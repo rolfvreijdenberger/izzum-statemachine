@@ -1,0 +1,6 @@
+<phpunit bootstrap="./bootstrap.php" convertErrorsToExceptions="true">
+    <testsuite name="izzum testsuite">
+        <directory>./</directory>>
+    </testsuite>
+</phpunit>
+
