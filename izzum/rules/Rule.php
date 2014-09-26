@@ -3,7 +3,9 @@ namespace izzum\rules;
 use izzum\rules\Exception;
 
 /**
- * Rules are used to encapsulate business logic.
+ * Rules are used to encapsulate business logic of the type where you ask a 
+ * question: 'does this piece of code conform to a specific business rule?'
+ * Rules should never have side effects and should only return true or false.
  * 
  * This Rule serves as a base class for all your business logic, encapsulating
  * and centralizing the logic in a class and making it reusable through it's interface.
@@ -28,6 +30,10 @@ use izzum\rules\Exception;
  * Clients should subclass this Rule and implement the 
  * protected '_applies' method and let that return a boolean value.
  * 
+ * A concrete Rule (a subclass) can (and should be) injected with contextual data via
+ * dependency injection in the constructor
+ *
+ * 
  * 
  * @author Rolf Vreijdenberger
  * @author Richard Ruiter
@@ -48,17 +54,19 @@ abstract class Rule
 
     /**
      * should we cache the result or not?
-     * TRICKY: this might be very dangerous for non-deterministic rules
+     * TRICKY: this might be very dangerous for non-deterministic rules but a 
+     * great speed optimizer for rules that are evaluated multiple times and are
+     * deterministic
      * @var boolean
      */
-    private $cache_result = true;
+    private $use_caching = false;
     
     /**
      * if the result is cached, it will be put in this variable
      * after the applies method has run
      * @var boolean
      */
-    private $applied_result;
+    private $cache;
     
     
      /**
@@ -91,17 +99,17 @@ abstract class Rule
     {
         try
         {
-            if($this->cache_result)
+            if($this->getCacheEnabled())
             {
-                if($this->applied_result !== null) {
-                    return $this->applied_result;
+                if($this->cache !== null) {
+                    return $this->cache;
                 }
             }
             $this->clearResult();
             $this->clearCache();
             $result = $this->_applies();
-            if($this->cache_result) {
-                $this->applied_result = $result;
+            if($this->getCacheEnabled()) {
+                $this->cache = $result;
             }
             if (is_bool($result)) {
                 return $result;
@@ -111,12 +119,22 @@ abstract class Rule
             }
         } catch (Exception $e)
         {
+            $this->handleException($e);
             throw $e;
         } catch (\Exception $e)
         {
             $e = new Exception($e->getMessage(), $e->getCode(), $e);
+            $this->handleException($e);
             throw $e;
         }
+    }
+    
+    /**
+     * hook method for logging etc.
+     * @param Exception $e
+     */
+    protected function handleException($e) {
+        //implement in subclass if needed
     }
 
     /**
@@ -230,7 +248,7 @@ abstract class Rule
     
     private final function clearCache()
     {
-        $this->applied_result = null;
+        $this->cache = null;
     }
     
     /**
@@ -247,19 +265,17 @@ abstract class Rule
      * should we cache the result if the rule is applied more than once?
      * @param boolean $cache
      */
-    public function setCached($cached = true) {
+    public function setCacheEnabled($cached = true) {
         $cached = (bool) $cached;
-        $this->cache_result = $cached;
-        if($this->applied_result) {
-            $this->clearCache();
-        }
+        $this->use_caching = $cached;
+        $this->clearCache();
     }
     
     /**
      * 
      * @return boolean
      */
-    public function getCached() {
-        return $this->cache_result;
+    public function getCacheEnabled() {
+        return $this->use_caching;
     }
 }

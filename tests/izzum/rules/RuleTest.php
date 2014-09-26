@@ -323,26 +323,30 @@ class RuleTest extends PHPUnit_Framework_TestCase
     {
         //fake non-determinism by using a helper rule
         $rule = new RandomNumberRule();
-        $this->assertTrue($rule->getCached());
+        //defaults to cache off.
+        $this->assertFalse($rule->getCacheEnabled());
         $this->assertEquals(0, $rule->getCount());
+        //enable caching
+        $rule->setCacheEnabled(true);
+        $this->assertTrue($rule->getCacheEnabled());
         $result = $rule->applies();
         $this->assertTrue($result);
-        $this->assertTrue($rule->getCached());
+        $this->assertTrue($rule->getCacheEnabled());
         $this->assertEquals($result, $rule->applies());
         $this->assertEquals($result, $rule->applies());
         $this->assertEquals(1, $rule->getCount());
         
-        //caching on
-        $rule->setCached(false);
-        $this->assertFalse($rule->getCached());
+        //caching off
+        $rule->setCacheEnabled(false);
+        $this->assertFalse($rule->getCacheEnabled());
         $this->assertNotEquals($result, $rule->applies());
         $this->assertEquals(2, $rule->getCount());
         $this->assertNotEquals($result, $rule->applies());
         $this->assertEquals(3, $rule->getCount());
         
-        //caching off again
-        $rule->setCached(true);
-        $this->assertTrue($rule->getCached());
+        //caching on again
+        $rule->setCacheEnabled(true);
+        $this->assertTrue($rule->getCacheEnabled());
         $this->assertFalse($rule->applies());
         $this->assertEquals(4, $rule->getCount());
         $this->assertFalse($rule->applies());
