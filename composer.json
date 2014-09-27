@@ -1,0 +1,22 @@
+{
+    "name": "izzum/izzum",
+    "description": "Yo man, who gots the izzum for tonights festivities?",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rolf Vreijdenberger",
+            "email": "rolf@vreijdenberger.nl"
+        },
+        {
+            "name": "Richard Ruiter",
+            "email": "richard.ruiter@gmail.com"
+        }
+    ],
+    "require": {
+    },
+    "autoload": {
+        "psr-4": {
+            "izzum\\": "izzum/"
+        }
+    }
+}
