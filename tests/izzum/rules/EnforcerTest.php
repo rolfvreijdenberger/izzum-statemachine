@@ -1,5 +1,6 @@
 <?php
-use izzum\rules\Boolean;
+use izzum\rules\True;
+use izzum\rules\False;
 use izzum\rules\Enforcer;
 use izzum\command\Command;
 use izzum\command\Exception;
@@ -19,19 +20,20 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
         //test an enforcer instance
         
         //test rule 'true'
-        $rule = new Boolean(true);
+        $rule = new True();
         $true = new CountCommand(10, true);
         $false = new CountCommand(20, false);
         $enforcer = new Enforcer($rule, $true, $false);
         $this->assertEquals(10, $true->getCount());
         $this->assertEquals(20, $false->getCount());
         $result = $enforcer->enforce();
+        $this->assertNotNull($enforcer->toString());
         $this->assertTrue($result);
         $this->assertEquals(11, $true->getCount(), 'should be increased by 1');
         $this->assertEquals(20, $false->getCount());
         
         //test rule 'false'
-        $rule = new Boolean(false);
+        $rule = new False();
         $true = new CountCommand(10, true);
         $false = new CountCommand(20, false);
         $enforcer = new Enforcer($rule, $true, $false);
@@ -49,7 +51,7 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
         //test the class methods of the enforcer
         
         //test rule 'true'
-        $rule = new Boolean(true);
+        $rule = new True();
         $true = new CountCommand(10, true);
         $false = new CountCommand(20, false);
         $this->assertEquals(10, $true->getCount());
@@ -60,7 +62,7 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(20, $false->getCount());
         
         //test rule 'false'
-        $rule = new Boolean(false);
+        $rule = new False();
         $true = new CountCommand(10, true);
         $false = new CountCommand(20, false);
         $this->assertEquals(10, $true->getCount());
@@ -77,7 +79,7 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
         //test that a command throws an exception in the enforcer
         
         //scenario: true exception
-        $rule = new Boolean(true);
+        $rule = new True();
         //use exception commands
         $true = new ExceptionCommand("exceptiontrue", 222);
         $false = new ExceptionCommand("exceptionfalse", 333);
@@ -92,7 +94,7 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
         
         
         //scenario: false exception
-        $rule = new Boolean(false);
+        $rule = new False();
         //use exception commands
         $true = new ExceptionCommand("exceptiontrue", 222);
         $false = new ExceptionCommand("exceptionfalse", 333);
@@ -109,7 +111,7 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
     public function testEnforcerNoFalseCommandProvided()
     {
         //no 'false' command provided and false executed (null behaviour
-        $rule = new Boolean(false);
+        $rule = new False();
         $true = new CountCommand(10, true);
         $enforcer = new Enforcer($rule, $true);
         $this->assertEquals(10, $true->getCount());
@@ -118,7 +120,7 @@ class EnforcerTest extends PHPUnit_Framework_TestCase
         $this->assertEquals(10, $true->getCount());
     
         //no 'false' command provided and true executed
-        $rule = new Boolean(true);
+        $rule = new True();
         $true = new CountCommand(10, true);
         $enforcer = new Enforcer($rule, $true);
         $this->assertEquals(10, $true->getCount());
