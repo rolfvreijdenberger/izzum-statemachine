@@ -2,9 +2,10 @@
 namespace izzum\rules;
 
 /**
- * Exception layer in between to handle exceptions for rules.
+ * Exception layer to handle exceptions for rules.
  *
  * @author Rolf Vreijdenberger
+ * @author Richard Ruiter
  */
 class Exception extends \Exception
 {

@@ -3,7 +3,10 @@ namespace izzum\rules;
 use izzum\rules\Exception;
 
 /**
- * Rules are used to encapsulate business logic.
+ * Rules are used to encapsulate business rules/logic of the type where you ask a 
+ * question: 'does this piece of code conform to a specific business rule?'
+ * 
+ * Rules should never have side effects and should only return true or false.
  * 
  * This Rule serves as a base class for all your business logic, encapsulating
  * and centralizing the logic in a class and making it reusable through it's interface.
@@ -23,11 +26,17 @@ use izzum\rules\Exception;
  *  //do something
  * }
  * 
+ * or:
+ * $rule = new IsOrderTaggedForDelivery($order);
+ * $rule->applies();
  * 
  * usage: 
  * Clients should subclass this Rule and implement the 
  * protected '_applies' method and let that return a boolean value.
  * 
+ * A concrete Rule (a subclass) can (and should be) injected with contextual data via
+ * dependency injection in the constructor
+ *
  * 
  * @author Rolf Vreijdenberger
  * @author Richard Ruiter
@@ -48,17 +57,19 @@ abstract class Rule
 
     /**
      * should we cache the result or not?
-     * TRICKY: this might be very dangerous for non-deterministic rules
+     * TRICKY: this might be very dangerous for non-deterministic rules but a 
+     * great speed optimizer for rules that are evaluated multiple times and are
+     * deterministic
      * @var boolean
      */
-    private $cache_result = true;
+    private $use_caching = false;
     
     /**
      * if the result is cached, it will be put in this variable
      * after the applies method has run
      * @var boolean
      */
-    private $applied_result;
+    private $cache;
     
     
      /**
@@ -85,23 +96,23 @@ abstract class Rule
      * trust that the caller checks the boolean type so we will.
      * 
      * @return boolean
-     * @throws \izzum\rules\Exception
+     * @throws \Exception
      */
     public final function applies()
     {
         try
         {
-            if($this->cache_result)
+            if($this->getCacheEnabled())
             {
-                if($this->applied_result !== null) {
-                    return $this->applied_result;
+                if($this->cache !== null) {
+                    return $this->cache;
                 }
             }
             $this->clearResult();
             $this->clearCache();
             $result = $this->_applies();
-            if($this->cache_result) {
-                $this->applied_result = $result;
+            if($this->getCacheEnabled()) {
+                $this->cache = $result;
             }
             if (is_bool($result)) {
                 return $result;
@@ -111,19 +122,29 @@ abstract class Rule
             }
         } catch (Exception $e)
         {
+            $this->handleException($e);
             throw $e;
         } catch (\Exception $e)
         {
             $e = new Exception($e->getMessage(), $e->getCode(), $e);
+            $this->handleException($e);
             throw $e;
         }
+    }
+    
+    /**
+     * hook method for logging etc.
+     * @param Exception $e
+     */
+    protected function handleException($e) {
+        //implement in subclass if needed
     }
 
     /**
      * Chain a 'OR' rule. This means one of the rules should apply.
      * 
-     * @param \izzum\rules\Rule $other
-     * @return \izzum\rules\Rule
+     * @param Rule $other
+     * @return Rule
      */
     public final function orRule(Rule $other)
     {
@@ -133,8 +154,8 @@ abstract class Rule
     /**
      * Chain a 'XOR' rule. This means one of the rules should apply but not both.
      *
-     * @param \izzum\rules\Rule $other
-     * @return \izzum\rules\Rule
+     * @param Rule $other
+     * @return Rule
      */
     public final function xorRule(Rule $other)
     {
@@ -145,8 +166,8 @@ abstract class Rule
     /**
      * Chain a 'AND' rule. This means both rules should apply.
      * 
-     * @param \izzum\rules\Rule $other
-     * @return \izzum\rules\Rule
+     * @param Rule $other
+     * @return Rule
      */
     public final function andRule(Rule $other)
     {
@@ -156,7 +177,7 @@ abstract class Rule
     /**
      * Inverse current rule
      * 
-     * @return \izzum\rules\Rule
+     * @return Rule
      */
     public final function not()
     {
@@ -182,7 +203,7 @@ abstract class Rule
      * 
      * @return RuleResult[]
      */
-    public function getResult() 
+    public function getResults() 
     {
         return $this->result;
     }
@@ -203,14 +224,14 @@ abstract class Rule
      * Check if this rule contains a certain expected result.
      * This is only matched on the string, not on the class that generated
      * the result
-     * In case you want to also know the class or classname, use getResult()
-     * @see Rule::getResult()
+     * In case you want to also know the class or classname, use getResults()
+     * @see Rule::getResults()
      * @param string $expected
      */
     public final function containsResult($expected) 
     {
         $output = false;
-        $results = $this->getResult();
+        $results = $this->getResults();
         foreach ($results as $result) {
             if($result->getResult() === $expected) 
             {
@@ -230,7 +251,7 @@ abstract class Rule
     
     private final function clearCache()
     {
-        $this->applied_result = null;
+        $this->cache = null;
     }
     
     /**
@@ -240,26 +261,24 @@ abstract class Rule
      */
     public final function hasResult()
     {
-        return count($this->getResult()) !== 0;
+        return count($this->getResults()) !== 0;
     }
     
     /**
      * should we cache the result if the rule is applied more than once?
      * @param boolean $cache
      */
-    public function setCached($cached = true) {
+    public function setCacheEnabled($cached = true) {
         $cached = (bool) $cached;
-        $this->cache_result = $cached;
-        if($this->applied_result) {
-            $this->clearCache();
-        }
+        $this->use_caching = $cached;
+        $this->clearCache();
     }
     
     /**
      * 
      * @return boolean
      */
-    public function getCached() {
-        return $this->cache_result;
+    public function getCacheEnabled() {
+        return $this->use_caching;
     }
 }

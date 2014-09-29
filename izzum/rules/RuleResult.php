@@ -13,6 +13,7 @@ namespace izzum\rules;
  * combined.
  *
  * @author Rolf Vreijdenberger
+ * @author Richard Ruiter
  */
 class RuleResult
 {

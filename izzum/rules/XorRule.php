@@ -52,7 +52,7 @@ class XorRule extends Rule
      * 
      * @return array
      */
-    public function getResult() {
-        return array_merge($this->other->getResult(), $this->original->getResult());
+    public function getResults() {
+        return array_merge($this->other->getResults(), $this->original->getResults());
     }
 }

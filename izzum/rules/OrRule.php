@@ -9,6 +9,7 @@ namespace izzum\rules;
  * $chained = $rule->orRule(new False());
  * $chained->applies();//true, since true or false is true.
  * @author Rolf Vreijdenberger
+ * @author Richard Ruiter
  */
 class OrRule extends Rule
 {
@@ -55,7 +56,7 @@ class OrRule extends Rule
      * 
      * @return array
      */
-    public function getResult() {
-        return array_merge($this->other->getResult(), $this->original->getResult());
+    public function getResults() {
+        return array_merge($this->other->getResults(), $this->original->getResults());
     }
 }

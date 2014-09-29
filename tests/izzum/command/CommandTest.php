@@ -36,6 +36,8 @@ class CommandTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(1, count($list));
         $command->execute();
         $this->assertEquals(2, count($list));
+        
+        $this->assertNotNull($command->toString());
     }
     
     public function testNullCommand()
@@ -143,6 +145,7 @@ class CommandTest extends PHPUnit_Framework_TestCase {
         
         //remove one by one
         //check remove() and contains()
+        $this->assertEquals(3, $composite->count());
         $composite->remove($command1);
         $this->assertFalse($composite->contains($command1));
         $this->assertTrue($composite->contains($command2));
@@ -155,6 +158,13 @@ class CommandTest extends PHPUnit_Framework_TestCase {
         $this->assertFalse($composite->contains($command1));
         $this->assertFalse($composite->contains($command2));
         $this->assertFalse($composite->contains($command3));
+        $this->assertNotNull($composite->toString());
+        
+        //nested composite
+        $composite = new Composite();
+        $nested = new Composite();
+        $composite->add($nested);
+        $this->assertNotNull($composite->toString());
     }
     
     
@@ -170,6 +180,31 @@ class CommandTest extends PHPUnit_Framework_TestCase {
             $this->assertEquals('test', $e->getMessage());
             $this->assertEquals("izzum\command\Exception", get_class($e));
         }
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldThrowNormalAndCommandException()
+    {
+        //coverage test
+        $command = new throwsExceptionCommand(true);
+        try {
+            $command->execute();
+            $this->fail('should throw exception');
+        } catch (Exception $e) {
+
+        }
+        
+        $command = new throwsExceptionCommand(false);
+        try {
+            $command->execute();
+            $this->fail('should throw exception');
+        } catch (Exception $e) {
+
+        }
+        
+        
     }
 }
 
@@ -193,6 +228,24 @@ class AddToListCommand extends izzum\command\Command {
     {
         //add an incrementing counter to the list reference
         $this->list[] = self::$ID++;
+    }
+}
+
+
+class throwsExceptionCommand extends izzum\command\Command {
+    private $bool;
+    public function __construct($bool)
+    {
+        $this->bool = $bool;
+    }
+    
+    protected function _execute()
+    {
+        if($this->bool) {
+            throw new  Exception('oops');
+        } else {
+            throw new \Exception('ooops');
+        }
     }
 }
 

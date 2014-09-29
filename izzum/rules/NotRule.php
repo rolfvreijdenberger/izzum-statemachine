@@ -6,6 +6,7 @@ namespace izzum\rules;
  * constructor should not apply. The rule is effectively negated.
  *
  * @author Rolf Vreijdenberger
+ * @author Richard Ruiter
  */
 class NotRule extends Rule
 {
@@ -35,8 +36,8 @@ class NotRule extends Rule
      * 
      * @return array
      */
-    public function getResult() 
+    public function getResults() 
     {
-        return $this->original->getResult();
+        return $this->original->getResults();
     }
 }
