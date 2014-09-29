@@ -3,8 +3,9 @@ namespace izzum\rules;
 use izzum\rules\Exception;
 
 /**
- * Rules are used to encapsulate business logic of the type where you ask a 
+ * Rules are used to encapsulate business rules/logic of the type where you ask a 
  * question: 'does this piece of code conform to a specific business rule?'
+ * 
  * Rules should never have side effects and should only return true or false.
  * 
  * This Rule serves as a base class for all your business logic, encapsulating
@@ -25,6 +26,9 @@ use izzum\rules\Exception;
  *  //do something
  * }
  * 
+ * or:
+ * $rule = new IsOrderTaggedForDelivery($order);
+ * $rule->applies();
  * 
  * usage: 
  * Clients should subclass this Rule and implement the 
@@ -33,7 +37,6 @@ use izzum\rules\Exception;
  * A concrete Rule (a subclass) can (and should be) injected with contextual data via
  * dependency injection in the constructor
  *
- * 
  * 
  * @author Rolf Vreijdenberger
  * @author Richard Ruiter
@@ -93,7 +96,7 @@ abstract class Rule
      * trust that the caller checks the boolean type so we will.
      * 
      * @return boolean
-     * @throws \izzum\rules\Exception
+     * @throws \Exception
      */
     public final function applies()
     {
@@ -140,8 +143,8 @@ abstract class Rule
     /**
      * Chain a 'OR' rule. This means one of the rules should apply.
      * 
-     * @param \izzum\rules\Rule $other
-     * @return \izzum\rules\Rule
+     * @param Rule $other
+     * @return Rule
      */
     public final function orRule(Rule $other)
     {
@@ -151,8 +154,8 @@ abstract class Rule
     /**
      * Chain a 'XOR' rule. This means one of the rules should apply but not both.
      *
-     * @param \izzum\rules\Rule $other
-     * @return \izzum\rules\Rule
+     * @param Rule $other
+     * @return Rule
      */
     public final function xorRule(Rule $other)
     {
@@ -163,8 +166,8 @@ abstract class Rule
     /**
      * Chain a 'AND' rule. This means both rules should apply.
      * 
-     * @param \izzum\rules\Rule $other
-     * @return \izzum\rules\Rule
+     * @param Rule $other
+     * @return Rule
      */
     public final function andRule(Rule $other)
     {
@@ -174,7 +177,7 @@ abstract class Rule
     /**
      * Inverse current rule
      * 
-     * @return \izzum\rules\Rule
+     * @return Rule
      */
     public final function not()
     {
@@ -200,7 +203,7 @@ abstract class Rule
      * 
      * @return RuleResult[]
      */
-    public function getResult() 
+    public function getResults() 
     {
         return $this->result;
     }
@@ -221,14 +224,14 @@ abstract class Rule
      * Check if this rule contains a certain expected result.
      * This is only matched on the string, not on the class that generated
      * the result
-     * In case you want to also know the class or classname, use getResult()
-     * @see Rule::getResult()
+     * In case you want to also know the class or classname, use getResults()
+     * @see Rule::getResults()
      * @param string $expected
      */
     public final function containsResult($expected) 
     {
         $output = false;
-        $results = $this->getResult();
+        $results = $this->getResults();
         foreach ($results as $result) {
             if($result->getResult() === $expected) 
             {
@@ -258,7 +261,7 @@ abstract class Rule
      */
     public final function hasResult()
     {
-        return count($this->getResult()) !== 0;
+        return count($this->getResults()) !== 0;
     }
     
     /**

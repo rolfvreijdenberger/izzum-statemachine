@@ -7,6 +7,7 @@ namespace izzum\rules;
  * constructor should apply.
  *
  * @author Rolf Vreijdenberger
+ * @author Richard Ruiter
  */
 class AndRule extends Rule
 {
@@ -53,8 +54,8 @@ class AndRule extends Rule
      * 
      * @return array
      */
-    public function getResult() 
+    public function getResults() 
     {
-        return array_merge($this->other->getResult(), $this->original->getResult());
+        return array_merge($this->other->getResults(), $this->original->getResults());
     }
 }
