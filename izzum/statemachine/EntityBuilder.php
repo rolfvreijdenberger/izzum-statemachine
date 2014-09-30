@@ -14,7 +14,7 @@ namespace izzum\statemachine;
  * mean that the Rules and Commands will not be specific to the applications' problem
  * domain but to that of the statemachine (and therefore possibly less reusable).
  * 
- * The Entity is configured with this builder class by default. It can be configured
+ * The Context instance is configured with this builder class by default. It can be configured
  * with a subclass if necessary. 
  * 
  * This class implements caching of the entity returned for a specific Entity.
@@ -36,7 +36,7 @@ namespace izzum\statemachine;
  * An example of a builder would be an 'EntityBuilderOrder' class,
  * which would be used for an Order statemachine.
  * 
- * @see Entity::getEntity()
+ * @see Context::getEntity()
  * @link https://en.wikipedia.org/wiki/Builder_pattern
  * 
  * @author Rolf Vreijdenberger
