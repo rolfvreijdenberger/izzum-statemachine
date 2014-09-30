@@ -1,8 +1,6 @@
-izzum
+izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum/)
 =====
 '_Yo man, who gots the izzum for tonights festivities?_'
-
-[![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum/)
 
 **An extensible statemachine library** using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia"), with a 
 [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") implementation that revolves around the [Command pattern](https://en.wikipedia.org/wiki/Command_pattern "command pattern on wikipedia") for 
@@ -28,7 +26,7 @@ Netherlands' fiber ISP organisations for their order management system.
 **Automated state diagram creation** [with plantuml](http://plantuml.sourceforge.net/ "plantuml on sourceforge") by providing a statemachine is a simple way to
 visualize your machine with all the Rule/Command logic, making it easy to communicate with
 business users or stakeholders.
-
+![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml.png )
 
 **packages**:
 - statemachine (transitions guarded by rules and logic executed by commands)
@@ -46,6 +44,7 @@ business users or stakeholders.
 - creation of README.md markdown with the help of [dillinger.io/](http://dillinger.io/)
 
 **examples**
+
 ```php
 <?php
 use izzum\statemachine\StateMachine;
