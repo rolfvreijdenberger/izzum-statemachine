@@ -1,4 +1,4 @@
-<phpunit bootstrap="./bootstrap.php" convertErrorsToExceptions="true">
+<phpunit bootstrap="./bootstrap.php" convertErrorsToExceptions="false">
     <testsuite name="izzum testsuite">
         <directory>./</directory>>
     </testsuite>
