@@ -39,8 +39,11 @@ business users or stakeholders.
 - Romuald Villetet
 - Harm de Jong
 
-the statemachine package was influenced by the [yohang statemachine](https://github.com/yohang/Finite "Finite on github") , thanks for some good work.
+**thanks**:
+- the statemachine package was influenced by the [yohang statemachine](https://github.com/yohang/Finite "Finite on github") , thanks for some good work.
+- creation of README.md markdown with the help of [dillinger.io/](http://dillinger.io/)
 
+**examples**
 ```php
 <?php
 use izzum\statemachine\StateMachine;
