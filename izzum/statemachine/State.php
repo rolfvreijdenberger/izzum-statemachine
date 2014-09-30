@@ -10,6 +10,10 @@ namespace izzum\statemachine;
  * objects when it is the same Staet for their origin/from State.
  * The LoaderArray class automatically takes care of this for us.
  * 
+ * the order of Transitions *might* be important.
+ * whenever a State is asked for it's transitions, the first transition might
+ * be tried first. this might have performance and configuration benefits.
+ * 
  * @author Rolf Vreijdenberger
  *
  */
@@ -61,6 +65,10 @@ class State {
     /**
      * an array of transitions that are outgoing for this state.
      * These will be set by Transition objects (they provide the association)
+     * 
+     * this is not a hashmap, so the order of Transitions *might* be important.
+     * whenever a State is asked for it's transitions, the first transition might
+     * be tried first. this might have performance and configuration benefits
      * 
      * @var Transition[]
      */

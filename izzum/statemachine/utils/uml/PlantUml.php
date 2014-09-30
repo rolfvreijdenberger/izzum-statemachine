@@ -1,7 +1,24 @@
 <?php
 namespace izzum\statemachine\utils\uml;
 use izzum\statemachine\StateMachine;
+use izzum\statemachine\Transition;
+use izzum\statemachine\State;
 use izzum\statemachine\Exception;
+/**
+ * creates a statediagram in plantuml format for a statemachine.
+ * 
+ * This mainly serves as a simple demo.
+ * 
+ * More diagrams can be created from the data in a persistence layer.
+ * for example:
+ * - activity diagrams: which transitions has en entity actually made (and when)
+ * - flow diagrams: a combination of the state diagram and the activity diagram
+ *          (show the full state diagram and highlight the states the entity has
+ *          actually gone through)
+ * - heat maps: a count of every state for every entity.
+ * 
+ * @link http://www.plantuml.com/plantuml/ put the output of the method there
+ */
 class PlantUml {
     
     
@@ -13,31 +30,6 @@ class PlantUml {
     private static function plantUmlStateAlias($original) {
         $alias = ucfirst(implode("", array_map('ucfirst',explode("-", $original))));
         return $alias;
-    }
-
-    /**
-     * fix for shorter path output of rules and commands
-     * @param string $path
-     * @return string
-     */
-    private function plantUmlPathFix($path)
-    {
-        $path = str_replace("izzum", "", $path);
-        $path = str_replace("\\rules\\", "\\R\\", $path);
-        $path = str_replace("\\command\\", "\\C\\", $path);
-        $path = str_replace("\\\\", "\\", $path);
-        return $path;
-    }
-
-    private static function getPlantUmlTimestampFormatted($timestamp)
-    {
-        if(is_null($timestamp)) {
-            $output = null;
-        } else {
-            $output = strtotime($timestamp);
-            $output =date('Y-m-d H:i',$output);
-        }
-        return $output;
     }
 
 
@@ -77,7 +69,6 @@ SKINS;
     /**
      * creates plantuml output for a statemachine
      * @param string $machine
-     * @param boolean $with_orphaned_states also show orphaned states (no incoming/outgoing)
      * @param string $placement placement of main note values: 'right' | 'left'
      * @return string plant uml code
      * @link http://plantuml.sourceforge.net/state.html
@@ -101,14 +92,16 @@ SKINS;
 
         //only one begin state
         $initial = self::getInitialState($machine);
+        $initial = $initial->getName();
         $initial_alias = self::plantUmlStateAlias($initial);
+        $aliases[$initial_alias] = $initial_alias;
         $uml .=  'state "' . $initial . '" as ' . $initial_alias . PHP_EOL;
         $uml .= "[*] --> $initial_alias". PHP_EOL;
 
         //note
         $uml .= "note $direction of New $NEWLINE" ;
         $uml .= "state diagram for machine '" . $machine->getMachine() . "'$NEWLINE";
-        $uml .= "created by izzum uml generator $NEWLINE";
+        $uml .= "created by izzum plantuml generator $NEWLINE";
         $uml .= "@link http://plantuml.sourceforge.net/state.html\"" . $NEWLINE;
         $uml .= "end note" . $NEWLINE;
 
@@ -117,46 +110,34 @@ SKINS;
         foreach ($transitions as $t)
         {
             //get states and aliases
-            $from = $t->getName();
+            $from = $t->getStateFrom()->getName();
             $from_alias = self::plantUmlStateAlias($from);
             $to = $t->getStateTo();
             $to_alias = self::plantUmlStateAlias($to->getName());
 
             
-            $commands = self::plantUmlPathFix($t->getCommandName());
-            $rules = self::plantUmlPathFix($t->getRuleName());
+            $commands = $t->getCommandName();
+            $rules = $t->getRuleName();
             $name_transition = $t->getName();
 
 
             //only write aliases if not done before
-            if($from_alias != "" && !isset($aliases[$from_alias])) {
-                //$description = $t['description_from'] ? "" . $t['description_from'] : "";
+            if(!isset($aliases[$from_alias])) {
                 $uml .= 'state "' . $from . '" as '. $from_alias . PHP_EOL;
-                //$uml .= "$from_alias : $description" . PHP_EOL;
                 $uml .= "$from_alias" . PHP_EOL;
                 $aliases[$from_alias] = $from_alias;
             }
 
-            //a state can be orphaned, in that case $to_alias is undefined
-            if($to_alias != "" && !isset($aliases[$to_alias])) {
-                //$description = $t['description_to'] ? "" . $t['description_to'] : "";
+            if(!isset($aliases[$to_alias])) {
                 $uml .= 'state "' . $to . '" as '. $to_alias . PHP_EOL;
-                //$uml .= "$to_alias : $description" . PHP_EOL;
-                $uml .= "$to_alias" . PHP_EOL;
                 $aliases[$to_alias] = $to_alias;
             }
 
-            //only write transitions if defined (when a state is not orphaned)
-            //if($name_transition != "" && !is_null($name_transition)) {
-                //write transition
-                $uml .= $from_alias .' --> '. $to_alias;
-
-             //   $uml .= " :prio: $priority" . $EOL;
-                $uml .= "rule: $rules" . $EOL;
-                $uml .= "cmd: $commands" . $EOL;
-                //$description = $t['description'];
-                //$uml .= "$description";
-            //}
+            //write transition
+            $uml .= $from_alias .' --> '. $to_alias;
+            $uml .= " : $name_transition" . $EOL;
+            $uml .= "rule: $rules" . $EOL;
+            $uml .= "command: $commands" . $EOL;
             $uml .= PHP_EOL;
 
             //store possible end states aliases
@@ -179,6 +160,12 @@ SKINS;
         return $uml;
     }
     
+    /**
+     * 
+     * @param StateMachine $machine
+     * @return State
+     * @throws Exception
+     */
     private static function getInitialState(StateMachine $machine) {
         $transitions = $machine->getTransitions();
         foreach($transitions as $transition) {
