@@ -8,6 +8,8 @@ izzum
 [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") implementation that revolves around the [Command pattern](https://en.wikipedia.org/wiki/Command_pattern "command pattern on wikipedia") for 
 doing transitions and using business rules for the transition guard logic.
 
+**Very well documented** so you can find what you want to know.
+
 **It can be tailored to your application domain** by using an adapter for 
 your persistence layer (postgresql/mysql, memcache, sessions etc), a loader 
 for your purpose (yaml~, json~, postgresql) and an abstraction of your 
