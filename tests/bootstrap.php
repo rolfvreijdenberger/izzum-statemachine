@@ -58,4 +58,4 @@ include_once($path . 'izzum/statemachine/factory/AbstractFactory.php');
 
 include_once($path . 'izzum/statemachine/utils/ExternalData.php');
 include_once($path . 'izzum/statemachine/utils/Utils.php');
-include_once($path . 'izzum/statemachine/utils/uml/PlantUml.php');
+
