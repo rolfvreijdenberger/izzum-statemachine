@@ -1,0 +1,28 @@
+{
+    "name": "rolfvreijdenberger/izzum",
+    "description": "php library - statemachine, rules and commands",
+    "keywords":    ["statemachine", "rules", "command", "transition", "state"],
+    "homepage":    "https://github.com/rolfvreijdenberger/izzum",
+    "type":        "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Rolf Vreijdenberger",
+            "email": "rolf@vreijdenberger.nl",
+            "homepage": "www.vreijdenberger.nl"
+        },
+        {
+            "name": "Richard Ruiter",
+            "email": "richard.ruiter@gmail.com"
+        }
+        
+    ],
+    "require": {
+        "php": ">=5.3.3"
+    },
+    "autoload": {
+        "psr-4": {
+            "izzum\\": "/izzum"
+        }
+    }
+}
