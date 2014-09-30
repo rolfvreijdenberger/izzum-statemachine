@@ -159,7 +159,11 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('MemoryEntityConcatenator', $io->toString());
     }
     
-    
+    /**
+     * not working in travis-ci because output already started. ob_flush is not 
+     * working
+     * @group uses-sessions
+     */
     public function testSessionAdapter()
     {
         //I have verified (by forcing a session id) that sessions actually
@@ -179,13 +183,13 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($io->setState($object, 'bogus'));
         $this->assertTrue($io->setState($object, 'bogus2'));
         $this->assertFalse($io->add($object), 'already there');
+        //we should have started output buffering in the bootstrap file
+        ob_flush();
     }
     
     
     public static function tearDownAfterClass() {
-        parent::tearDownAfterClass();
-        //we have started output buffering in the bootstrap file
-        ob_flush();
+        parent::tearDownAfterClass();        
     }
     
     /**
