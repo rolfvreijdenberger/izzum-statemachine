@@ -440,5 +440,41 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
       
     }
     
+    /**
+     * @test
+     * @group not-on-production
+     * @group plantuml
+     * 
+     */
+    public function shouldCreatePlantUmlStateDiagram()
+    {
+        $machine = 'machine-example';
+        $id = 123;
+        $context = new Context($id, $machine);
+        $machine = new StateMachine($context);
+        $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
+        $s_a = new State('order-confirmation', State::TYPE_NORMAL);
+        $s_b = new State('technical-delivery', State::TYPE_NORMAL);
+        $s_c = new State('contract-creation', State::TYPE_NORMAL);
+        $s_d = new State('services-activation', State::TYPE_NORMAL);
+        $s_done = new State(State::STATE_DONE, State::TYPE_FINAL);
+        
+        $t_new_to_a = new Transition($s_new, $s_a, Transition::RULE_TRUE, 'izzum\command\ValidateOrder');
+        $t_a_to_b = new Transition($s_a, $s_b, 'izzum\rules\IsReadyForDelivery', 'izzum\command\SendConfirmation');
+        $t_b_to_c = new Transition($s_b, $s_c, Transition::RULE_TRUE, 'izzum\command\TechnicalDelivery');
+        $t_b_to_d = new Transition($s_b, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_c_to_d = new Transition($s_c, $s_d, 'izzum\rules\ReadyForContract', 'izzum\command\CreateContract');
+        $t_d_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, 'izzum\rules\ActiveServices' );
+        
+        $machine->addTransition($t_new_to_a);
+        $machine->addTransition($t_a_to_b);
+        $machine->addTransition($t_b_to_c);
+        $machine->addTransition($t_b_to_d);
+        $machine->addTransition($t_c_to_d);
+        $machine->addTransition($t_d_done);
+        echo PlantUml::createStateDiagram($machine);
+    }
+    
+    
 
 }

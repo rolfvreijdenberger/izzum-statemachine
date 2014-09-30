@@ -163,6 +163,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      * not working in travis-ci because output already started. ob_flush is not 
      * working
      * @group uses-sessions
+     * @group not-on-production
      */
     public function testSessionAdapter()
     {

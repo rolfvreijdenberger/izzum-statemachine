@@ -65,6 +65,7 @@ class LoaderArray implements Loader {
     {
         $states = array();
         $transitions = array();
+        $output = array();
         foreach ($this->loaderdata as $data)
         {
             //origin states
@@ -82,13 +83,13 @@ class LoaderArray implements Loader {
             $state_to = $states[$name_to];
             
             //transitions
-            $transtion_name = Utils::getTransitionName($name_from, $name_to);
-            if(!isset($transitions[$transtion_name])) {
-                $transitions[$transtion_name] = new Transition($state_from, $state_to, $data->getRule(), $data->getCommand());
+            $transition_name = Utils::getTransitionName($name_from, $name_to);
+            if(!isset($transitions[$transition_name])) {
+                $transitions[$transition_name] = new Transition($state_from, $state_to, $data->getRule(), $data->getCommand());
+                $output[] = $transitions[$transition_name];
             }
         }
-        
-        return $transitions;
+        return $output;
     }
     
     /**
