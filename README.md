@@ -52,9 +52,27 @@ interface in case there is a need for more advanced manipulation.
 ```php
 <?php
 $id = $order->getId();
-$factory = new StateMachineFactory();
+//abstract factory pattern is used to create a family of related objects
+$factory = new ConcreteFactory();
 $machine = $factory->getStateMachine($id);
 $machine->run();
+
+
+//interface overview for the statemachine
+$machine = new StateMachine($context);
+$machine->apply('new_to_initialize');
+$machine->run();
+$machine->runToCompletion();
+$machine->can('new_to_initialize');
+$machine->getContext();
+$machine->getStates();
+$machine->getTransitions();
+$machine->getCurrentState();
+$machine->getInitialState();
+$machine->toString();
+$machine->addTransition($transition);
+$machine->changeContext($context);
+
 ```
 
 ###Formal ways to encapsulate the logic for transitions###
@@ -76,7 +94,7 @@ It is used in a high load commercial environment with a postgresql backend
 for one of the best Dutch fiber ISP organisations for their order management system.
 
 ###no dependencies###
-There are no dependencies on third party libraries. 
+There are no dependencies on third party libraries. php 5.3 or higher
 
 ###License###
 MIT
