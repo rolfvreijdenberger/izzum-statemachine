@@ -2,8 +2,10 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch
 =====
 '_Yo man, who gots the izzum for tonights festivities?_'
 
-see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum "navigable version on documentup.com") for a navigable
+
+- see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum "navigable version on documentup.com") for a navigable
 version of this document.
+- Dont' want to read? Just skip to [examples](#examples)
 
 ##about##
 ###An extensible and flexible statemachine library###
@@ -12,6 +14,7 @@ implementation that revolves around the [Command pattern](https://en.wikipedia.o
 for doing transitions and using business rules for the transition guard logic.
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
+Subclassing and/or using hooks in the code allow you to add logging, event dispatching etc.
 
 ###thoroughly documented###
 find out how it works and what matters in clean code and excellent inline
@@ -53,7 +56,7 @@ $machine->run();
 
 ###Formal ways to encapsulate the logic for transitions###
 All logic for a single transition is encapsulated in two classes:
-- a subclass of Rule (see the package) which make sure that a transition is 
+- a subclass of Rule (see the package) which makes sure that a transition is 
 allowed/disallowed by checking if a business rule applies.
 - a subclass of Command (see the package) which executes logic that is part
 of the transition that is currently being executed between two states.
@@ -69,6 +72,12 @@ Making use of proven design patterns to allow you to tailor it to your needs.
 It is used in a high load commercial environment with a postgresql backend 
 for one of the best Dutch fiber ISP organisations for their order management system.
 
+###no dependencies###
+There are no dependencies on third party libraries. 
+
+###License###
+MIT
+
 ###Automated uml state diagram creation###
 Create uml state diagrams from a statemachine [with plantuml](http://plantuml.sourceforge.net/ "plantuml on sourceforge") 
 It is a great way to visualize your machine with all the Rule/Command logic, 
@@ -78,7 +87,7 @@ see the examples section for some diagrams.
 
 ##Examples##
 
-###uml diagram for a fictive order system###
+###uml diagram for an order system###
 ![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml.png )
 
 ###php example for the simplest case###
@@ -133,11 +142,12 @@ $machine->runToCompletion();
 
 
 ##contributors and thank you's##
-- Richard Ruiter 
+- Richard Ruiter
 - Romuald Villetet
 - Harm de Jong
 - the statemachine package was influenced by the [yohang statemachine](https://github.com/yohang/Finite "Finite on github") , thanks for some good work.
 - creation of README.md markdown with the help of [dillinger.io/](http://dillinger.io/)
+- nice layout of this file: [documentup.com](http://documentup.com/rolfvreijdenberger/izzum)
 
 
 
