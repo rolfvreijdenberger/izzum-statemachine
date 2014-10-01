@@ -8,10 +8,13 @@ version of this document.
 - Dont' want to read? Just skip to [examples](#examples)
 
 ##about##
-###An extensible and flexible statemachine library###
+###A superior, extensible and flexible statemachine library###
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") 
-implementation that revolves around the [Command pattern](https://en.wikipedia.org/wiki/Command_pattern "command pattern on wikipedia") 
-for doing transitions and using business rules for the transition guard logic.
+implementation that allows you to add state to any domain object and to define
+the logic of transitions between any and all states for that object.
+Itrevolves around the [Command pattern](https://en.wikipedia.org/wiki/Command_pattern "command pattern on wikipedia") 
+for executing transition logic and uses business rules for the transition guard logic.
+
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
 Subclassing and/or using hooks in the code allow you to add logging, event dispatching etc.
