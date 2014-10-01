@@ -1,9 +1,9 @@
-izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum/)
+izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum/) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/?branch=master)
 =====
 '_Yo man, who gots the izzum for tonights festivities?_'
 
 
-- see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum "navigable version on documentup.com") for a navigable
+- see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum/recompile "navigable version on documentup.com") for a navigable
 version of this document.
 - Dont' want to read? Just skip to [examples](#examples)
 
@@ -169,6 +169,8 @@ $machine->runToCompletion();
 - the statemachine package was influenced by the [yohang statemachine](https://github.com/yohang/Finite "Finite on github") , thanks for some good work.
 - creation of README.md markdown with the help of [dillinger.io/](http://dillinger.io/)
 - nice layout of this file: [documentup.com](http://documentup.com/rolfvreijdenberger/izzum)
+- continuous integration servers: https://travis-ci.org and https://scrutinizer-ci.com
+
 
 
 
