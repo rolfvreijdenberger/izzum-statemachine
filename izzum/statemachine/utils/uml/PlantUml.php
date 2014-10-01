@@ -5,7 +5,7 @@ use izzum\statemachine\Transition;
 use izzum\statemachine\State;
 use izzum\statemachine\Exception;
 /**
- * creates a statediagram in plantuml format for a statemachine.
+ * creates a uml statediagram in plantuml format for a statemachine.
  * 
  * This mainly serves as a simple demo.
  * 
@@ -17,7 +17,7 @@ use izzum\statemachine\Exception;
  *          actually gone through)
  * - heat maps: a count of every state for every entity.
  * 
- * @link http://www.plantuml.com/plantuml/ put the output of the method there
+ * @link http://www.plantuml.com/plantuml/ 
  */
 class PlantUml {
     
@@ -37,6 +37,7 @@ class PlantUml {
      * get skins for layout
      * @return string
      * @link http://plantuml.sourceforge.net/skinparam.html
+     * @link http://plantuml.com/classes.html#Skinparam
      */
     private static function getPlantUmlSkins()
     {
@@ -67,14 +68,14 @@ SKINS;
     }
 
     /**
-     * creates plantuml output for a statemachine
+     * creates plantuml state output for a statemachine
      * @param string $machine
-     * @param string $placement placement of main note values: 'right' | 'left'
-     * @return string plant uml code
+     * @return string plant uml code, this can be used to render an image
+     * @link http://www.plantuml.com/plantuml/
      * @link http://plantuml.sourceforge.net/state.html
      * @throws Exception
      */
-    public static function createStateDiagram(StateMachine $machine, $direction = 'right')
+    public static function createStateDiagram(StateMachine $machine)
     {
         $transitions = $machine->getTransitions();
 
@@ -91,7 +92,7 @@ SKINS;
         $uml .= self::getPlantUmlSkins() . PHP_EOL;
 
         //only one begin state
-        $initial = self::getInitialState($machine);
+        $initial = $machine->getInitialState();
         $initial = $initial->getName();
         $initial_alias = self::plantUmlStateAlias($initial);
         $aliases[$initial_alias] = $initial_alias;
@@ -105,19 +106,22 @@ SKINS;
         $uml .= "@link http://plantuml.sourceforge.net/state.html\"" . $NEWLINE;
         $uml .= "end note" . $NEWLINE;
 
-
-        //create the diagram
+        //the order in which transitions are executed
+        $order = array();
+        
+        //create the diagram by drawing all transitions
         foreach ($transitions as $t)
         {
-            //get states and aliases
+            //get states and state aliases (plantuml cannot work with certain 
+            //characters, so therefore we create an alias for the state name)
             $from = $t->getStateFrom()->getName();
             $from_alias = self::plantUmlStateAlias($from);
             $to = $t->getStateTo();
             $to_alias = self::plantUmlStateAlias($to->getName());
 
-            
-            $commands = $t->getCommandName();
-            $rules = $t->getRuleName();
+            //get some names to display
+            $command = $t->getCommandName();
+            $rule = $t->getRuleName();
             $name_transition = $t->getName();
 
 
@@ -126,18 +130,28 @@ SKINS;
                 $uml .= 'state "' . $from . '" as '. $from_alias . PHP_EOL;
                 $uml .= "$from_alias" . PHP_EOL;
                 $aliases[$from_alias] = $from_alias;
+                
+            }
+            
+            //store order in which transitions will be handled
+            if(!isset($order[$from_alias])){
+                $order[$from_alias] = 1;
+            }else {
+                $order[$from_alias] = $order[$from_alias] + 1;
             }
 
+            //get 'to' alias
             if(!isset($aliases[$to_alias])) {
                 $uml .= 'state "' . $to . '" as '. $to_alias . PHP_EOL;
                 $aliases[$to_alias] = $to_alias;
             }
 
-            //write transition
+            //write transition information
             $uml .= $from_alias .' --> '. $to_alias;
-            $uml .= " : $name_transition" . $EOL;
-            $uml .= "rule: $rules" . $EOL;
-            $uml .= "command: $commands" . $EOL;
+            $uml .= " : <b><size:10>$name_transition</size></b>" . $EOL;
+            $uml .= "transition order from '$from': <b>" . $order[$from_alias] . "</b>" . $EOL;
+            $uml .= "rule: $rule" . $EOL;
+            $uml .= "command: $command" . $EOL;
             $uml .= PHP_EOL;
 
             //store possible end states aliases
@@ -150,7 +164,7 @@ SKINS;
 
         }
 
-        //add end states
+        //add end states to diagram
         foreach ($end_states as $end) {
             $uml .= "$end --> [*]" . PHP_EOL;
         }
@@ -160,21 +174,5 @@ SKINS;
         return $uml;
     }
     
-    /**
-     * 
-     * @param StateMachine $machine
-     * @return State
-     * @throws Exception
-     */
-    private static function getInitialState(StateMachine $machine) {
-        $transitions = $machine->getTransitions();
-        foreach($transitions as $transition) {
-            if($transition->getStateFrom()->isInitial())
-            {
-                return $transition->getStateFrom();
-            }
-        }
-        throw new Exception('no initial state found');
-    }
 
 }

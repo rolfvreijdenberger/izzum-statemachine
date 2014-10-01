@@ -6,6 +6,7 @@ use izzum\statemachine\utils\ContextNull;
 use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\utils\uml\PlantUml;
+use izzum\statemachine\loader\LoaderArray;
 
 /**
  * @group statemachine
@@ -128,6 +129,21 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(6, $machine->getStates());
         $this->assertCount(6, $machine->getTransitions());
         
+    }
+    
+    public function testGetInitialState()
+    {
+        $object = ContextNull::forTest();
+        $machine = new StateMachine($object);
+        try {
+        $machine->getInitialState();
+        $this->fail('should not come here');
+        } catch(Exception $e) {
+            $this->assertEquals(Exception::SM_NO_INITIAL_STATE_FOUND, $e->getCode());
+        }
+        
+        $this->addTransitionsToMachine($machine);
+        $this->assertEquals(State::STATE_NEW, $machine->getInitialState()->getName());
     }
 
     
@@ -448,7 +464,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldCreatePlantUmlStateDiagram()
     {
-        $machine = 'machine-example';
+        $machine = 'order-flow';
         $id = 123;
         $context = new Context($id, $machine);
         $machine = new StateMachine($context);
@@ -464,7 +480,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $t_b_to_c = new Transition($s_b, $s_c, Transition::RULE_TRUE, 'izzum\command\TechnicalDelivery');
         $t_b_to_d = new Transition($s_b, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
         $t_c_to_d = new Transition($s_c, $s_d, 'izzum\rules\ReadyForContract', 'izzum\command\CreateContract');
-        $t_d_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, 'izzum\rules\ActiveServices' );
+        $t_d_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, 'izzum\command\ActivateServices' );
         
         $machine->addTransition($t_new_to_a);
         $machine->addTransition($t_a_to_b);
@@ -472,9 +488,45 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $machine->addTransition($t_b_to_d);
         $machine->addTransition($t_c_to_d);
         $machine->addTransition($t_d_done);
+        
+        echo PHP_EOL;
+        echo __METHOD__ . PHP_EOL;
+        echo PHP_EOL;
         echo PlantUml::createStateDiagram($machine);
+        echo PHP_EOL;
     }
     
+    /**
+     * @test
+     * @group not-on-production
+     * @group plantuml
+     */
+    public function shouldCreatePlantUmlStateDiagramByUsingLoader()
+    {
+        $machine = 'coffee-machine';
+        $id = 123;
+        $context = new Context($id, $machine);
+        $machine = new StateMachine($context);
+        $data = array();
+        $data[] = new LoaderData('new', 'initialize', Transition::RULE_TRUE, 'izzum\command\Initialize', 'initial');
+        $data[] = new LoaderData('initialize', 'cup', Transition::RULE_TRUE, 'izzum\command\DropCup');
+        $data[] = new LoaderData('cup', 'coffee', Transition::RULE_TRUE, 'izzum\command\AddCoffee');
+        $data[] = new LoaderData('coffee', 'sugar', 'izzum\rules\WantsSugar', 'izzum\command\AddSugar');
+        $data[] = new LoaderData('sugar', 'coffee', Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $data[] = new LoaderData('coffee', 'milk', 'izzum\rules\WantsMilk', 'izzum\command\AddMilk');
+        $data[] = new LoaderData('milk', 'coffee', Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $data[] = new LoaderData('coffee', 'spoon', 'izzum\rules\MilkOrSugar', 'izzum\command\AddSpoon');
+        $data[] = new LoaderData('coffee', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\command\Cleanup', State::TYPE_NORMAL, State::TYPE_FINAL);
+        $data[] = new LoaderData('spoon', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\command\CleanUp', State::TYPE_NORMAL, State::TYPE_FINAL);
+        $loader = new LoaderArray($data);
+        $loader->load($machine);
+        
+        echo PHP_EOL;
+        echo __METHOD__ . PHP_EOL;
+        echo PHP_EOL;
+        echo PlantUml::createStateDiagram($machine);
+        echo PHP_EOL;
+    }
     
 
 }

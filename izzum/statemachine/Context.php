@@ -66,7 +66,7 @@ class Context {
      * @param mixed $id the id of the domain specific entity (it will internally be converted to a string)
      * @param string $machine the name of the statemachine (eg: 'order')
      * @param EntityBuilder $builder A specific builder class to create a reference to the entity we wish to manipulate.
-     * @param persistance\Adapter $persistance_adapter A specific reader/writer class can be used to generate different 'read/write' behaviour
+     * @param Adapter $persistance_adapter A specific reader/writer class can be used to generate different 'read/write' behaviour
      */
     public function __construct($id, $machine, $builder = null, $persistance_adapter = null)
     {
