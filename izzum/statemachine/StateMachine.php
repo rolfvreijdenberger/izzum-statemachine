@@ -3,6 +3,7 @@ namespace izzum\statemachine;
 use izzum\statemachine\Context;
 use izzum\statemachine\State;
 use izzum\statemachine\Transition;
+use izzum\statemachine\Exception;
 /**
  * StateMachine class.
  * 
@@ -136,20 +137,7 @@ class StateMachine {
             throw $e;
         }
     }
-    
-    /**
-     * Before a transition is checked to be possible, you can add domain
-     * specific logic here by overriding this method in a subclass
-     * @param Transition $transition
-     * @return boolean
-     */
-    protected function checkGuard(Transition $transition) 
-    {
-        //eg: dispatch an event and see if it is rejected by a listener
-        return true;
-    }
-    
-    
+
     /**
      * Apply a transition by name. (<state-from>_to_<state-to>)
      * The transition should be possible and it is checked in this method.
@@ -158,135 +146,10 @@ class StateMachine {
      *     Furthermore,an exception will lead to a failed transition and the failed
      *     transition will lead to a notification to the Context
      * @return void
-     *  @see Context::notifyFailedTransition()
      */
     public function apply($transition_name) {
-        try {
-            if(!$this->can($transition_name)) {
-                //we tried a transition, but it is not allowed
-                throw new Exception(
-                        sprintf("Transition '%s' not allowed from state '%s'", 
-                                $transition_name, $this->getContext()->getState()),
-                        Exception::SM_TRANSITION_NOT_ALLOWED);
-            }
-            $transition = $this->getTransition($transition_name);
-
-            //possible hook
-            $this->preProcess($transition);
-            
-            $transition->process($this->getContext());
-            $this->setCurrentState($transition->getStateTo());
-            
-            //possible hook
-            $this->postProcess($transition);
-            
-        } catch (Exception $e) {
-            $this->handleException($e, $transition_name);
-            //already a statemachine exception, just rethrow
-            throw $e;
-        } catch (\Exception $e) {
-            //a non statemachine type exception, wrap it and throw
-            $e = new Exception($e->getMessage(), Exception::SM_APPLY_FAILED, $e);
-            $this->handleException($e, $transition_name);
-            throw $e;
-        }
-    }
-    
-    protected function handleException(Exception $e, $transition_name) {
-        //override if necessary to log exceptions or to add some extra info
-        //to the underlying storage facility (for example, an exception will
-        //not lead to a transition, so this can be used to indicate a failed 
-        //transition in some sort of history structure)
-    }
-    
-    
-    
-     /**
-     * Add a state. 
-     * @param State $state
-     */
-    protected function addState(State $state)
-    {
-        $this->states[$state->getName()] = $state;
-    }
-    
-    /**
-     * add a transition. 
-     * Since a transition has complete knowledge about it's states,
-     * the addition of a transition will also trigger the adding of the
-     * to and from state on this class.
-     * 
-     * this method should be package visibility
-     * @param Transition $transition
-     */
-    public function addTransition(Transition $transition) 
-    {
-        $this->transitions[$transition->getName()] = $transition;
-        
-        $from = $transition->getStateFrom();
-        if(!$this->getState($from->getName())) {
-            $this->addState($from);
-        }
-        
-        
-        //transitions create bidirectional references to the States
-        //when they are made, but here the States that are set on the machine
-        //can actually be different instances from different transitions (eg:
-        //a->b and a->c => we now have two State instances of a)
-        //we therefore need to merge the transitions on the existing states.
-        //The LoaderArray class does this for us by default, but we do it here
-        //too, just in case a client decides to call the 'addTransition' method
-        //directly without a proper loader.
-        $state = $this->getState($from->getName());
-        if(!$state->hasTransition($transition->getName())) {
-            $state->addTransition($transition);
-        }
-        
-        $to = $transition->getStateTo();
-        if(!$this->getState($to->getName())) {
-            $this->addState($to);
-        }
-    }
-    
-    /**
-     * get a state by name.
-     * @param string $name
-     * @return State
-     */
-    public function getState($name) 
-    {
-        return isset($this->states[$name]) ? $this->states[$name] : null;
-    }
-    
-    /**
-     * get a transition by name.
-     * @param string $name
-     * @return Transition
-     */
-    public function getTransition($name)
-    {
-        return isset($this->transitions[$name]) ? $this->transitions[$name] : null;
-    }
-    
-    /**
-     * called before each transition will try to run.
-     * a hook to implement in subclasses if necessary, to do stuff such as
-     * event handling, locking an entity, logging etc.
-     * @param Transition $transition
-     */
-    protected function preProcess(Transition $transition) {
-        //dispatch events, log, lock entity etc.
-    }
-    
-    /**
-     * called after each transition has run.
-     * a hook to implement in subclasses if necessary, to do stuff such as
-     * event handling, locking an entity, logging etc.
-     * @param Transition $transition
-     */
-    protected function postProcess(Transition $transition) {
-        //dispatch events, log, lock entity etc.
-    }
+        $this->transition($transition_name, true);
+    }    
 
     
     /**
@@ -319,7 +182,9 @@ class StateMachine {
             foreach($transitions as $transition){
                 //depending on the current state AND the rules defined
                 if($this->can($transition->getName())) {
-                    $this->apply($transition->getName());
+                    //transition, without checking if we can transition, since 
+                    //we just did that.
+                    $this->transition($transition->getName(), false);
                     //transition done
                     return true;
                 }
@@ -335,18 +200,17 @@ class StateMachine {
         //no transition done
         return false;
     }
+
     
     /**
      * run a statemachine until it cannot run the next transition or until
      * it is in a final state.
-
      * 
      * preconditions: 
      *     - the transitions should be defined for each state
      *     - the transitions should be allowed by the rules
      *     - the transitions should be able to execute
      * @param string[] $transitions an array of transition names
-
      * @throws Exception in case something went wrong.
      * @return int the number of sucessful transitions made. 
      */
@@ -356,6 +220,8 @@ class StateMachine {
         try {
             $run = true;
             while ($run) {
+               //when using cyclic graphs, you can get into an infinite loop. 
+               //design your machine correctly (with the right rules)
                $run = $this->run();
                if($run) {
                    //increment after succesful transition
@@ -371,25 +237,52 @@ class StateMachine {
             throw $e;
         }
         return $transitions;
-    }    
-
-    /**
-     * set the context on the statemachine and provide bidirectional association
-     * @param Context $context
-     */
-    protected final function setContext(Context $context)
-    {
-        if($this->context){
-            if($this->context->getMachine() !== $context->getMachine()) {
-                throw new Exception(
-                    sprintf("Trying to set context for a different machine. currently '%s' and new '%s'",
-                        $this->context->getMachine(), $context->getMachine()), 
-                    Exception::SM_CONTEXT_DIFFERENT_MACHINE);
-            }
-        }
-        $this->context = $context;
-        $context->setStateMachine($this);
     }
+    
+
+    
+        
+    /**
+     * add a transition. 
+     * Since a transition has complete knowledge about it's states,
+     * the addition of a transition will also trigger the adding of the
+     * to and from state on this class.
+     * 
+     * this method should be package visibility for the Loader, but since php
+     * does not support that, it can also be used to add a Transition directly.
+     * Make sure that transitions how share a common State use the same instance
+     * of that State object and vice versa.
+     * @param Transition $transition
+     */
+    public function addTransition(Transition $transition) 
+    {
+        $this->transitions[$transition->getName()] = $transition;
+        
+        $from = $transition->getStateFrom();
+        if(!$this->getState($from->getName())) {
+            $this->addState($from);
+        }
+        
+        
+        //transitions create bidirectional references to the States
+        //when they are made, but here the States that are set on the machine
+        //can actually be different instances from different transitions (eg:
+        //a->b and a->c => we now have two State instances of a)
+        //we therefore need to merge the transitions on the existing states.
+        //The LoaderArray class does this for us by default, but we do it here
+        //too, just in case a client decides to call the 'addTransition' method
+        //directly without a proper loader.
+        $state = $this->getState($from->getName());
+        if(!$state->hasTransition($transition->getName())) {
+            $state->addTransition($transition);
+        }
+        
+        $to = $transition->getStateTo();
+        if(!$this->getState($to->getName())) {
+            $this->addState($to);
+        }
+    }
+    
     
     /**
      * change the context for a statemachine that already has a context.
@@ -431,14 +324,27 @@ class StateMachine {
         return $state;
     }
     
-    /**
-     * sets the state
-     * @param State $state
+     /**
+     * Get the initial state, the only state with type State::TYPE_INITIAL
+     * @return State
+     * @throws Exception
      */
-    protected function setCurrentState(State $state) {
-        $this->getContext()->setState($state->getName());
+    public function getInitialState() {
+        $transitions = $this->getTransitions();
+        foreach($transitions as $transition) {
+            if($transition->getStateFrom()->isInitial())
+            {
+                return $transition->getStateFrom();
+            }
+        }
+        throw new Exception('no initial state found, bad configuration', 
+                Exception::SM_NO_INITIAL_STATE_FOUND);
     }
     
+    /**
+     * get the machine name
+     * @return string
+     */
     public function getMachine()
     {
         return $this->getContext()->getMachine();
@@ -463,8 +369,161 @@ class StateMachine {
         return $this->states;
     }
     
+    
+    /**
+     * get a state by name.
+     * @param string $name
+     * @return State
+     */
+    public function getState($name) 
+    {
+        return isset($this->states[$name]) ? $this->states[$name] : null;
+    }
+    
+    /**
+     * get a transition by name.
+     * @param string $name
+     * @return Transition
+     */
+    public function getTransition($name)
+    {
+        return isset($this->transitions[$name]) ? $this->transitions[$name] : null;
+    }
+    
     public function toString()
     {
         return get_class($this) . ": [" . $this->getContext()->getId(true) ."]";
     }
+    
+    /**
+     * Before a transition is checked to be possible, you can add domain
+     * specific logic here by overriding this method in a subclass
+     * @param Transition $transition
+     * @return boolean
+     */
+    protected function checkGuard(Transition $transition) 
+    {
+        //eg: dispatch an event and see if it is rejected by a listener
+        return true;
+    }
+    
+   
+    /**
+     * apply a transition by name.
+     * @param string $transition_name
+     * @param boolean $check_allowed to specify if we want to do the check to see
+     *      if the transition is allowed or not. This is a performance optimalization
+     *      so in case we call 'can' directly, we can use 'transition' directly 
+     *      after that without doing the checks (including expensive Rules) twice.
+     * @throws Exception
+     * @return void
+     */
+    protected function transition($transition_name, $check_allowed = true) 
+    {
+        try {
+            if($check_allowed === true) {
+                if(!$this->can($transition_name)) {
+                    //we tried a transition, but it is not allowed
+                    throw new Exception(
+                            sprintf("Transition '%s' not allowed from state '%s'", 
+                                    $transition_name, $this->getContext()->getState()),
+                            Exception::SM_TRANSITION_NOT_ALLOWED);
+                }
+            }
+            $transition = $this->getTransition($transition_name);
+
+            //possible hook
+            $this->preProcess($transition);
+            
+            $transition->process($this->getContext());
+            $this->setCurrentState($transition->getStateTo());
+            
+            //possible hook
+            $this->postProcess($transition);
+            
+        } catch (Exception $e) {
+            $this->handleException($e, $transition_name);
+            //already a statemachine exception, just rethrow
+            throw $e;
+        } catch (\Exception $e) {
+            //a non statemachine type exception, wrap it and throw
+            $e = new Exception($e->getMessage(), Exception::SM_APPLY_FAILED, $e);
+            $this->handleException($e, $transition_name);
+            throw $e;
+        }
+    }
+            
+    /**
+     * called whenever an exception occurs from inside 'transition()'
+     * can be used for logging etc.
+     * 
+     * @param Exception $e
+     * @param string $transition_name
+     */
+    protected function handleException(Exception $e, $transition_name) {
+        //override if necessary to log exceptions or to add some extra info
+        //to the underlying storage facility (for example, an exception will
+        //not lead to a transition, so this can be used to indicate a failed 
+        //transition in some sort of history structure)
+    }
+
+     /**
+     * called before each transition will try to run.
+     * a hook to implement in subclasses if necessary, to do stuff such as
+     * event handling, locking an entity, logging etc.
+     * @param Transition $transition
+     */
+    protected function preProcess(Transition $transition) {
+        //dispatch events, log, lock entity etc.
+    }
+    
+    /**
+     * called after each transition has run.
+     * a hook to implement in subclasses if necessary, to do stuff such as
+     * event handling, locking an entity, logging etc.
+     * @param Transition $transition
+     */
+    protected function postProcess(Transition $transition) {
+        //dispatch events, log, lock entity etc.
+    }
+    
+    
+     /**
+     * Add a state. 
+     * @param State $state
+     */
+    protected function addState(State $state)
+    {
+        $this->states[$state->getName()] = $state;
+    }
+
+
+
+    /**
+     * set the context on the statemachine and provide bidirectional association
+     * @param Context $context
+     */
+    protected final function setContext(Context $context)
+    {
+        if($this->context){
+            if($this->context->getMachine() !== $context->getMachine()) {
+                throw new Exception(
+                    sprintf("Trying to set context for a different machine. currently '%s' and new '%s'",
+                        $this->context->getMachine(), $context->getMachine()), 
+                    Exception::SM_CONTEXT_DIFFERENT_MACHINE);
+            }
+        }
+        $this->context = $context;
+        $context->setStateMachine($this);
+    }
+
+    
+    /**
+     * sets the state
+     * @param State $state
+     */
+    protected function setCurrentState(State $state) {
+        $this->getContext()->setState($state->getName());
+    }
+
 }

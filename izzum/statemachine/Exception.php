@@ -30,6 +30,7 @@ class Exception extends \Exception {
           SM_NO_CURRENT_STATE_FOUND                    = 17,
           SM_NO_TRANSITION_FOUND                       = 18,
           SM_TRANSITION_NOT_ALLOWED                    = 19,
-          SM_CONTEXT_DIFFERENT_MACHINE                 = 20;
+          SM_CONTEXT_DIFFERENT_MACHINE                 = 20,
+          SM_NO_INITIAL_STATE_FOUND                    = 21;
 
 }

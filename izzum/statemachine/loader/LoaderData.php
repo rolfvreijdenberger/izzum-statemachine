@@ -65,8 +65,8 @@ class LoaderData {
         $this->state_to             = $state_to;
         $this->rule                 = $rule;
         $this->command              = $command; 
-        $this->state_type_to        = $state_type_to;
         $this->state_type_from      = $state_type_from;
+        $this->state_type_to        = $state_type_to;
        
     }
     

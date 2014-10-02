@@ -78,7 +78,7 @@ class LoaderArray implements Loader {
             //destination states
             $name_to = $data->getStateTo();
             if(!isset($states[$name_to])) {
-                $states[$name_to] = new State($name_to, $data->getStateTypeFrom());
+                $states[$name_to] = new State($name_to, $data->getStateTypeTo());
             } 
             $state_to = $states[$name_to];
             
@@ -86,6 +86,9 @@ class LoaderArray implements Loader {
             $transition_name = Utils::getTransitionName($name_from, $name_to);
             if(!isset($transitions[$transition_name])) {
                 $transitions[$transition_name] = new Transition($state_from, $state_to, $data->getRule(), $data->getCommand());
+                //the order in which transitions are created actually does matter.
+                //it matters insofar that when a statemachine::run() is called,
+                //the first transition in a state will be tried first.
                 $output[] = $transitions[$transition_name];
             }
         }
