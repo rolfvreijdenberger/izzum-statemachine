@@ -106,6 +106,18 @@ making it easy to communicate with business users or stakeholders.
 
 see the examples section for some diagrams.
 
+##Usage##
+###rules###
+todo
+###commands###
+todo
+###entity builders###
+todo
+###persistence adapters###
+todo
+###loaders###
+todo
+
 ##Examples##
 
 ###uml diagram for an order system###
