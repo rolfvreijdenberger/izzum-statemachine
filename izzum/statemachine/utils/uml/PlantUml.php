@@ -100,7 +100,7 @@ SKINS;
         $uml .= "[*] --> $initial_alias". PHP_EOL;
 
         //note
-        $uml .= "note $direction of New $NEWLINE" ;
+        $uml .= "note right of $initial_alias $NEWLINE" ;
         $uml .= "state diagram for machine '" . $machine->getMachine() . "'$NEWLINE";
         $uml .= "created by izzum plantuml generator $NEWLINE";
         $uml .= "@link http://plantuml.sourceforge.net/state.html\"" . $NEWLINE;

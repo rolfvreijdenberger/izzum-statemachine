@@ -102,23 +102,17 @@ abstract class Rule
     {
         try
         {
-            if($this->getCacheEnabled())
-            {
-                if($this->cache !== null) {
-                    return $this->cache;
-                }
+            if($this->shouldReturnCache()) {
+                return $this->getCache();
             }
             $this->clearResult();
             $this->clearCache();
             $result = $this->_applies();
-            if($this->getCacheEnabled()) {
-                $this->cache = $result;
-            }
             if (is_bool($result)) {
+                $this->setCache($result);
                 return $result;
             } else {
-                $error = 'A rule must return a boolean.';
-                throw new Exception($error, Exception::CODE_NONBOOLEAN);
+                throw new Exception('A rule must return a boolean.', Exception::CODE_NONBOOLEAN);
             }
         } catch (Exception $e)
         {
@@ -244,14 +238,22 @@ abstract class Rule
     /**
      * Clear the results
      */
-    private final function clearResult()
+    private function clearResult()
     {
         $this->result = array();
     }
     
-    private final function clearCache()
+    private function clearCache()
     {
         $this->cache = null;
+    }
+    
+    private function setCache($result) 
+    {
+        if($this->getCacheEnabled())
+        {
+            $this->cache = $result;
+        }
     }
     
     /**
@@ -268,17 +270,42 @@ abstract class Rule
      * should we cache the result if the rule is applied more than once?
      * @param boolean $cache
      */
-    public function setCacheEnabled($cached = true) {
+    public final function setCacheEnabled($cached = true) {
         $cached = (bool) $cached;
         $this->use_caching = $cached;
         $this->clearCache();
     }
     
     /**
+     * return the cached value
+     * @return boolean
+     */
+    protected final function getCache()
+    {
+        return $this->cache;
+    }
+    
+    /**
+     * should we return a cached value?
+     * @return boolean
+     */
+    private function shouldReturnCache()
+    {
+        if($this->getCacheEnabled())
+        {
+            if($this->cache !== null) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+    
+    /**
      * 
      * @return boolean
      */
-    public function getCacheEnabled() {
+    public final function getCacheEnabled() {
         return $this->use_caching;
     }
 }
