@@ -9,6 +9,11 @@ use izzum\statemachine\StateMachine;
  * prioritized transition, so that when a state has 2 outgoing transitions, 
  * 1 is always tried first
  * 
+ * Ideally your  specific loader should:
+ * - implement this interface: for use in a subclass of AbstractFactory
+ * - act as a Decorator for the LoaderArray: for the logic of building the transitions and
+ *      states correctly (use LoaderArray via composition)
+ * 
  * 
  * @see LoaderObject
  * @see LoaderArray
