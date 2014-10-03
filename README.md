@@ -5,7 +5,7 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch
 
 - see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum/recompile "navigable version on documentup.com") for a navigable
 version of this document.
-- Don't want to read? Just skip to the [examples](#examples)
+- Want to know what to do to get it working? Skip to the [Usage section](#Usage)or [examples](#examples)
 
 ##about##
 ###A superior, extensible and flexible statemachine library###
