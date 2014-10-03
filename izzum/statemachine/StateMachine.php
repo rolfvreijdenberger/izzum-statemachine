@@ -24,6 +24,10 @@ use izzum\statemachine\Exception;
  * are specified by a guard clause -in the form of a business Rule- and a transition
  * Command.
  * 
+ * We have provided a fully functional, normalized and indexed set of tables
+ * for the postgresql relational database to function as a backend to store all
+ * relevant information for a statemachine.
+ * 
  * The Context object contains a reference to an underlying Entity domain model (eg:
  * an order, a customer etc) which is injected at runtime into the Rule and 
  * the Command associated with the transitions.
