@@ -12,7 +12,8 @@ use izzum\statemachine\Transition;
  * This should always be the object that is used by other Loader implementations.
  * This means other LoaderInterface implementations should delegate the loading
  * to this class. This means you should implement the Loader interface and 
- * use object composition for the LoaderArray)
+ * use object composition for the LoaderArray. In other words: your custom loader
+ * should act as a decorator for LoaderArray.
  * 
  * @see LoaderData
  * @author Rolf Vreijdenberger
