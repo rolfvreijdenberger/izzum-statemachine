@@ -75,7 +75,6 @@ abstract class Adapter {
      * the statemachine itself eg: via 'getEntityIds' etc.
       * 
      * @param Context $context
-     *      the logic via 'setState'
      * @boolean true if it was added, false if it was already there.
      * @throws Exception
      */
@@ -88,7 +87,7 @@ abstract class Adapter {
       * storage facility.
       * 
       * A storage facility could store a timestamp and the state the transition
-      * was made from, for extra statistical information.
+      * was made to, for extra statistical information.
       * 
       * @param Context $context
       * @param string $state
@@ -101,7 +100,7 @@ abstract class Adapter {
       * storage facility.
       * 
       * @param Context $context
-      * @return string
+      * @return string the current state of the entity represented in the context
      */
     abstract protected function processGetState(Context $context);
     

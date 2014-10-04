@@ -45,6 +45,10 @@ class LoaderArray implements Loader {
     }
     
 
+    /**
+     * Load a statemachine with data
+     * @param StateMachine $stateMachine
+     */
     public function load(StateMachine $stateMachine)
     {
         $transitions = $this->getTransitions();

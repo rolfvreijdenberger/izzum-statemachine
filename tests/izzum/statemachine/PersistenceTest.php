@@ -8,7 +8,7 @@ use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\StorageData;
 use izzum\statemachine\persistence\Session;
-
+use izzum\statemachine\persistence\Postgres;
 /**
  * @group statemachine
  * @author rolf
@@ -230,6 +230,102 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         } catch (Exception $e) {
             $this->assertEquals(345, $e->getCode());
         }
+    }
+    
+    /**
+     * this test will only run when the \assets\persistance\postgresql.sql file has been 
+     * executed on a postgres backend, providing test data.
+     * @group not-on-production
+     * @group postgres
+     */
+    public function testPostgresAdapter()
+    {
+        //TRICKY:
+        //this test will only run when the \assets\persistance\postgresql.sql file has been 
+        //executed on a postgres backend, providing test data.
+        $machine = 'izzum';
+        $pg_connection = "host=localhost user=postgres dbname=postgres password=izzum";
+        $adapter = new Postgres($pg_connection);
+        
+        //transitions
+        $this->assertCount(9, $adapter->getTransitions($machine));
+        $this->assertCount(9, $adapter->getLoaderData($machine));
+        
+        
+        //get all the entitty ids.
+        //since, if we run this test over multiple iterations, stuff will be added,
+        //we use the >= to be able to run this test on a fresh dataset and on 
+        //a dataset that has repeatedly been altered by this test.
+        $ids = $adapter->getEntityIds($machine);
+        $this->assertGreaterThanOrEqual(14, $ids);
+        $ids = $adapter->getEntityIds($machine, 'new');
+        $this->assertGreaterThanOrEqual(5, $ids);
+        $ids = $adapter->getEntityIds($machine, 'done');
+        $this->assertGreaterThanOrEqual(2, $ids);
+        $ids = $adapter->getEntityIds($machine,'bad');
+        $this->assertCount(2, $ids);
+        $ids = $adapter->getEntityIds($machine, 'fine');
+        $this->assertCount(1, $ids);
+        $ids = $adapter->getEntityIds($machine, 'ok');
+        $this->assertCount(3, $ids);
+        $ids = $adapter->getEntityIds($machine, 'excellent');
+        $this->assertCount(1, $ids);
+        $ids = $adapter->getEntityIds($machine, 'bogus');
+        $this->assertCount(0, $ids);
+        
+        
+        //diverse tests for the persistance of anon existing fully random id
+        $random_id = rand(1,999999999) . "-" . microtime();
+        $context = new Context($random_id, $machine, null, $adapter);
+        try {
+            $this->assertEquals(State::STATE_NEW, $context->getState());
+            $this->fail('should not come here');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
+            $this->assertContains('no state found for', $e->getMessage());
+            $this->assertContains('Did you add', $e->getMessage());
+        }
+        $this->assertFalse($adapter->isPersisted($context), 'not persisted yet');
+        $count = count($adapter->getEntityIds($machine, 'new'));
+        $this->assertTrue($adapter->add($context), 'first time');
+        $this->assertCount($count + 1, $adapter->getEntityIds($machine, 'new'), '1 extra in state new');
+        $this->assertFalse($adapter->add($context), 'already added');
+        $this->assertEquals(State::STATE_NEW, $context->getState(), 'state is now new');
+        
+        
+        
+        //the postgres persistence adapter doubles as a loader, so we do some tests
+        //for that
+        $sm = new StateMachine($context);
+        $this->assertCount(0, $sm->getTransitions());
+        $this->assertCount(0, $sm->getStates());
+        $adapter->load($sm);
+        $this->assertCount(9, $sm->getTransitions());
+        $this->assertCount(6, $sm->getStates());
+        $count_done = count($adapter->getEntityIds($machine, 'done'));
+        
+        //take the happy flow
+        $sm->runToCompletion();
+        $this->assertCount($count_done + 1, $adapter->getEntityIds($machine, 'done'));
+        
+        
+        //create a new context to take the unhappy flow
+        $random_id = rand(999999999, 9999999999) . "-" . microtime();
+        $other_context = new Context($random_id, $machine, null, $adapter);
+        $sm->changeContext($context);
+        $this->assertCount(9, $sm->getTransitions());
+        $this->assertCount(6, $sm->getStates());
+        //load again, not necessary, but should not be a problem either
+        $adapter->load($sm);
+        $this->assertCount(9, $sm->getTransitions());
+        $this->assertCount(6, $sm->getStates());
+        //add via the context itself
+        $this->assertFalse($adapter->isPersisted($context));
+        $this->assertTrue($context->add());
+        $this->assertFalse($context->add());
+        //TODO: run via bad path.
+        
+        
     }
     
     
