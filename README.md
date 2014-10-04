@@ -97,7 +97,7 @@ for one of the best Dutch fiber ISP organisations for their order management sys
 ### Uses well known design patterns and OOP principles ###
 - patterns: AbstractFactory, template method (hooks), command, Adapter (persistence), Builder (domain model), Decorator (Loader)
 - principles: Dependency injection, encapsulation, polymorphism, extensible/inheritance, open/closed.
-- 
+ 
 ### postgresql backend implementation ###
 we have provided a postgres implementation that can be used as your persistence layer to store
 and retrieve states, define your machines and transitions, and keep your history of transitions.
