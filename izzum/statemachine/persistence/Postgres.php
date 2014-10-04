@@ -8,7 +8,7 @@ use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\Exception;
 /**
  * A persistence adapter/loader specifically for a postgresql backend as defined in the
- * file /assets/persistence/postgresql.sql
+ * file /assets/sql/postgresql.sql
  * 
  * TRICKY: this Adapter does double duty as a Loader since they both use the 
  * same backend. You could use two seperate classes for this, but since they
@@ -37,7 +37,6 @@ class Postgres extends Adapter implements  Loader {
     
     /**
      * the pg connection string
-     * @link http://php.net/manual/en/function.pg-connect.php
      * @var string
      */
     private $pg_connection;
@@ -118,12 +117,15 @@ class Postgres extends Adapter implements  Loader {
      * implementation of the hook in the Adapter::setState() template method
      * @param Context $context
      * @param string $state
+     * @return boolean true if not already present, false if stored before
      */
     protected function processSetState(Context $context, $state) {
         if($this->isPersisted($context)) {
             $this->updateState($context, $state);
+            return false;
         } else {
             $this->insertState($context, $state);      
+            return true;
         }
     }
 
@@ -240,6 +242,30 @@ class Postgres extends Adapter implements  Loader {
             throw new Exception(sprintf('query for updating state failed: [%s]', 
                     $error), 
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
+        } 
+    }
+    
+    
+       /**
+     * Stores a failed transition in the storage facility.
+     * @param Context $context
+     * @param Exception $e
+     * @param string $transition_name
+     */
+    public function setFailedTransition(Context $context, Exception $e, $transition_name)
+    {
+        //check if it is persisted, otherwise we cannot get the current state
+        if($this->isPersisted($context)) {
+            $message = new \stdClass();
+            $message->code = $e->getCode();
+            $message->transition = $transition_name;
+            $message->message = $e->getMessage();          
+            $message->file = $e->getFile();
+            $message->line = $e->getLine();
+            //convert to json for storage
+            $json = json_encode($message);
+            $state = $context->getState();
+            $this->addHistory($context, $state, $json);
         } 
     }
 

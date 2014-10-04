@@ -181,6 +181,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
         $rulefalse = new False();
         $rule = $rulefalse->andRule($rulefalse);
         $this->assertFalse($rule->applies());
+        $this->assertCount(0, $rule->getResults());
     }
 
     /**
@@ -213,6 +214,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
         $rulefalse = new False();
         $rule = $rulefalse->orRule($rulefalse);
         $this->assertFalse($rule->applies());
+        $this->assertCount(0, $rule->getResults());
     }
     
     /**
@@ -245,6 +247,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
     	$rulefalse = new False();
     	$rule = $rulefalse->xorRule($rulefalse);
     	$this->assertFalse($rule->applies());
+        $this->assertCount(0, $rule->getResults());
     }
 
     /**
@@ -256,6 +259,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
         $rule = new True();
         $rule = $rule->not();
         $this->assertFalse($rule->applies());
+        $this->assertCount(0, $rule->getResults());
     }
 
     /**
@@ -389,6 +393,27 @@ class RuleTest extends PHPUnit_Framework_TestCase
         $this->assertTrue($rule->hasResult());
         
     }
+    
+    public function testException()
+    {
+        //for complete code coverage of exception paths
+        $rule = new throwsExceptionRule(true);
+        try {
+            $rule->applies();
+            $this->fail('should not come here');
+        } catch (Exception $e) {
+            $this->assertEquals(1, $e->getCode());
+        }
+        
+        $rule = new throwsExceptionRule(false);
+        try {
+            $rule->applies();
+            $this->fail('should not come here');
+        } catch (Exception $e) {
+            $this->assertEquals(2, $e->getCode());
+
+        }
+    }
    
 }
 
@@ -417,3 +442,21 @@ class RuleResultRule extends Rule {
         return true;
     }
 }
+
+class throwsExceptionRule extends Rule {
+    private $bool;
+    public function __construct($bool)
+    {
+        $this->bool = $bool;
+    }
+    
+    protected function _applies()
+    {
+        if($this->bool) {
+            throw new  Exception('oops', 1);
+        } else {
+            throw new \Exception('ooops', 2);
+        }
+    }
+}
+

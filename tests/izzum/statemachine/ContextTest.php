@@ -90,8 +90,15 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         
         //even though we have a valid reader, the state machine does not exist.
         $this->assertEquals(State::STATE_NEW, $o->getState());
-        $this->assertFalse($o->setState(State::STATE_UNKNOWN));
+        $this->assertTrue($o->setState(State::STATE_UNKNOWN));
         $this->assertEquals(State::STATE_UNKNOWN, $o->getState());
+        
+        //for coverage.
+        $o->getId();
+        $o->getId(true);
+        $o->getId(false);
+        $o->getId(true, true);
+        $o->getId(false, true);
     
     }
     
@@ -123,12 +130,15 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
     
         //even though we have a valid reader, the state machine does not exist.
         $this->assertEquals(State::STATE_NEW, $o->getState());
-        $this->assertFalse($o->setState(State::STATE_UNKNOWN));
-        $this->assertTrue($o->setState(State::STATE_UNKNOWN));
+        $this->assertTrue($o->setState(State::STATE_UNKNOWN),'added');
+        $this->assertFalse($o->setState(State::STATE_UNKNOWN),'already there');
         
         //for coverage.
         $statemachine = new StateMachine($o);
         $this->assertNull($o->setStateMachine($statemachine));
+        
+        
+        
     }
     
 }

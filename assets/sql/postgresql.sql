@@ -229,6 +229,7 @@ VALUES
 -- even though those false rules will be tried when we use StateMachine::run(),
 -- they will not trigger a transition and run() will then follow the path trough
 -- the happy transitions with the true rule.
+-- the bad to done path will throw an exception on the rule
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
@@ -240,7 +241,7 @@ VALUES
 ('izzum', 'ok', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'ok_to_bad transition'),
 ('izzum', 'fine', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'fine_to_bad transition'),
 ('izzum', 'excellent', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'excellent_to_bad transition'),
-('izzum', 'bad', 'done','\izzum\rules\True', 'izzum\command\Null', 1, 'bad_to_done transition');
+('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\Null', 1, 'bad_to_done transition');
 
 INSERT INTO statemachine_entities
 (machine, entity_id, state)

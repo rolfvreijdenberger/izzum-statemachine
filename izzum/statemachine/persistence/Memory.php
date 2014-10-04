@@ -74,7 +74,12 @@ class Memory extends Adapter {
     }
     
     
-    
+    /**
+     * 
+     * @param Context $context
+     * @param string $state
+     * @return boolan false if already stored and overwritten, true if not stored before
+     */
     protected final function setStateInRegistry(Context $context, $state) {
         $already_stored = true;
         $storage = $this->getStorageFromRegistry($context);
@@ -83,7 +88,7 @@ class Memory extends Adapter {
         } 
         $data = StorageData::get($context, $state);
         $this->writeRegistry($context->getId(),$data);
-        return $already_stored;
+        return !$already_stored;
     }
     
 

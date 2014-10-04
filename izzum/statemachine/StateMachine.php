@@ -131,6 +131,7 @@ class StateMachine {
             if(!$this->checkGuard($transition)) {
                 return false;
             }
+            //this will check the Rule defined for the transition
             return $transition->can($this->getContext());
         } catch (Exception $e) {
             //already a statemachine exception, just rethrow
@@ -184,10 +185,21 @@ class StateMachine {
             //get currently available transitions
             $transitions = $this->getCurrentState()->getTransitions();
             foreach($transitions as $transition){
-                //depending on the current state AND the rules defined
-                if($this->can($transition->getName())) {
-                    //transition, without checking if we can transition, since 
-                    //we just did that.
+                try {
+                    $can = $this->can($transition->getName());
+                } catch (\Exception $e) {
+                    //we handle a transition exception here, since we
+                    //check $this->can() outside the $this->transition() method
+                    //where all the hooks are.
+                    //this should be refactored to an implementation
+                    //where all the hooks are in a single routine
+                    $this->handleTransitionException($e, $transition->getName());
+                    throw $e;
+                }
+                
+                //we can transition
+                if($can) {
+                    //don't check if we can transition, since we just did that.
                     $this->transition($transition->getName(), false);
                     //transition done
                     return true;
@@ -198,7 +210,7 @@ class StateMachine {
             throw $e;
         } catch (\Exception $e) {
             //a non statemachine type exception, wrap it and throw
-            $e = new Exception($e->getMessage(), $e->getCode(), $e);
+            $e = new Exception($e->getMessage(), Exception::SM_RUN_FAILED, $e);
             throw $e;
         }
         //no transition done
@@ -243,7 +255,52 @@ class StateMachine {
         return $transitions;
     }
     
+    /**
+     * This method is the beating hart of the statemachine: apply a transition by name.
+     * @param string $transition_name
+     * @param boolean $check_allowed to specify if we want to do the check to see
+     *      if the transition is allowed or not. This is a performance optimalization
+     *      so in case we call 'can' directly, we can use 'transition' directly 
+     *      after that without doing the checks (including expensive Rules) twice.
+     * @throws Exception
+     * @return void
+     * https://en.wikipedia.org/wiki/Template_method_pattern
+     */
+    protected function transition($transition_name, $check_allowed = true) 
+    {
+        try {
+            if($check_allowed === true) {
+                if(!$this->can($transition_name)) {
+                    //we tried a transition, but it is not allowed
+                    throw new Exception(
+                            sprintf("Transition '%s' not allowed from state '%s'", 
+                                    $transition_name, $this->getContext()->getState()),
+                            Exception::SM_TRANSITION_NOT_ALLOWED);
+                }
+            }
+            $transition = $this->getTransition($transition_name);
 
+            //possible hook for subclasses to implement
+            $this->preProcess($transition);
+            
+            $transition->process($this->getContext());
+            $this->setCurrentState($transition->getStateTo());
+            
+            //possible hook for subclasses to implement
+            $this->postProcess($transition);
+            
+        } catch (Exception $e) {
+            $this->handleTransitionException($e, $transition_name);
+            //already a statemachine exception, just rethrow
+            throw $e;
+        } catch (\Exception $e) {
+            //a non statemachine type exception, wrap it and throw
+            $e = new Exception($e->getMessage(), Exception::SM_APPLY_FAILED, $e);
+            //possible hook for subclasses to implement
+            $this->handleTransitionException($e, $transition_name);
+            throw $e;
+        }
+    }
     
         
     /**
@@ -411,51 +468,6 @@ class StateMachine {
         return true;
     }
     
-   
-    /**
-     * apply a transition by name.
-     * @param string $transition_name
-     * @param boolean $check_allowed to specify if we want to do the check to see
-     *      if the transition is allowed or not. This is a performance optimalization
-     *      so in case we call 'can' directly, we can use 'transition' directly 
-     *      after that without doing the checks (including expensive Rules) twice.
-     * @throws Exception
-     * @return void
-     */
-    protected function transition($transition_name, $check_allowed = true) 
-    {
-        try {
-            if($check_allowed === true) {
-                if(!$this->can($transition_name)) {
-                    //we tried a transition, but it is not allowed
-                    throw new Exception(
-                            sprintf("Transition '%s' not allowed from state '%s'", 
-                                    $transition_name, $this->getContext()->getState()),
-                            Exception::SM_TRANSITION_NOT_ALLOWED);
-                }
-            }
-            $transition = $this->getTransition($transition_name);
-
-            //possible hook
-            $this->preProcess($transition);
-            
-            $transition->process($this->getContext());
-            $this->setCurrentState($transition->getStateTo());
-            
-            //possible hook
-            $this->postProcess($transition);
-            
-        } catch (Exception $e) {
-            $this->handleException($e, $transition_name);
-            //already a statemachine exception, just rethrow
-            throw $e;
-        } catch (\Exception $e) {
-            //a non statemachine type exception, wrap it and throw
-            $e = new Exception($e->getMessage(), Exception::SM_APPLY_FAILED, $e);
-            $this->handleException($e, $transition_name);
-            throw $e;
-        }
-    }
             
     /**
      * called whenever an exception occurs from inside 'transition()'
@@ -464,31 +476,32 @@ class StateMachine {
      * @param Exception $e
      * @param string $transition_name
      */
-    protected function handleException(Exception $e, $transition_name) {
+    protected function handleTransitionException(Exception $e, $transition_name) {
         //override if necessary to log exceptions or to add some extra info
         //to the underlying storage facility (for example, an exception will
         //not lead to a transition, so this can be used to indicate a failed 
         //transition in some sort of history structure)
+        $this->getContext()->setFailedTransition($e, $transition_name);
     }
 
      /**
      * called before each transition will try to run.
      * a hook to implement in subclasses if necessary, to do stuff such as
-     * event handling, locking an entity, logging etc.
+     * event handling, locking an entity, logging, cleanup etc.
      * @param Transition $transition
      */
     protected function preProcess(Transition $transition) {
-        //dispatch events, log, lock entity etc.
+        //dispatch events, log, lock entity, cleanup etc.
     }
     
     /**
      * called after each transition has run.
      * a hook to implement in subclasses if necessary, to do stuff such as
-     * event handling, locking an entity, logging etc.
+     * event handling, locking an entity, logging, cleanup etc.
      * @param Transition $transition
      */
     protected function postProcess(Transition $transition) {
-        //dispatch events, log, lock entity etc.
+        //dispatch events, log, lock entity, cleanup etc.
     }
     
     

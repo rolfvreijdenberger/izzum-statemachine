@@ -33,6 +33,7 @@ class Exception extends \Exception {
           SM_CONTEXT_DIFFERENT_MACHINE                 = 20,
           SM_NO_INITIAL_STATE_FOUND                    = 21,
           PERSISTENCE_FAILED_TO_CONNECT                = 22,
-          PERSISTENCE_LAYER_EXCEPTION                  = 23;
+          PERSISTENCE_LAYER_EXCEPTION                  = 23,
+          SM_RUN_FAILED                                = 24;
 
 }

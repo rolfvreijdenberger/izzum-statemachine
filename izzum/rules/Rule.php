@@ -96,7 +96,8 @@ abstract class Rule
      * trust that the caller checks the boolean type so we will.
      * 
      * @return boolean
-     * @throws \Exception
+     * @throws Exception
+     * https://en.wikipedia.org/wiki/Template_method_pattern
      */
     public final function applies()
     {

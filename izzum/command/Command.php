@@ -21,7 +21,8 @@ abstract class Command implements ICommand {
     /**
      * (non-PHPdoc)
      * @see \izzum\command\ICommand::execute()
-     * @throws izzum\command\Exception
+     * @throws Exception
+     * https://en.wikipedia.org/wiki/Template_method_pattern
      */
     public final function execute()
     {

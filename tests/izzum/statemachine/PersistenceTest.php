@@ -76,10 +76,10 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $object = ContextNull::get(-1, 'order', 'ordermachine');
         $io = new Memory();
         $result = $io->setState($object, "test");
-        $this->assertFalse($result, 'default writer returns false when not present');
+        $this->assertTrue($result, 'default writer returns true when not present');
         
         $result = $io->setState($object, "test");
-        $this->assertTrue($result, 'default writer returns true when data is present');
+        $this->assertFalse($result, 'default writer returns false when data is present');
         $this->assertEquals('izzum\statemachine\persistence\Memory', $io->toString());
         
         $result = $io->getState($object);
@@ -131,7 +131,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
        
         //move 1 to anoter state
         $result = $io->setState($object1, State::STATE_DONE);
-        $this->assertTrue($result, 'already present');
+        $this->assertFalse($result, 'already present');
         $this->assertCount(1, $io->getEntityIds($machine, State::STATE_NEW));
         $this->assertCount(1, $io->getEntityIds($machine, State::STATE_DONE));
         $this->assertCount(2, $io->getEntityIds($machine));
@@ -181,8 +181,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $machine = "new-machine";
         $builder = new EntityBuilder();
         $object = new Context($id, $machine, $builder, $io);
-        $this->assertFalse($io->setState($object, 'bogus'));
-        $this->assertTrue($io->setState($object, 'bogus2'));
+        $this->assertTrue($io->setState($object, 'bogus'));
+        $this->assertFalse($io->setState($object, 'bogus2'));
         $this->assertFalse($io->add($object), 'already there');
         //we should have started output buffering in the bootstrap file
         ob_flush();
@@ -233,7 +233,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
     }
     
     /**
-     * this test will only run when the \assets\persistance\postgresql.sql file has been 
+     * this test will only run when the \assets\sql\postgresql.sql file has been 
      * executed on a postgres backend, providing test data.
      * @group not-on-production
      * @group postgres
@@ -241,11 +241,12 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
     public function testPostgresAdapter()
     {
         //TRICKY:
-        //this test will only run when the \assets\persistance\postgresql.sql file has been 
+        //this test will only run when the \assets\sql\postgresql.sql file has been 
         //executed on a postgres backend, providing test data.
         $machine = 'izzum';
+        $schema = 'public';
         $pg_connection = "host=localhost user=postgres dbname=postgres password=izzum";
-        $adapter = new Postgres($pg_connection);
+        $adapter = new Postgres($pg_connection, $schema);
         
         //transitions
         $this->assertCount(9, $adapter->getTransitions($machine));
@@ -254,7 +255,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //get all the entitty ids.
         //since, if we run this test over multiple iterations, stuff will be added,
-        //we use the >= to be able to run this test on a fresh dataset and on 
+        //we use the >=assertion to be able to run this test on a fresh dataset and on 
         //a dataset that has repeatedly been altered by this test.
         $ids = $adapter->getEntityIds($machine);
         $this->assertGreaterThanOrEqual(14, $ids);
@@ -263,13 +264,13 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $ids = $adapter->getEntityIds($machine, 'done');
         $this->assertGreaterThanOrEqual(2, $ids);
         $ids = $adapter->getEntityIds($machine,'bad');
-        $this->assertCount(2, $ids);
+        $this->assertGreaterThanOrEqual(2, $ids);
         $ids = $adapter->getEntityIds($machine, 'fine');
-        $this->assertCount(1, $ids);
+        $this->assertGreaterThanOrEqual(1, $ids);
         $ids = $adapter->getEntityIds($machine, 'ok');
-        $this->assertCount(3, $ids);
+        $this->assertGreaterThanOrEqual(3, $ids);
         $ids = $adapter->getEntityIds($machine, 'excellent');
-        $this->assertCount(1, $ids);
+        $this->assertGreaterThanOrEqual(1, $ids);
         $ids = $adapter->getEntityIds($machine, 'bogus');
         $this->assertCount(0, $ids);
         
@@ -304,27 +305,60 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(6, $sm->getStates());
         $count_done = count($adapter->getEntityIds($machine, 'done'));
         
-        //take the happy flow
-        $sm->runToCompletion();
+        //take the happy flow to completion
+        $total = $sm->runToCompletion();
+        $this->assertEquals(4, $total);
         $this->assertCount($count_done + 1, $adapter->getEntityIds($machine, 'done'));
         
         
         //create a new context to take the unhappy flow
-        $random_id = rand(999999999, 9999999999) . "-" . microtime();
+        $random_id = rand(1, 999999999) . "-" . microtime();
         $other_context = new Context($random_id, $machine, null, $adapter);
-        $sm->changeContext($context);
+        $sm->changeContext($other_context);
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
         //load again, not necessary, but should not be a problem either
         $adapter->load($sm);
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
-        //add via the context itself
-        $this->assertFalse($adapter->isPersisted($context));
-        $this->assertTrue($context->add());
-        $this->assertFalse($context->add());
-        //TODO: run via bad path.
+        $this->assertFalse($adapter->isPersisted($other_context));
         
+        
+        //run via 'bad' path, priority 2, this will also 'add' it to the backend
+        try {
+            $sm->can('new_to_bad');
+            $this->fail('should not come here, not added');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
+        }
+        
+        
+        try {
+            $sm->apply('new_to_bad');
+            $this->fail('should not come here, not added');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
+        }
+        //do this directly on adapter to see if will actually insert into the history
+        //and entity tables
+        $this->assertTrue($adapter->setState($other_context, 'new'));
+        $this->assertEquals($other_context->getState(), 'new');
+        $this->assertTrue($sm->can('new_to_bad'));
+        $this->assertTrue($sm->can('new_to_ok'));
+        
+        $count = count($adapter->getEntityIds($machine, 'bad'));
+        $sm->apply('new_to_bad');
+        $this->assertCount($count + 1, $adapter->getEntityIds($machine, 'bad'));
+        $this->assertTrue(in_array($random_id, $adapter->getEntityIds($machine, 'bad')));
+        $this->assertTrue(in_array($random_id, $adapter->getEntityIds($machine)));
+        $this->assertFalse(in_array($random_id, $adapter->getEntityIds($machine, 'new')));
+        
+        try {
+            $sm->run();
+            $this->fail('should not come here. bad to done will throw an exception via the rule');
+        } catch (Exception $e) {
+            $this->assertEquals(Exception::RULE_APPLY_FAILURE, $e->getCode());
+        }
         
     }
     

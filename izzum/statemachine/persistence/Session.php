@@ -65,7 +65,7 @@ class Session extends Adapter {
         //set object on the session
         $data = StorageData::get($context, $state);
         $_SESSION[$this->namespace][$key] = $data;
-        return $already_stored;
+        return !$already_stored;
     }
 
 

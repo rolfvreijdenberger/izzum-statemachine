@@ -2,6 +2,7 @@
 namespace izzum\statemachine;
 use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\Memory;
+use izzum\statemachine\Exception;
 /**
  * Context is an object that holds information about a stateful entity, which is
  * basically an application domain specific object like 'Order' or 'Customer' that
@@ -126,7 +127,8 @@ class Context {
      * Sets the state
      *
      * @param string $state
-     * @return string
+     * @return boolan true is state was never added before (just added for the
+     *      first time), false otherwise
     */
     public function setState($state)
     {
@@ -228,7 +230,7 @@ class Context {
     
     public function __toString()
     {
-        return $this->getState();
+        return $this->toString();
     }
     
     /**
@@ -238,5 +240,19 @@ class Context {
     public function add()
     {
        return $this->getPersistenceAdapter()->add($this);
+    }
+    
+    /**
+     * stores a failed transition, called by the statemachine
+     * This is a transition that has failed since it:
+     * - was not allowed
+     * - where an exception was thrown from a rule or command 
+     * - etc. any general transition failure
+     * @param Exception $e
+     * @param string $transition_name
+     */
+    public function setFailedTransition(Exception $e, $transition_name)
+    {
+        $this->getPersistenceAdapter()->setFailedTransition($this, $e, $transition_name);
     }
 }

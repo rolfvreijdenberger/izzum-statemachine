@@ -91,6 +91,7 @@ abstract class Adapter {
       * 
       * @param Context $context
       * @param string $state
+     * @return boolean true if just added to storage, false if stored before
      */
     abstract protected function processSetState(Context $context, $state);
     
@@ -136,8 +137,8 @@ abstract class Adapter {
      * 
      * @param Context $context Assume this object has the old state
      * @param string $state this is the new state
-     * @return boolan true if already stored and overwritten, false if not stored before
-     * @throws \izzum\statemachine\persistence\Exception
+     * @return boolan false if already stored before, true if just added
+     * @throws Exception
      */
     public final function setState(Context $context, $state){
         try {
@@ -151,6 +152,17 @@ abstract class Adapter {
             $e = new Exception($e->getMessage(), Exception::IO_FAILURE_SET, $e);
             throw $e;
         }
+    }
+    
+    /**
+     * Stores a failed transition in the storage facility.
+     * @param Context $context
+     * @param Exception $e
+     * @param string $transition_name
+     */
+    public function setFailedTransition(Context $context, Exception $e, $transition_name)
+    {
+        //override in subclasses if necessary
     }
     
     public function toString()
