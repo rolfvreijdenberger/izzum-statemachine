@@ -9,7 +9,7 @@ namespace izzum\statemachine;
  * used by Rules and Commands for a specific statemachine (eg: Order). 
  * A typical statemachine would use a subclass of this builder.
  * 
- * Of course, a specific Rule or Command can just accept the Entity directly
+ * Of course, a specific Rule or Command can just accept the Context directly
  * and use the entity_id to generate the domain object itself. But this would also
  * mean that the Rules and Commands will not be specific to the applications' problem
  * domain but to that of the statemachine (and therefore possibly less reusable).
