@@ -2,11 +2,10 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch
 =====
 '_Yo man, who gots the izzum for tonights festivities?_'
 
-
 - see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum/recompile "navigable version on documentup.com") for a navigable
 version of this document.
 - Want to know what to do to get it working? Skip to the [Usage section](#usage) or [examples](#examples)
-- **new**: a [postgresql]("http://www.postgresql") backend to store your data.
+- **`new`**: a [postgresql]("http://www.postgresql") backend to store your data.
 
 ##about##
 ### A superior, extensible and flexible statemachine library ###
@@ -18,7 +17,8 @@ for executing transition logic and uses business rules for the transition guard 
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
-Subclassing and/or using hooks in the code allow you to add logging, event dispatching etc.
+Subclassing and/or using hooks in the code allow you to add logging, event dispatching,
+inserting logic specific to your domain etc.
 
 ### thoroughly documented ###
 find out how it works and what matters in clean code and excellent inline
@@ -35,7 +35,7 @@ by using a subclassed builder that creates the domain model you want to associat
 with a statemachine. 
 
 This allows you to operate on your own domain models by using them as an argument to your 
-Command (transition logic) and Rule (transition guard) classes.
+`Command` (transition logic) and `Rule` (transition guard) classes.
 
 
 ### Easy configuration ###
@@ -51,14 +51,6 @@ Clients of your code (your application) will only need to use a couple of lines
 of code to interact with your statemachine and have access to a well designed
 interface in case there is a need for more advanced manipulation.
 ```php
-<?php
-$id = $order->getId();
-//abstract factory pattern is used to create a family of related objects
-$factory = new ConcreteFactory();
-$machine = $factory->getStateMachine($id);
-$machine->run();
-
-
 //interface overview for the statemachine
 $machine = new StateMachine($context);
 $machine->apply('new_to_initialize');
@@ -73,7 +65,6 @@ $machine->getInitialState();
 $machine->toString();
 $machine->addTransition($transition);
 $machine->changeContext($context);
-
 ```
 
 ### Formal ways to encapsulate the logic for transitions ###
@@ -87,6 +78,8 @@ Although you have to do some work to create the rules and commands and have them
 accept your domain model as a dependency in their constructor, it provides you
 with a great way to seperate your concerns in their own (testable) classes.
 
+It makes it easy for teams to work on discrete parts of the lifecycle of the domain model.
+
 ### Battle proven, fully unittested with high code coverage ### 
 Using industry best practices for writing code with tests to back it up. 
 Making use of proven design patterns to allow you to tailor it to your needs.
@@ -98,7 +91,7 @@ for one of the best Dutch fiber ISP organisations for their order management sys
 - patterns: AbstractFactory, template method (hooks), command, Adapter (persistence), Builder (domain model), Decorator (Loader)
 - principles: Dependency injection, encapsulation, polymorphism, extensible/inheritance, open/closed.
  
-### postgresql backend implementation ###
+### multiple backend implementations ###
 we have provided a postgres implementation that can be used as your persistence layer to store
 and retrieve states, define your machines and transitions, and keep your history of transitions.
 
@@ -119,15 +112,76 @@ see the examples section for some diagrams.
 
 ###demo###
 see the /examples/demo directory for a working implementation of a traffic light
-### rules ###
+###domain models: the representation of your applications' workers###
+your domain models are specific to your application. They are carefully designed
+and group data and related logic together. They work well with other models in your
+application. There is a model in your application that you wish to manipulate in 
+more discrete points during it's lifecycle, which are defined by states that your
+object can be in. You can identify your domain models by their unique
+id in the application, possibly related to storage in a database. You manipulate 
+them via gui's, cron jobs, message queues and they perform all kinds of magic.
+But they don't hold state very well.
+This is where the statemachine shines. It's only function is to use your domain model
+and query it for information about transitions that it wants to make between states.
+It can/will store data seperately from your domain object OR can integrate with
+your currently existing domain model (via a persistance adapter, more on that later).
+```php
+namespace izzum\examples\demo;
+/**
+ * Traffic light is the domain object of our example.
+ */
+class TrafficLight {
+     private $id;
+     private $color;
+     private $switch_time;
+     const TIME_RED = 4, TIME_ORANGE = 2, TIME_GREEN = 6;
+    
+    public function __construct($id) {
+        $this->setId($id);
+        $this->setGreen();
+    }
+    protected function setSwitchTime() {
+        $this->switch_time = time();
+    }
+    public function setGreen() {
+        $this->setColor('green');
+    }
+    ...also some methods for red and orange
+    protected function setColor($color) {
+        $this->setSwitchTime();
+        $this->color = $color;
+        echo sprintf('trafficlight[%s] switching to [%s]', 
+                $this->id, strtoupper($color)) . PHP_EOL;
+    }
+    public function isReadyToSwitch() {
+        switch ($this->color) {
+            case 'green':
+                if($this->onColorFor(self::TIME_GREEN)){
+                    return true;
+                }
+                ...same for orange and red
+        }
+        return false;
+    }
+    protected function onColorFor($time) {
+        $difference = $this->switch_time + $time;
+        return time() >= $difference;
+    }   
+    public function toString() {
+        return sprintf("trafficlight[%s] on color [%s] for [%s] seconds", 
+                $this->id, $this->color, time() - $this->switch_time) .
+            PHP_EOL;
+    }  
+}
+```
+### rules: check if a transition is allowed ###
 A rule will query your domain object for information to decide whether it is allowed
 to make a transition (by returning true or false).
 
-Create a rule by subclassing izzum\rules\Rule and by accepting a domain object in 
-the newly created rules' constructor. Override the '_applies' method to query
+Create a rule by subclassing `izzum\rules\Rule` and by accepting a domain object in 
+the newly created rules' constructor. Override the `_applies()` method to query
 the  domain object and return true/false.
 ```php
-<?php
 namespace izzum\examples\demo\rules;
 use izzum\rules\Rule;
 use izzum\examples\demo\TrafficLight;
@@ -144,15 +198,15 @@ class CanSwitch extends Rule {
     }
 }
 ```
-### commands ###
+### commands: perform transition logic ###
 A command will execute the logic associated with the transition and this is the
 place where your domain model (or associated objects) will be manipulated.
 
-Create Commands for your domain model by subclassing izzum\command\Command and
+Create Commands for your domain model by subclassing `izzum\command\Command` and
 by accepting a domain model via the constructor. store the domain model on your
 concrete command. It is advisable to create a superclass for your statemachine
 commands that stores the domain object so you can use it in your subclasses.
-Then override the '_execute' method in each Command to do the magic necessary 
+Then override the `_execute` method in each Command to do the magic necessary 
 for that step.
 ```php
 <?php
@@ -172,22 +226,21 @@ class SwitchRed extends Command {
     }
 }
 ```
-### entity builders ###
+### entity builders: build your domain model ###
 An EntityBuilder builds your domain model on which you operate, in our case it's
 a TrafficLight. A domain object will always be representable by it's type and a 
 unique id. It's the duty of the EntityBuilder to create one for your statemachine
 and set the correct (entity)id on it.
 
-Create a specific EntityBuilder for your domain model by subclassing izzum\statemachine\EntityBuilder.
-override the 'build()' method to return a domainmodel of choice. The 'build()' method
-accepts an izzum\statemachine\context model that can be queried for the id of the 
-domain model via 'Context::getEntityId()'. The concrete EntityBuilder for your
-application should be set on the Context object.
+Create a specific EntityBuilder for your domain model by subclassing `izzum\statemachine\EntityBuilder`.
+override the `build(Context $context)` method to return a domainmodel of choice. 
+The method accepts an `izzum\statemachine\Context` model that can be queried 
+for the id of the domain model via `Context::getEntityId()`. 
+The concrete EntityBuilder for your application should be set on the Context object.
 
 The object that is returned by the EntityBuilder is the object that will be 
 injected at runtime in the Rules and Command associated with a transition.
 ```php
-<?php
 namespace izzum\examples\demo;
 use izzum\statemachine\EntityBuilder;
 use \izzum\statemachine\Context;
@@ -197,33 +250,33 @@ class EntityBuilderTrafficLight extends EntityBuilder{
     }
 }
 ```
-### persistence adapters ###
+### persistence adapters: writing and reading your state data ###
 A persistance adapter is an adapter that is specifically tailored for your 
 applications' design to store and retrieve the data associated by the statemachine
 with your domain model. 
 
 Currently there is a fully functional and tested Postgres database adapter that 
 both loads the configuration and stores the data. An sql file for the data
-definitions is also provided in /assets/sql/postgres.sql
+definitions is also provided in `/assets/sql/postgres.sql`
 We also provide an in memory adapter that stores data for a single php process
 and a session adapter that stores data for a session (can be used for GUI wizards)
 
-A specific adapter is created by subclassing izzum\statemachine\adapter\Adapter
+A specific adapter is created by subclassing `izzum\statemachine\persistence\Adapter`
 and implementing the methods to get and set states.
 
 This is a power feature for advanced users who will know or can find out what 
 they are or should be doing.
-An example is not provided here, you can check out izzum\statemachine\persistence
+An example is not provided here, you can check out `izzum\statemachine\persistence`
 to take a look at the different adapters provided.
-### loaders ###
+### loaders: loading your statemachine definition ###
 A loader is closely (but not necessarily) coupled to your persistence layer and 
 is used to load the data for your statemachine. This includes all data for the
 states, the transition between these states and the rules and commands associated
 with these transitions.
 
-Create a Loader by implementing the izzum\statemachine\loader\Loader interface on
-your custom Loader class and then delegate the actual loading in the 'load' method
-to the izzum\statemachine\loader\LoaderArray class.
+Create a Loader by implementing the `izzum\statemachine\loader\Loader` interface on
+your custom Loader class and then delegate the actual loading in the `load` method
+to the `izzum\statemachine\loader\LoaderArray` class.
 
 Since a Loader and a Persistence adapter are probably tightly coupled, you can 
 integrate both of them in one class (see the izzum\statemachine\persistence\Postgres
@@ -250,7 +303,7 @@ class for an example of that)
         $loader = new LoaderArray($data);
 ```
 
-###factories###
+###factories: creating related classes###
 An Factory can be used to create a family of related classes. In our case, all
 the classes that are needed for your application domain. The factory should provide
 you with a statemachine, which is dependent on a Context object. The Context object
@@ -263,10 +316,9 @@ to use.
 Since creating a statemachine involces creating different types of objects, 
 it is advisable to use a factory for your application domain but it is not necessary.
 
-Create a factory by subclassing izzum\statemachine\factory\AbstractFactory and
+Create a factory by subclassing `izzum\statemachine\factory\AbstractFactory` and
 by implementing the abstract methods necessary.
 ```php
-<?php
 namespace izzum\examples\demo;
 use izzum\statemachine\factory\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
@@ -293,6 +345,31 @@ class TrafficLightFactory extends AbstractFactory{
     }
 }
 ```
+###your application: tying it all together###
+Your application needs to do some work!
+Create the factory and get a statemachine from it. Just pass in the unique id
+for the domain model you want to manipulate to get the correct statemachine.
+Use the `run()`, `apply($transition_name)`, `runToCompletion()` methods on the statemachine. 
+The statemachine will find it's own path through it's
+transitions by using the rules that either allow/disallow a transition and
+by executing the Command logic if a transition is possible.
+
+```php
+//create the factory
+$factory = new TrafficLightFactory();
+//get the machine from the factory, for traffic light 1
+$machine = $factory->getStateMachine(1);
+
+//let the traffic light do it's work
+while(true) {
+    $machine->run();
+    sleep(1);  
+}
+```
+###state diagram for the traffic light machine###
+![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml-traffic-light.png )
+###output for the traffic light machine###
+![traffic light state diagram](https://raw.githubuserconte###nt.com/rolfvreijdenberger/izzum/master/assets/traffic-light-output.png )
 
 ##Examples##
 
