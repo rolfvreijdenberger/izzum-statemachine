@@ -2,11 +2,11 @@
 namespace izzum\statemachine;
 /**
  * EntityBuilder is an object that builds an entity (an application domain specific
- * model) that a Context must return.
- * It can be obtained via the factory method getEntity(). 
+ * model) for a Context object.
+ * It can be obtained via the factory method EntityBuilder::getEntity(). 
  * 
  * The entity returned is the application domain specific object that will be 
- * used by Rules and Commands for a specific statemachine (eg: Order). 
+ * injected in the Rules and Commands for a specific statemachine (eg: Order). 
  * A typical statemachine would use a subclass of this builder.
  * 
  * Of course, a specific Rule or Command can just accept the Context directly
@@ -27,14 +27,15 @@ namespace izzum\statemachine;
  * 
  * This is a prime candidate to be overriden by subclasses (if need be).
  * Subclass this class and override the 'build' method to return a
- * domain specific object of choice. The building of that domain objects depends
- * on the information in the Entity, specifically the entity_id.
+ * domain specific object of choice. The building of that domain object depends
+ * on the information in the Context, specifically the entity_id.
  * 
  * the builder can be configured via dependency injection at creation time so 
- * the builder can make use of this data when it is called via 'getEntity'.
+ * the builder can make use of the injected data when it is called via 'getEntity'.
  * 
  * An example of a builder would be an 'EntityBuilderOrder' class,
- * which would be used for an Order statemachine.
+ * which would be used for a  statemachine that acts upon an 'Order' object from your
+ * applation domain.
  * 
  * @see Context::getEntity()
  * @link https://en.wikipedia.org/wiki/Builder_pattern
@@ -96,7 +97,7 @@ class EntityBuilder {
     
     
     /**
-     * the actual building function. Override this one to return a different 
+     * the actual building function. Override this method to return a different 
      * application specific domain model.
      * 
      * In an overriden function it is possible to use state of the concrete 
@@ -109,7 +110,7 @@ class EntityBuilder {
     protected function build(Context $context)
     {
         //the default implementation returns a context, which holds an id
-        //that can be used to work with in your rules and commands.
+        //that can be used in your rules and commands.
         return $context;
     }
     
