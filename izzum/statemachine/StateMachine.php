@@ -491,7 +491,8 @@ class StateMachine {
      * @param Transition $transition
      */
     protected function preProcess(Transition $transition) {
-        //dispatch events, log, lock entity, cleanup etc.
+        //dispatch events, log, lock entity, cleanup,
+        //begin transaction via persistance layer etc.
     }
     
     /**
@@ -501,7 +502,8 @@ class StateMachine {
      * @param Transition $transition
      */
     protected function postProcess(Transition $transition) {
-        //dispatch events, log, lock entity, cleanup etc.
+        //dispatch events, log, lock entity, cleanup, 
+        //commit transaction via persistence layer etc.
     }
     
     
