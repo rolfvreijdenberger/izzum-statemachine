@@ -23,8 +23,8 @@ Subclassing and/or using hooks in the code allow you to add logging, event dispa
 ### thoroughly documented ###
 find out how it works and what matters in clean code and excellent inline
 documentation with explanations of how and why you'd use it and what you can 
-potentially use it for. The unittests can serve as extra documentation on 
-how to use it.
+potentially use it for. 
+The unittests and the examples provided can serve as extra documentation on how to use it.
 
 ### Use your own specific domain models ###
 It can be tailored to your application domain by using an adapter for 
@@ -117,16 +117,182 @@ see the examples section for some diagrams.
 
 ##Usage##
 
+###demo###
+see the /examples/demo directory for a working implementation of a traffic light
 ### rules ###
-todo
+A rule will query your domain object for information to decide whether it is allowed
+to make a transition (by returning true or false).
+
+Create a rule by subclassing izzum\rules\Rule and by accepting a domain object in 
+the newly created rules' constructor. Override the '_applies' method to query
+the  domain object and return true/false.
+```php
+<?php
+namespace izzum\examples\demo\rules;
+use izzum\rules\Rule;
+use izzum\examples\demo\TrafficLight;
+/**
+ * This rule checks if a traffic light can switch.
+ */
+class CanSwitch extends Rule {
+    private $light;
+    public function __construct(TrafficLight $light) {
+        $this->light = $light;
+    }
+    protected function _applies() {
+        return (boolean) $this->light->isReadyToSwitch();
+    }
+}
+```
 ### commands ###
-todo
+A command will execute the logic associated with the transition and this is the
+place where your domain model (or associated objects) will be manipulated.
+
+Create Commands for your domain model by subclassing izzum\command\Command and
+by accepting a domain model via the constructor. store the domain model on your
+concrete command. It is advisable to create a superclass for your statemachine
+commands that stores the domain object so you can use it in your subclasses.
+Then override the '_execute' method in each Command to do the magic necessary 
+for that step.
+```php
+<?php
+namespace izzum\examples\demo\command;
+use izzum\command\Command;
+use izzum\examples\demo\TrafficLight;
+/**
+ * SwitchRed command switches the traffic light to red.
+ */
+class SwitchRed extends Command {
+    protected $light;
+    public function __construct(TrafficLight $light) {
+        $this->light = $light;
+    }
+    protected function _execute() {
+        $this->light->setRed();
+    }
+}
+```
 ### entity builders ###
-todo
+An EntityBuilder builds your domain model on which you operate, in our case it's
+a TrafficLight. A domain object will always be representable by it's type and a 
+unique id. It's the duty of the EntityBuilder to create one for your statemachine
+and set the correct (entity)id on it.
+
+Create a specific EntityBuilder for your domain model by subclassing izzum\statemachine\EntityBuilder.
+override the 'build()' method to return a domainmodel of choice. The 'build()' method
+accepts an izzum\statemachine\context model that can be queried for the id of the 
+domain model via 'Context::getEntityId()'. The concrete EntityBuilder for your
+application should be set on the Context object.
+
+The object that is returned by the EntityBuilder is the object that will be 
+injected at runtime in the Rules and Command associated with a transition.
+```php
+<?php
+namespace izzum\examples\demo;
+use izzum\statemachine\EntityBuilder;
+use \izzum\statemachine\Context;
+class EntityBuilderTrafficLight extends EntityBuilder{
+    protected function build(Context $context) {
+        return new TrafficLight($context->getEntityId());
+    }
+}
+```
 ### persistence adapters ###
-todo
+A persistance adapter is an adapter that is specifically tailored for your 
+applications' design to store and retrieve the data associated by the statemachine
+with your domain model. 
+
+Currently there is a fully functional and tested Postgres database adapter that 
+both loads the configuration and stores the data. An sql file for the data
+definitions is also provided in /assets/sql/postgres.sql
+We also provide an in memory adapter that stores data for a single php process
+and a session adapter that stores data for a session (can be used for GUI wizards)
+
+A specific adapter is created by subclassing izzum\statemachine\adapter\Adapter
+and implementing the methods to get and set states.
+
+This is a power feature for advanced users who will know or can find out what 
+they are or should be doing.
+An example is not provided here, you can check out izzum\statemachine\persistence
+to take a look at the different adapters provided.
 ### loaders ###
-todo
+A loader is closely (but not necessarily) coupled to your persistence layer and 
+is used to load the data for your statemachine. This includes all data for the
+states, the transition between these states and the rules and commands associated
+with these transitions.
+
+Create a Loader by implementing the izzum\statemachine\loader\Loader interface on
+your custom Loader class and then delegate the actual loading in the 'load' method
+to the izzum\statemachine\loader\LoaderArray class.
+
+Since a Loader and a Persistence adapter are probably tightly coupled, you can 
+integrate both of them in one class (see the izzum\statemachine\persistence\Postgres
+class for an example of that)
+```php
+        $data = array();
+        //from new to green. this will start the cycle. mark 'new' as type initial
+        $data[] = LoaderData::get('new', 'green' , 
+                Transition::RULE_TRUE, Transition::COMMAND_NULL, 
+                State::TYPE_INITIAL, State::TYPE_NORMAL);
+        //from green to orange. use the switch to orange command
+        $data[] = LoaderData::get('green', 'orange' , 
+                'izzum\examples\demo\rules\CanSwitch',
+                'izzum\examples\demo\command\SwitchOrange');
+        //from orange to red. use the appropriate command
+        $data[] = LoaderData::get('orange', 'red' , 
+                'izzum\examples\demo\rules\CanSwitch',
+                'izzum\examples\demo\command\SwitchRed');
+        //from red back to green.  The transition from green has already been  defined earlier.
+        $data[] = LoaderData::get('red', 'green' , 
+                'izzum\examples\demo\rules\CanSwitch',
+                'izzum\examples\demo\command\SwitchGreen');
+
+        $loader = new LoaderArray($data);
+```
+
+###factories###
+An Factory can be used to create a family of related classes. In our case, all
+the classes that are needed for your application domain. The factory should provide
+you with a statemachine, which is dependent on a Context object. The Context object
+works with an EntityBuilder that actually creates your domain model. The context
+object also works with a Persistance adapter that reads and writes to the underlying
+storage facility. A loader will load up your statemachine with all the State and
+Transition models and their associated Rules and Commands for the statemachine
+to use. 
+
+Since creating a statemachine involces creating different types of objects, 
+it is advisable to use a factory for your application domain but it is not necessary.
+
+Create a factory by subclassing izzum\statemachine\factory\AbstractFactory and
+by implementing the abstract methods necessary.
+```php
+<?php
+namespace izzum\examples\demo;
+use izzum\statemachine\factory\AbstractFactory;
+use izzum\statemachine\persistence\Memory;
+use izzum\statemachine\loader\LoaderData;
+use izzum\statemachine\loader\LoaderArray;
+/**
+ * the Factory to build the statemachines for TrafficLight domain models.
+ */
+class TrafficLightFactory extends AbstractFactory{
+    protected function getEntityBuilder() {
+        return new EntityBuilderTrafficLight();
+    }
+    protected function getLoader() {
+        $data = array();
+        ... see earlier example
+        $loader = new LoaderArray($data);
+        return $loader;
+    }
+    protected function getMachineName() {
+        return 'traffic-light';
+    }
+    protected function getPersistenceAdapter() {
+        return new Memory();
+    }
+}
+```
 
 ##Examples##
 
@@ -185,9 +351,7 @@ $machine->runToCompletion();
 
 
 ##contributors and thank you's##
-- Richard Ruiter
-- Romuald Villetet
-- Harm de Jong
+- Richard Ruiter, Romuald Villetet, Harm de Jong, Elena van Engelen-Maslova
 - the statemachine package was influenced by the [yohang statemachine](https://github.com/yohang/Finite "Finite on github") , thanks for some good work.
 - creation of README.md markdown with the help of [dillinger.io/](http://dillinger.io/)
 - nice layout of this file: [documentup.com](http://documentup.com/rolfvreijdenberger/izzum)
