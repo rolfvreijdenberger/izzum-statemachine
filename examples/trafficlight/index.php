@@ -12,7 +12,6 @@ namespace izzum\examples\trafficlight;
  * with the autoloader in:
  * <root>/vendor/autoload.php
  */
-echo __DIR__;
 $loader = require_once __DIR__ . '/../../../../../vendor/autoload.php';
 $loader->addPsr4('izzum\examples\\', __DIR__ . '/../');
 $loader->register();
