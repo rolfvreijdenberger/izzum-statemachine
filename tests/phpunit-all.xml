@@ -1,10 +1,10 @@
 <phpunit bootstrap="./bootstrap.php" colors="true" verbose="true" convertErrorsToExceptions="false">
-    <testsuite name="izzum testsuite">
+    <testsuite name="izzum testsuite - all tests">
         <directory>./</directory>>
     </testsuite>
     <groups>
         <exclude>
-            <group>not-on-production</group>
+            <group></group>
         </exclude>
     </groups>
 </phpunit>

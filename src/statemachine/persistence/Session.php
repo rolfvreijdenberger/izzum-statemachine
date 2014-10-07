@@ -39,6 +39,9 @@ class Session extends Adapter {
             
         }
         $this->namespace = $namespace;
+        if(!isset($_SESSION)) {
+            $_SESSION = array();
+        }
         if(!isset($_SESSION[$this->namespace])) {
             $_SESSION[$this->namespace] = array();
         }

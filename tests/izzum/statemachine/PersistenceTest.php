@@ -9,6 +9,7 @@ use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\StorageData;
 use izzum\statemachine\persistence\Session;
 use izzum\statemachine\persistence\Postgres;
+use izzum\statemachine\persistence\PDO;
 /**
  * @group statemachine
  * @author rolf
@@ -248,7 +249,20 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $pg_connection = "host=localhost user=postgres dbname=postgres password=izzum";
         $adapter = new Postgres($pg_connection, $schema);
         
-        //transitions
+        $this->assertPersistenceAdapter($adapter, $machine);
+        
+       
+        
+    }
+    
+    /**
+     * helper method for different backend adapters
+     * that use a database (postgres, pdo)
+     * @param Adapter $adapter
+     * @param string $machine
+     */
+    protected function assertPersistenceAdapter($adapter, $machine) {
+         //transitions
         $this->assertCount(9, $adapter->getTransitions($machine));
         $this->assertCount(9, $adapter->getLoaderData($machine));
         
@@ -359,7 +373,37 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         } catch (Exception $e) {
             $this->assertEquals(Exception::RULE_APPLY_FAILURE, $e->getCode());
         }
-        
+    }
+    
+    
+    /**
+     * this test will only run when the \assets\sql\postgresql.sql file has been 
+     * executed on a postgres backend, providing test data.
+     * @group not-on-production
+     * @group pdo
+     */
+    public function testPDOAdapterPOSTGRES()
+    {
+        $machine = 'izzum';
+        $user = 'postgres';
+        $password = "izzum";
+        $dsn = "pgsql:host=localhost;port=5432;dbname=postgres";
+        $adapter = new PDO($dsn, $user, $password);   
+        $this->assertPersistenceAdapter($adapter, $machine);
+    }
+    
+       /**
+     * this test will only run when the \assets\sql\sqlite.sql file has been 
+     * executed on a sqlite backend, providing test data.
+     * @group not-on-production
+     * @group sqlite
+     */
+    public function testPDOAdapterSQLITE()
+    {
+        $machine = 'izzum';
+        $dsn = "sqlite:sqlite.db";
+        $adapter = new PDO($dsn);   
+        $this->assertPersistenceAdapter($adapter, $machine);
     }
     
     

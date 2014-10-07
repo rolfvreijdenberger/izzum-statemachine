@@ -1,3 +1,4 @@
 /index.php
-
+tests/report
+tests/sqlite.db
 /vendor/
