@@ -1,13 +1,21 @@
 <?php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 /**
  * run this script from the command line:
  * php -f index.php
  * and stop it with ctrl+c
  * make sure you include the right scripts via an autoloader
  */
-//use composer autoloader
-require_once __DIR__ . '/../../vendor/autoload.php';
+/**
+ * add the composer autoloader, we assume this is the normal composer setup:
+ * <root>/vendor/rolfvreijdenberger/izzum/
+ * with the autoloader in:
+ * <root>/vendor/autoload.php
+ */
+echo __DIR__;
+$loader = require_once __DIR__ . '/../../../../../vendor/autoload.php';
+$loader->addPsr4('izzum\examples\\', __DIR__ . '/../');
+$loader->register();
 
 //create the factory
 $factory = new TrafficLightFactory();

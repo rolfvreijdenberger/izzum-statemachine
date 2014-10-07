@@ -367,15 +367,15 @@ while(true) {
 }
 ```
 ###result: state diagram for the traffic light machine###
-![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml-traffic-light.png )
+![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/images/state-diagram-plantuml-traffic-light.png )
 ###result: output for the traffic light machine###
-![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/traffic-light-output.png )
+![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/images/traffic-light-output.png )
 
 
 ##Examples##
 
 ### uml diagram for an order system ###
-![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml.png )
+![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/images/state-diagram-plantuml.png )
 
 ### php example for the simplest case ###
 ```php
@@ -425,7 +425,7 @@ echo PlantUml::createStateDiagram($machine);
 //run the machine to completion
 $machine->runToCompletion();
 ```
-![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml-coffee.png )
+![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/images/state-diagram-plantuml-coffee.png )
 
 
 ##contributors and thank you's##

@@ -1,12 +1,12 @@
 <?php
-namespace izzum\examples\demo\command;
+namespace izzum\examples\trafficlight\command;
 /**
- * SwitchRed command switches the traffic light to red.
+ * SwitchOrange command switches the traffic light to orange.
  * each switch command operates on the domain object and will have side effects, 
  * like manipulating the model, setting data etc.
  */
-class SwitchRed extends Switcher{
+class SwitchOrange extends Switcher{
     protected function _execute() {
-        $this->light->setRed();
+        $this->light->setOrange();
     }
 }

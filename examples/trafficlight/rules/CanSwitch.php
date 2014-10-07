@@ -1,7 +1,7 @@
 <?php
-namespace izzum\examples\demo\rules;
+namespace izzum\examples\trafficlight\rules;
 use izzum\rules\Rule;
-use izzum\examples\demo\TrafficLight;
+use izzum\examples\trafficlight\TrafficLight;
 /**
  * This rule checks if a traffic light can switch.
  * It only has knowledge about a traffic light domain model and no knowledge

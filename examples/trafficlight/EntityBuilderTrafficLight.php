@@ -1,5 +1,5 @@
 <?php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 use izzum\statemachine\EntityBuilder;
 use \izzum\statemachine\Context;
 /**

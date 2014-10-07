@@ -2,5 +2,10 @@
     <testsuite name="izzum testsuite">
         <directory>./</directory>>
     </testsuite>
+    <groups>
+        <exclude>
+            <group>not-on-production</group>
+        </exclude>
+    </groups>
 </phpunit>
 

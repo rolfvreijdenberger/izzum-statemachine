@@ -1,5 +1,5 @@
 <?php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 /**
  * Traffic light is the domain object of our example.
  * 

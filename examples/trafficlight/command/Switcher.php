@@ -1,7 +1,7 @@
 <?php
-namespace izzum\examples\demo\command;
+namespace izzum\examples\trafficlight\command;
 use izzum\command\Command;
-use izzum\examples\demo\TrafficLight;
+use izzum\examples\trafficlight\TrafficLight;
 /**
  * Switcher functions as a superclass for all our
  * traffic light switcher classes and accepts a traffic light

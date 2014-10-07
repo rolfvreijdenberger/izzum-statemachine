@@ -1,5 +1,5 @@
 <?php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 use izzum\statemachine\factory\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\loader\LoaderData;
@@ -32,18 +32,18 @@ class TrafficLightFactory extends AbstractFactory{
 
         //from green to orange. use the switch to orange command
         $data[] = LoaderData::get('green', 'orange' , 
-                'izzum\examples\demo\rules\CanSwitch',
-                'izzum\examples\demo\command\SwitchOrange');
+                'izzum\examples\trafficlight\rules\CanSwitch',
+                'izzum\examples\trafficlight\command\SwitchOrange');
         //from orange to red. use the appropriate command
         $data[] = LoaderData::get('orange', 'red' , 
-                'izzum\examples\demo\rules\CanSwitch',
-                'izzum\examples\demo\command\SwitchRed');
+                'izzum\examples\trafficlight\rules\CanSwitch',
+                'izzum\examples\trafficlight\command\SwitchRed');
 
         //from red back to green.  The transition from green has already been 
         //defined earlier.
         $data[] = LoaderData::get('red', 'green' , 
-                'izzum\examples\demo\rules\CanSwitch',
-                'izzum\examples\demo\command\SwitchGreen');
+                'izzum\examples\trafficlight\rules\CanSwitch',
+                'izzum\examples\trafficlight\command\SwitchGreen');
 
         $loader = new LoaderArray($data);
         return $loader;
