@@ -4,8 +4,8 @@ namespace izzum\examples\trafficlight;
  * run this script from the command line:
  * php -f index.php
  * and stop it with ctrl+c
- * make sure you include the right scripts via an autoloader
  */
+ 
 /**
  * add the composer autoloader, we assume this is the normal composer setup:
  * <root>/vendor/rolfvreijdenberger/izzum/
