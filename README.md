@@ -369,7 +369,7 @@ while(true) {
 ###state diagram for the traffic light machine###
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml-traffic-light.png )
 ###output for the traffic light machine###
-![traffic light state diagram](https://raw.githubuserconte###nt.com/rolfvreijdenberger/izzum/master/assets/traffic-light-output.png)
+![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/traffic-light-output.png )
 
 
 ##Examples##
