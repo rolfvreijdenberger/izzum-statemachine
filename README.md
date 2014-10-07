@@ -111,7 +111,7 @@ see the examples section for some diagrams.
 ##Usage##
 
 ###demo###
-see the /examples/demo directory for a working implementation of a traffic light
+see the `/examples/demo` directory for a working implementation of a traffic light
 ###domain models: the representation of your applications' workers###
 your domain models are specific to your application. They are carefully designed
 and group data and related logic together. They work well with other models in your
