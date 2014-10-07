@@ -1,6 +1,6 @@
 {
     "name": "rolfvreijdenberger/izzum",
-    "description": "php library - statemachine, rules and commands",
+    "description": "A superior statemachine library php > 5.3",
     "keywords":    ["statemachine", "rules", "command", "transition", "state"],
     "type":        "library",
     "license": "MIT",
