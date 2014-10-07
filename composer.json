@@ -1,7 +1,7 @@
 {
     "name": "rolfvreijdenberger/izzum",
     "description": "A superior statemachine library php > 5.3",
-    "keywords":    ["statemachine", "rules", "command", "transition", "state"],
+    "keywords":    ["statemachine", "rules", "command", "transition", "state", "finite", "izzum", "automaton", "pattern"],
     "type":        "library",
     "license": "MIT",
     "authors": [
