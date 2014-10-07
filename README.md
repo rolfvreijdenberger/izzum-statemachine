@@ -366,9 +366,9 @@ while(true) {
     sleep(1);  
 }
 ```
-###state diagram for the traffic light machine###
+###result: state diagram for the traffic light machine###
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/state-diagram-plantuml-traffic-light.png )
-###output for the traffic light machine###
+###result: output for the traffic light machine###
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum/master/assets/traffic-light-output.png )
 
 
