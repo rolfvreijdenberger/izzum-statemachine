@@ -12,13 +12,9 @@ version of this document.
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") 
 implementation that allows you to add state to any domain object and to define
 the logic of transitions between any and all states for that object.
-It revolves around the [Command pattern](https://en.wikipedia.org/wiki/Command_pattern "command pattern on wikipedia") 
-for executing transition logic and uses business rules for the transition guard logic.
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
-Subclassing and/or using hooks in the code allow you to add logging, event dispatching,
-inserting logic specific to your domain etc.
 
 ### thoroughly documented ###
 find out how it works and what matters in clean code and excellent inline
@@ -27,24 +23,13 @@ potentially use it for.
 The unittests and the examples provided can serve as extra documentation on how to use it.
 
 ### Use your own specific domain models ###
-It can be tailored to your application domain by using an adapter for 
-your persistence layer (postgresql/mysql, memcache, sessions etc), a loader 
-for your purpose (yaml~, json~, postgresql) and an abstraction of your 
+It can be tailored to your application domain to work together with your own
 [application specific domain models](https://en.wikipedia.org/wiki/Domain_model "domain model on wikipedia") 
-by using a subclassed builder that creates the domain model you want to associate
-with a statemachine. 
-
-This allows you to operate on your own domain models by using them as an argument to your 
-`Command` (transition logic) and `Rule` (transition guard) classes.
 
 
 ### Easy configuration ###
 Izzum makes it simple to define a statemachine with transitions and states by
 providing simple objects that handle the loading logic for you.
-A LoaderData object contains data to fully configure one transition between 2 states
-and a Loader class can handle the loading of the statemachine via LoaderData for you.
-Implement your own loader to adapt it to your configuration wishes like getting
-the data from a database or file.
 
 A full implementation using [php PDO](http://php.net/manual/en/intro.pdo.php) is provided, 
 which enables you to directly connect to postgresql/sqlite/mysql/MSSQL database 
@@ -73,9 +58,9 @@ $machine->changeContext($context);
 
 ### Formal ways to encapsulate the logic for transitions ###
 All logic for a single transition is encapsulated in two classes:
-- a subclass of Rule (see the package) which makes sure that a transition is 
+- a subclass of Rule, a business rule which makes sure that a transition is 
 allowed/disallowed by checking if a business rule applies.
-- a subclass of Command (see the package) which executes logic that is part
+- a subclass of a [Command](https://en.wikipedia.org/wiki/Command_pattern) which executes logic that is part
 of the transition that is currently being executed between two states.
 
 Although you have to do some work to create the rules and commands and have them
@@ -85,14 +70,14 @@ with a great way to seperate your concerns in their own (testable) classes.
 It makes it easy for teams to work on discrete parts of the lifecycle of the domain model.
 
 ### Battle proven, fully unittested with high code coverage ### 
-Using industry best practices for writing code with tests to back it up. 
+Quality first! Using industry best practices for writing code with tests to back it up. 
 Making use of proven design patterns to allow you to tailor it to your needs.
 
 It is used in a high load commercial environment with a postgresql backend 
 for one of the best Dutch fiber ISP organisations for their order management system.
 
 ### Uses well known design patterns and OOP principles ###
-- patterns: AbstractFactory, template method (hooks), command, Adapter (persistence), Builder (domain model), Decorator (Loader)
+- patterns: AbstractFactory, template method (hooks), [Command](https://en.wikipedia.org/wiki/Command_pattern), Adapter (persistence), Builder (domain model), Decorator (Loader)
 - principles: Dependency injection, encapsulation, polymorphism, extensible/inheritance, open/closed.
  
 ### multiple backend implementations ###
@@ -104,7 +89,7 @@ and retrieve states, define your machines and transitions, and keep your history
 There are no dependencies on third party libraries. php 5.3 or higher
 
 ### License ###
-[MIT]("https://en.wikipedia.org/wiki/MIT_License")
+[MIT](https://en.wikipedia.org/wiki/MIT_License)
 
 ### Automated uml state diagram creation ###
 Create uml state diagrams from a statemachine [with plantuml](http://plantuml.sourceforge.net/ "plantuml on sourceforge") 
