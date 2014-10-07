@@ -5,7 +5,7 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch
 - see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum/recompile "navigable version on documentup.com") for a navigable
 version of this document.
 - Want to know what to do to get it working? Skip to the [Usage section](#usage) or [examples](#examples)
-- **`new`**: a [postgresql]("http://www.postgresql") backend to store your data.
+- **`new`**: a [postgresql]("http://www.postgresql.org") and [sqlite]("http://www.sqlite.org") backend to store your data.
 
 ##about##
 ### A superior, extensible and flexible statemachine library ###
@@ -45,6 +45,10 @@ A LoaderData object contains data to fully configure one transition between 2 st
 and a Loader class can handle the loading of the statemachine via LoaderData for you.
 Implement your own loader to adapt it to your configuration wishes like getting
 the data from a database or file.
+
+A full implementation using [php PDO]("http://php.net/manual/en/intro.pdo.php") is provided, 
+which enables you to directly connect to postgresql/sqlite/mysql/MSSQL database 
+with the code and the sql definitions provided in `assets/sql/*.sql`   
 
 ### Well designed interface ###
 Clients of your code (your application) will only need to use a couple of lines
@@ -92,7 +96,8 @@ for one of the best Dutch fiber ISP organisations for their order management sys
 - principles: Dependency injection, encapsulation, polymorphism, extensible/inheritance, open/closed.
  
 ### multiple backend implementations ###
-we have provided a postgres implementation that can be used as your persistence layer to store
+we have provided a [php PDO]("http://php.net/manual/en/intro.pdo.php") implementation that can be used 
+to connect to all supported databases as your persistence layer to store
 and retrieve states, define your machines and transitions, and keep your history of transitions.
 
 ### no dependencies ###
@@ -111,7 +116,11 @@ see the examples section for some diagrams.
 ##Usage##
 
 ###demo###
-see the `/examples/demo` directory for a working implementation of a traffic light
+see the `/examples/trafficlight` directory for a working implementation of a 
+traffic light that you can easily run from the command line.
+
+###installation###
+use [composer]("https://getcomposer.org/") to install the project
 ###domain models: the representation of your applications' workers###
 your domain models are specific to your application. They are carefully designed
 and group data and related logic together. They work well with other models in your
@@ -126,7 +135,7 @@ and query it for information about transitions that it wants to make between sta
 It can/will store data seperately from your domain object OR can integrate with
 your currently existing domain model (via a persistance adapter, more on that later).
 ```php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 /**
  * Traffic light is the domain object of our example.
  */
@@ -182,9 +191,9 @@ Create a rule by subclassing `izzum\rules\Rule` and by accepting a domain object
 the newly created rules' constructor. Override the `_applies()` method to query
 the  domain object and return true/false.
 ```php
-namespace izzum\examples\demo\rules;
+namespace izzum\examples\trafficlight\rules;
 use izzum\rules\Rule;
-use izzum\examples\demo\TrafficLight;
+use izzum\examples\trafficlight\TrafficLight;
 /**
  * This rule checks if a traffic light can switch.
  */
@@ -210,9 +219,9 @@ Then override the `_execute` method in each Command to do the magic necessary
 for that step.
 ```php
 <?php
-namespace izzum\examples\demo\command;
+namespace izzum\examples\trafficlight\command;
 use izzum\command\Command;
-use izzum\examples\demo\TrafficLight;
+use izzum\examples\trafficlight\TrafficLight;
 /**
  * SwitchRed command switches the traffic light to red.
  */
@@ -241,7 +250,7 @@ The concrete EntityBuilder for your application should be set on the Context obj
 The object that is returned by the EntityBuilder is the object that will be 
 injected at runtime in the Rules and Command associated with a transition.
 ```php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 use izzum\statemachine\EntityBuilder;
 use \izzum\statemachine\Context;
 class EntityBuilderTrafficLight extends EntityBuilder{
@@ -289,16 +298,16 @@ class for an example of that)
                 State::TYPE_INITIAL, State::TYPE_NORMAL);
         //from green to orange. use the switch to orange command
         $data[] = LoaderData::get('green', 'orange' , 
-                'izzum\examples\demo\rules\CanSwitch',
-                'izzum\examples\demo\command\SwitchOrange');
+                'izzum\examples\trafficlight\rules\CanSwitch',
+                'izzum\examples\trafficlight\command\SwitchOrange');
         //from orange to red. use the appropriate command
         $data[] = LoaderData::get('orange', 'red' , 
-                'izzum\examples\demo\rules\CanSwitch',
-                'izzum\examples\demo\command\SwitchRed');
+                'izzum\examples\trafficlight\rules\CanSwitch',
+                'izzum\examples\trafficlight\command\SwitchRed');
         //from red back to green.  The transition from green has already been  defined earlier.
         $data[] = LoaderData::get('red', 'green' , 
-                'izzum\examples\demo\rules\CanSwitch',
-                'izzum\examples\demo\command\SwitchGreen');
+                'izzum\examples\trafficlight\rules\CanSwitch',
+                'izzum\examples\trafficlight\command\SwitchGreen');
 
         $loader = new LoaderArray($data);
 ```
@@ -319,7 +328,7 @@ it is advisable to use a factory for your application domain but it is not neces
 Create a factory by subclassing `izzum\statemachine\factory\AbstractFactory` and
 by implementing the abstract methods necessary.
 ```php
-namespace izzum\examples\demo;
+namespace izzum\examples\trafficlight;
 use izzum\statemachine\factory\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\loader\LoaderData;
