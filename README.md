@@ -5,7 +5,7 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch
 - see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum/recompile "navigable version on documentup.com") for a navigable
 version of this document.
 - Want to know what to do to get it working? Skip to the [Usage section](#usage) or [examples](#examples)
-- **`new`**: a [postgresql]("http://www.postgresql.org") and [sqlite]("http://www.sqlite.org") backend to store your data.
+- **`new`**: a [postgresql](http://www.postgresql.org) and [sqlite](http://www.sqlite.org) backend to store your data.
 
 ##about##
 ### A superior, extensible and flexible statemachine library ###
