@@ -46,7 +46,7 @@ and a Loader class can handle the loading of the statemachine via LoaderData for
 Implement your own loader to adapt it to your configuration wishes like getting
 the data from a database or file.
 
-A full implementation using [php PDO]("http://php.net/manual/en/intro.pdo.php") is provided, 
+A full implementation using [php PDO](http://php.net/manual/en/intro.pdo.php) is provided, 
 which enables you to directly connect to postgresql/sqlite/mysql/MSSQL database 
 with the code and the sql definitions provided in `assets/sql/*.sql`   
 
@@ -96,7 +96,7 @@ for one of the best Dutch fiber ISP organisations for their order management sys
 - principles: Dependency injection, encapsulation, polymorphism, extensible/inheritance, open/closed.
  
 ### multiple backend implementations ###
-we have provided a [php PDO]("http://php.net/manual/en/intro.pdo.php") implementation that can be used 
+we have provided a [php PDO](http://php.net/manual/en/intro.pdo.php) implementation that can be used 
 to connect to all supported databases as your persistence layer to store
 and retrieve states, define your machines and transitions, and keep your history of transitions.
 
@@ -120,7 +120,7 @@ see the `/examples/trafficlight` directory for a working implementation of a
 traffic light that you can easily run from the command line.
 
 ###installation###
-use [composer]("https://getcomposer.org/") to install the project
+use [composer](https://getcomposer.org/) to install the project
 ###domain models: the representation of your applications' workers###
 your domain models are specific to your application. They are carefully designed
 and group data and related logic together. They work well with other models in your
