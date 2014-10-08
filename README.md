@@ -10,8 +10,9 @@ version of this document.
 ##about##
 ### A superior, extensible and flexible statemachine library ###
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") 
-implementation that allows you to add state to any domain object and to define
-the logic of transitions between any and all states for that object.
+implementation that allows you to add state for any domain object and to define
+the logic of transitions between any and all states for that object while keeping your object
+unaware that it is governed by a statemachine.
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
