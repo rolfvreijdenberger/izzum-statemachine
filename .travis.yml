@@ -4,7 +4,7 @@ php:
   - 5.4
   - 5.6
 install:
-  - composer --no-interaction --prefer-source install
+  - composer --no-interaction install
 script: phpunit --configuration tests/phpunit.xml --exclude-group not-on-production --coverage-clover=coverage.clover
 after_script:
   - wget https://scrutinizer-ci.com/ocular.phar
