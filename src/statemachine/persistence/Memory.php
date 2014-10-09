@@ -111,10 +111,11 @@ class Memory extends Adapter {
     }
     
     protected final function getStorageFromRegistry(Context $context){
-        if(!isset($this->getRegistry()[$context->getId()])) {
+        $registry = $this->getRegistry();
+        if(!isset($registry[$context->getId()])) {
            $storage = null;   
         } else {
-            $storage =  $this->getRegistry()[$context->getId()];
+            $storage =  $registry[$context->getId()];
         }
         return $storage;
     }
