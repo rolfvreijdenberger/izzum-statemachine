@@ -386,7 +386,8 @@ class RuleTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($rule->containsResult(RuleResultRule::RESULT_CONDITIONAL));
         $this->assertFalse($rule->hasResult());
         $rule->applies();
-        $result = $rule->getResults()[0];
+        $result = $rule->getResults();
+        $result = $result[0];
         $this->assertEquals($rule, $result->getRule());
         $this->assertEquals(RuleResultRule::RESULT_CONDITIONAL, $result->getResult());
         $this->assertTrue($rule->containsResult(RuleResultRule::RESULT_CONDITIONAL));
