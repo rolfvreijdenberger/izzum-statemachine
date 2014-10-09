@@ -2,7 +2,7 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachi
 =====
 '_Yo man, who gots the izzum for tonights festivities?_'
 
-- see [http://documentup.com/rolfvreijdenberger/izzum](http://documentup.com/rolfvreijdenberger/izzum/recompile "navigable version on documentup.com") for a navigable
+- see [http://documentup.com/rolfvreijdenberger/izzum-statemachine](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com") for a navigable
 version of this document.
 - Want to know what to do to get it working? Skip to the [Usage section](#usage) or [examples](#examples)
 - **`new`**: a [postgresql](http://www.postgresql.org) and [sqlite](http://www.sqlite.org) backend to store your data.
@@ -17,7 +17,7 @@ unaware that it is governed by a statemachine.
 The statemachine is in the form of a rooted [bidirected](https://en.wikipedia.org/wiki/Bidirected_graph) finite [graph](https://en.wikipedia.org/wiki/Graph_(mathematics)).
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
-we give you the means to adjust the logic provided by this library to your needs.
+we give you the means to adjust the logic provided by this library to your needs, including using the backend of choice to store configuration of the statemachine and the transition history of your stateful objects.
 
 ### thoroughly documented ###
 find out how it works and what matters in clean code and excellent inline
