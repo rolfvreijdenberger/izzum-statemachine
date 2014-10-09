@@ -27,7 +27,7 @@ class PlantUml {
      * @param string $original
      * @return string
      */
-    private static function plantUmlStateAlias($original) {
+    private function plantUmlStateAlias($original) {
         $alias = ucfirst(implode("", array_map('ucfirst',explode("-", $original))));
         return $alias;
     }
@@ -39,7 +39,7 @@ class PlantUml {
      * @link http://plantuml.sourceforge.net/skinparam.html
      * @link http://plantuml.com/classes.html#Skinparam
      */
-    private static function getPlantUmlSkins()
+    private function getPlantUmlSkins()
     {
         $output = <<<SKINS
 skinparam state {
@@ -75,7 +75,7 @@ SKINS;
      * @link http://plantuml.sourceforge.net/state.html
      * @throws Exception
      */
-    public static function createStateDiagram(StateMachine $machine)
+    public function createStateDiagram(StateMachine $machine)
     {
         $transitions = $machine->getTransitions();
 
@@ -89,12 +89,12 @@ SKINS;
         $uml = "@startuml" . PHP_EOL;
 
         //skins for colors etc.
-        $uml .= self::getPlantUmlSkins() . PHP_EOL;
+        $uml .= $this->getPlantUmlSkins() . PHP_EOL;
 
         //only one begin state
         $initial = $machine->getInitialState();
         $initial = $initial->getName();
-        $initial_alias = self::plantUmlStateAlias($initial);
+        $initial_alias = $this->plantUmlStateAlias($initial);
         $aliases[$initial_alias] = $initial_alias;
         $uml .=  'state "' . $initial . '" as ' . $initial_alias . PHP_EOL;
         $uml .= "[*] --> $initial_alias". PHP_EOL;
@@ -115,9 +115,9 @@ SKINS;
             //get states and state aliases (plantuml cannot work with certain 
             //characters, so therefore we create an alias for the state name)
             $from = $t->getStateFrom()->getName();
-            $from_alias = self::plantUmlStateAlias($from);
+            $from_alias = $this->plantUmlStateAlias($from);
             $to = $t->getStateTo();
-            $to_alias = self::plantUmlStateAlias($to->getName());
+            $to_alias = $this->plantUmlStateAlias($to->getName());
 
             //get some names to display
             $command = $t->getCommandName();

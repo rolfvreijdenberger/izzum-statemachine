@@ -418,7 +418,8 @@ $data[] = new LoaderData('spoon', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\c
 $loader = new LoaderArray($data);
 $loader->load($machine);
 //some output for plantuml
-echo PlantUml::createStateDiagram($machine);
+$generator = new PlantUml();
+echo $generator->createStateDiagram($machine);
 //run the machine to completion
 $machine->runToCompletion();
 ```

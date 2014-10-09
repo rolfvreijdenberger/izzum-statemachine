@@ -63,7 +63,7 @@ class PDO extends Adapter implements  Loader {
     
     /**
      * 
-     * @param string $dsn a PDO database source string
+     * @param string $dsn a PDO data source name
      *      example: 'pgsql:host=localhost;port=5432;dbname=izzum'
      * @param string $user optional, defaults to null
      * @param string $password optional, defaults to null
@@ -470,11 +470,6 @@ class PDO extends Adapter implements  Loader {
      * do some cleanup
      */
     public function __destruct() {
-        try {
-            $this->connection = null;
-        } catch(\Exception $e) {
-            //fail silenty to prevent race conditions
-        }
+        $this->connection = null;
     }
-
 }

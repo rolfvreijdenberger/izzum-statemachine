@@ -8,7 +8,7 @@ use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\StorageData;
 use izzum\statemachine\persistence\Session;
-use izzum\statemachine\persistence\Postgres;
+
 use izzum\statemachine\persistence\PDO;
 /**
  * @group statemachine
@@ -233,27 +233,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         }
     }
     
-    /**
-     * this test will only run when the \assets\sql\postgresql.sql file has been 
-     * executed on a postgres backend, providing test data.
-     * @group not-on-production
-     * @group postgres
-     */
-    public function testPostgresAdapter()
-    {
-        //TRICKY:
-        //this test will only run when the \assets\sql\postgresql.sql file has been 
-        //executed on a postgres backend, providing test data.
-        $machine = 'izzum';
-        $schema = 'public';
-        $pg_connection = "host=localhost user=postgres dbname=postgres password=izzum";
-        $adapter = new Postgres($pg_connection, $schema);
-        
-        $this->assertPersistenceAdapter($adapter, $machine);
-        
-       
-        
-    }
     
     /**
      * helper method for different backend adapters

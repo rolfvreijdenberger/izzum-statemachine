@@ -492,7 +492,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         echo PHP_EOL;
         echo __METHOD__ . PHP_EOL;
         echo PHP_EOL;
-        echo PlantUml::createStateDiagram($machine);
+        $plant = new PlantUml();
+        echo $plant->createStateDiagram($machine);
         echo PHP_EOL;
     }
     
@@ -524,7 +525,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         echo PHP_EOL;
         echo __METHOD__ . PHP_EOL;
         echo PHP_EOL;
-        echo PlantUml::createStateDiagram($machine);
+        $plant = new PlantUml();
+        echo $plant->createStateDiagram($machine);
         echo PHP_EOL;
     }
     

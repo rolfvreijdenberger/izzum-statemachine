@@ -1,5 +1,8 @@
 -- for full explanation and comments, see the postgresql.sql file
 
+-- this database can be used with the izzum\statemachine\persistence\PDO adapter with
+-- a correct dsn to connect to sqlite ("sqlite:path/to/sqlite.db")
+
 DROP TABLE IF EXISTS statemachine_history;
 DROP TABLE IF EXISTS statemachine_entities;
 DROP TABLE IF EXISTS statemachine_transitions;
