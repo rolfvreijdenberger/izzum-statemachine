@@ -1,4 +1,4 @@
-izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum/) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/?branch=master)
+izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachine.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum/) [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/?branch=master) [![Code Coverage](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum/?branch=master)
 =====
 '_Yo man, who gots the izzum for tonights festivities?_'
 
@@ -13,6 +13,8 @@ A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "fini
 implementation that allows you to add state for any domain object and to define
 the logic of transitions between any and all states for that object while keeping your object
 unaware that it is governed by a statemachine.
+
+The statemachine is in the form of a rooted [bidirected](https://en.wikipedia.org/wiki/Bidirected_graph) finite [graph](https://en.wikipedia.org/wiki/Graph_(mathematics).
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
