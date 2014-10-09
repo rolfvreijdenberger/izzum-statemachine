@@ -14,7 +14,7 @@ implementation that allows you to add state for any domain object and to define
 the logic of transitions between any and all states for that object while keeping your object
 unaware that it is governed by a statemachine.
 
-The statemachine is in the form of a rooted [bidirected](https://en.wikipedia.org/wiki/Bidirected_graph) finite [graph](https://en.wikipedia.org/wiki/Graph_(mathematics).
+The statemachine is in the form of a rooted [bidirected](https://en.wikipedia.org/wiki/Bidirected_graph) finite [graph](https://en.wikipedia.org/wiki/Graph_(mathematics)).
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs.
