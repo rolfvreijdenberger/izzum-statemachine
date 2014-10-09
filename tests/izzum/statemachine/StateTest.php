@@ -23,9 +23,10 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $sc = new State('c');
         $t1 = new Transition($state, $sb);
         $t2 = new Transition($state, $sc);
-        $this->assertCount(2, $state->getTransitions(), 'biderectional associtation initiated through transition');
-        $this->assertEquals($t1, $state->getTransitions()[0], 'in order transitions were created');
-        $this->assertEquals($t2, $state->getTransitions()[1], 'in order transitions were created');
+        $trans = $state->getTransitions();
+        $this->assertCount(2, $trans, 'biderectional associtation initiated through transition');
+        $this->assertEquals($t1, $trans[0], 'in order transitions were created');
+        $this->assertEquals($t2, $trans[1], 'in order transitions were created');
         $this->assertTrue($state->isInitial());
         $this->assertFalse($state->isFinal());
         $this->assertFalse($state->isNormal());
