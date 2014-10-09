@@ -497,12 +497,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         echo PHP_EOL;
     }
     
-    /**
-     * @test
-     * @group not-on-production
-     * @group plantuml
-     */
-    public function shouldCreatePlantUmlStateDiagramByUsingLoader()
+
+    protected function doPlant($output = false)
     {
         $machine = 'coffee-machine';
         $id = 123;
@@ -522,13 +518,30 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $loader = new LoaderArray($data);
         $loader->load($machine);
         
-        echo PHP_EOL;
-        echo __METHOD__ . PHP_EOL;
-        echo PHP_EOL;
         $plant = new PlantUml();
-        echo $plant->createStateDiagram($machine);
-        echo PHP_EOL;
+        $result = $plant->createStateDiagram($machine);
+        $this->assertNotNull($result);
+        $this->assertTrue(is_string($result));
+        if($output) {
+            echo PHP_EOL;
+            echo __METHOD__ . PHP_EOL;
+            echo PHP_EOL;
+            echo $result;
+            echo PHP_EOL;
+        }
     }
     
-
+    
+    public function testPlantUml() {
+        $this->doPlant(false);
+    }
+     /**
+     * @test
+     * @group not-on-production
+     * @group plantuml
+     */
+    public function testPlantUmlWithOutput()
+    {
+        $this->doPlant(true);
+    }
 }
