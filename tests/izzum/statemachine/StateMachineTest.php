@@ -175,9 +175,14 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertNotEquals($sa, $sb);
         $this->assertNotEquals($sb, $sc);
         
-        $this->assertEquals($sa->getTransitions()[0], $transition_1, 'bidirectional association');
-        $this->assertEquals($sbb->getTransitions()[0], $transition_2, 'bidirectional association');
-        $this->assertNotEquals($sbb->getTransitions()[1], $transition_2, 'no association, transition not on state');
+        $sat = $sa->getTransitions();
+        $sat0 = $sat[0];
+        $this->assertEquals($sat0, $transition_1, 'bidirectional association');
+        $sbbt = $sbb->getTransitions();
+        $sbbt0 = $sbbt[0];
+        $this->assertEquals($sbbt0, $transition_2, 'bidirectional association');
+        $sbbt1 = $sbbt[1];
+        $this->assertNotEquals($sbbt1, $transition_2, 'no association, transition not on state');
         
     }
     
