@@ -1,5 +1,5 @@
 {
-    "name": "rolfvreijdenberger/izzum",
+    "name": "rolfvreijdenberger/izzum-statemachine",
     "description": "A superior statemachine library php > 5.3. integrates with your domain models.",
     "keywords":    ["statemachine", "rules", "command", "transition", "state", "machine", "domain", "model", "finite", "izzum", "automaton", "pattern"],
     "type":        "library",
