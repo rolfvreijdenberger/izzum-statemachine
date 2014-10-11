@@ -312,11 +312,11 @@ to use.
 Since creating a statemachine involces creating different types of objects, 
 it is advisable to use a factory for your application domain but it is not necessary.
 
-Create a factory by subclassing `izzum\statemachine\factory\AbstractFactory` and
+Create a factory by subclassing `izzum\statemachine\AbstractFactory` and
 by implementing the abstract methods necessary.
 ```php
 namespace izzum\examples\trafficlight;
-use izzum\statemachine\factory\AbstractFactory;
+use izzum\statemachine\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\loader\LoaderArray;
