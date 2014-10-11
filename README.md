@@ -370,6 +370,10 @@ while(true) {
 
 ##Examples
 
+###examples section in the code###
+Check out the `/examples/trafficlight/` directory. Here you will find a 
+working example of a functioning application with a Factory, Builder and some
+Rules and Commands in action. This can guide you to building your own implementation.
 
 ###class diagram for the izzum package
 ![generated plant uml classdiagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/class-diagram-plantuml.png )
