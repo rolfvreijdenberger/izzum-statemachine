@@ -8,7 +8,7 @@ version of this document.
 - **`new`**: a [postgresql](http://www.postgresql.org) and [sqlite](http://www.sqlite.org) backend to store your data.
 
 ##about##
-###  A superior, extensible and flexible statemachine library  ### 
+###  A superior, extensible and flexible statemachine library### 
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") 
 implementation that allows you to add state for any domain object and to define
 the logic of transitions between any and all states for that object while keeping your object
@@ -19,18 +19,18 @@ The statemachine is in the form of a rooted [bidirected](https://en.wikipedia.or
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs, including using the backend of choice to store configuration of the statemachine and the transition history of your stateful objects.
 
-###  thoroughly documented  ### 
+###  thoroughly documented### 
 find out how it works and what matters in clean code and excellent inline
 documentation with explanations of how and why you'd use it and what you can 
 potentially use it for. 
 The unittests and the examples provided can serve as extra documentation on how to use it.
 
-###  Use your own specific domain models  ### 
+###  Use your own specific domain models### 
 It can be tailored to your application domain to work together with your own
 [application specific domain models](https://en.wikipedia.org/wiki/Domain_model "domain model on wikipedia") 
 
 
-###  Easy configuration  ### 
+###  Easy configuration### 
 Izzum makes it simple to define a statemachine with transitions and states by
 providing simple objects that handle the loading logic for you.
 
@@ -38,7 +38,7 @@ A full implementation using [php PDO](http://php.net/manual/en/intro.pdo.php) is
 which enables you to directly connect to postgresql/sqlite/mysql/MSSQL database 
 with the code and the sql definitions provided in `assets/sql/*.sql`   
 
-###  Well designed interface  ### 
+###  Well designed interface### 
 Clients of your code (your application) will only need to use a couple of lines
 of code to interact with your statemachine and have access to a well designed
 interface in case there is a need for more advanced manipulation.
@@ -59,7 +59,7 @@ $machine->addTransition($transition);
 $machine->changeContext($context);
 ```
 
-###  Formal ways to encapsulate the logic for transitions  ### 
+###  Formal ways to encapsulate the logic for transitions### 
 All logic for a single transition is encapsulated in two classes:
 - a subclass of Rule, a business rule which makes sure that a transition is 
 allowed/disallowed by checking if a business rule applies.
@@ -72,29 +72,29 @@ with a great way to seperate your concerns in their own (testable) classes.
 
 It makes it easy for teams to work on discrete parts of the lifecycle of the domain model.
 
-###  Battle proven, fully unittested with high code coverage  ###  
+###  Battle proven, fully unittested with high code coverage###  
 Quality first! Using industry best practices for writing code with tests to back it up. 
 Making use of proven design patterns to allow you to tailor it to your needs.
 
 It is used in a high load commercial environment with a postgresql backend 
 for one of the best Dutch fiber ISP organisations for their order management system.
 
-###  Uses well known design patterns and OOP principles  ### 
+###  Uses well known design patterns and OOP principles### 
 - patterns: AbstractFactory, template method (hooks), [Command](https://en.wikipedia.org/wiki/Command_pattern), Adapter (persistence), Builder (domain model), Decorator (Loader)
 - principles: Dependency injection, encapsulation, polymorphism, extensible/inheritance, open/closed.
  
-###  multiple backend implementations  ### 
+###  multiple backend implementations### 
 we have provided a [php PDO](http://php.net/manual/en/intro.pdo.php) implementation that can be used 
 to connect to all supported databases as your persistence layer to store
 and retrieve states, define your machines and transitions, and keep your history of transitions.
 
-###  no dependencies  ### 
+###  no dependencies### 
 There are no dependencies on third party libraries. php 5.3 or higher
 
-###  License  ### 
+###  License### 
 [MIT](https://en.wikipedia.org/wiki/MIT_License)
 
-###  Automated uml state diagram creation  ### 
+###  Automated uml state diagram creation### 
 Create uml state diagrams from a statemachine [with plantuml](http://plantuml.sourceforge.net/ "plantuml on sourceforge") 
 It is a great way to visualize your machine with all the Rule/Command logic, 
 making it easy to communicate with business users or stakeholders.
@@ -103,13 +103,13 @@ see the examples section for some diagrams.
 
 ##Usage##
 
-### demo ### 
+### demo### 
 see the `/examples/trafficlight` directory for a working implementation of a 
 traffic light that you can easily run from the command line.
 
-### installation ### 
+### installation### 
 use [composer](https://getcomposer.org/) to install the project
-### domain models: the representation of your applications' workers ### 
+### domain models: the representation of your applications' workers### 
 your domain models are specific to your application. They are carefully designed
 and group data and related logic together. They work well with other models in your
 application. There is a model in your application that you wish to manipulate in 
@@ -171,7 +171,7 @@ class TrafficLight {
     }  
 }
 ```
-###  rules: check if a transition is allowed  ### 
+###  rules: check if a transition is allowed### 
 A rule will query your domain object for information to decide whether it is allowed
 to make a transition (by returning true or false).
 
@@ -195,7 +195,7 @@ class CanSwitch extends Rule {
     }
 }
 ```
-###  commands: perform transition logic  ### 
+###  commands: perform transition logic### 
 A command will execute the logic associated with the transition and this is the
 place where your domain model (or associated objects) will be manipulated.
 
@@ -223,7 +223,7 @@ class SwitchRed extends Command {
     }
 }
 ```
-###  entity builders: build your domain model  ### 
+###  entity builders: build your domain model### 
 An EntityBuilder builds your domain model on which you operate, in our case it's
 a TrafficLight. A domain object will always be representable by it's type and a 
 unique id. It's the duty of the EntityBuilder to create one for your statemachine
@@ -247,7 +247,7 @@ class EntityBuilderTrafficLight extends EntityBuilder{
     }
 }
 ```
-###  persistence adapters: writing and reading your state data  ### 
+###  persistence adapters: writing and reading your state data### 
 A persistance adapter is an adapter that is specifically tailored for your 
 applications' design to store and retrieve the data associated by the statemachine
 with your domain model. 
@@ -265,7 +265,7 @@ This is a power feature for advanced users who will know or can find out what
 they are or should be doing.
 An example is not provided here, you can check out `izzum\statemachine\persistence`
 to take a look at the different adapters provided.
-###  loaders: loading your statemachine definition  ### 
+###  loaders: loading your statemachine definition### 
 A loader is closely (but not necessarily) coupled to your persistence layer and 
 is used to load the data for your statemachine. This includes all data for the
 states, the transition between these states and the rules and commands associated
@@ -300,7 +300,7 @@ class for an example of that)
         $loader = new LoaderArray($data);
 ```
 
-### factories: creating related classes ### 
+### factories: creating related classes### 
 An Factory can be used to create a family of related classes. In our case, all
 the classes that are needed for your application domain. The factory should provide
 you with a statemachine, which is dependent on a Context object. The Context object
@@ -342,7 +342,7 @@ class TrafficLightFactory extends AbstractFactory{
     }
 }
 ```
-### your application: tying it all together ### 
+### your application: tying it all together### 
 Your application needs to do some work!
 Create the factory and get a statemachine from it. Just pass in the unique id
 for the domain model you want to manipulate to get the correct statemachine.
@@ -363,24 +363,24 @@ while(true) {
     sleep(1);  
 }
 ```
-### result: state diagram for the traffic light machine ### 
+### result: state diagram for the traffic light machine### 
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml-traffic-light.png )
-### result: output for the traffic light machine ### 
+### result: output for the traffic light machine### 
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/traffic-light-output.png )
 
 
 ##Examples##
 
 
-###  class diagram for the izzum package  ### 
+###  class diagram for the izzum package### 
 ![generated plant uml classdiagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/class-diagram-plantuml.png )
 
 
 
-###  uml diagram for an order system  ### 
+###  uml diagram for an order system### 
 ![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml.png )
 
-###  php example for the simplest case  ### 
+###  php example for the simplest case### 
 ```php
 <?php
 use izzum\statemachine\StateMachine;
@@ -399,7 +399,7 @@ $machine->run();
 echo $machine->getCurrentState();
 ```
 
-###  plantuml diagram and the code to create it  ### 
+###  plantuml diagram and the code to create it### 
 ```php
 <?php
 use izzum\statemachine\StateMachine;
