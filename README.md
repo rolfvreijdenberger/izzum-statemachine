@@ -3,7 +3,7 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachi
 '_Yo man, who gots the izzum for tonights festivities?_'
 
 - see [documentup.com for a navigable version of this document](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com").
-- Want to know what to do to get it working? Skip to the [Usage section](#usage) or [examples](#examples)
+- Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)
 - Visually oriented? Know uml? see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
 
 ##about
