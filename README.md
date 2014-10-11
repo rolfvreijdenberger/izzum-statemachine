@@ -98,16 +98,30 @@ Create uml state diagrams from a statemachine [with plantuml](http://plantuml.so
 It is a great way to visualize your machine with all the Rule/Command logic, 
 making it easy to communicate with business users or stakeholders.
 
-see the examples section for some diagrams.
+###installation
+use [composer](https://getcomposer.org/) to install the project
+create a file called composer.json
+```
+{
+    "require": {
+        "rolfvreijdenberger/izzum-statemachine": "~1.0"
+    }
+}
+```
+and install it with
+```
+composer install
+```
+you will find the izzum package in ./vendor/rolfvreijdenberger/izzum-statemachine
 
-##Usage
+##Usage: a working example
 
 ###demo
 see the `/examples/trafficlight` directory for a working implementation of a 
 traffic light that you can easily run from the command line.
+In the directory, type ```php -f index.php```
 
-###installation
-use [composer](https://getcomposer.org/) to install the project
+
 ###domain models: the representation of your applications' workers
 your domain models are specific to your application. They are carefully designed
 and group data and related logic together. They work well with other models in your
@@ -362,8 +376,9 @@ while(true) {
     sleep(1);  
 }
 ```
-###result: state diagram for the traffic light machine
+###result: generated state diagram for the traffic light machine
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml-traffic-light.png )
+
 ###result: output for the traffic light machine
 ![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/traffic-light-output.png )
 
@@ -375,30 +390,7 @@ while(true) {
 ![generated plant uml classdiagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/class-diagram-plantuml.png )
 
 
-
-###uml diagram for an order system
-![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml.png )
-
-###php example for the simplest case
-```php
-<?php
-use izzum\statemachine\StateMachine;
-use izzum\statemachine\PostgresFactory;
-
-//use the abstract factory pattern with a postgres persistence layer to store
-//the states for the different stateful entities, a loader to load all the configured
-//transitions, states, rules and commands and a specific builder for the 
-//domain object (an order)
-$factory = new PostgresFactory('order-machine');
-//get a statemachine that can run transitions for all states for
-//the order we are currently manipulating
-$machine = $factory->getStateMachine($order->getId());
-//run the first transition allowed
-$machine->run();
-echo $machine->getCurrentState();
-```
-
-###plantuml diagram and the code to create it
+###howto create a state diagram via plantuml from the code
 ```php
 <?php
 use izzum\statemachine\StateMachine;
@@ -425,10 +417,17 @@ $loader->load($machine);
 //some output for plantuml
 $generator = new PlantUml();
 echo $generator->createStateDiagram($machine);
-//run the machine to completion
-$machine->runToCompletion();
+//feed the output to a plantuml diagram creator:
+// - available on plantuml site
+// - or incorporate the generator directly in your application
 ```
+
+###uml diagram for a fictive coffee machine
 ![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml-coffee.png )
+
+
+###uml diagram for a fictive order system
+![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml.png )
 
 
 ##contributors and thank you's
