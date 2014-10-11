@@ -107,15 +107,22 @@ traffic light that you can easily run from the command line.
 In the directory, type ```php -f index.php```
 
 
-###domain models: the representation of your applications' workers
+###domain models: your existing application code
 your domain models are specific to your application. They are carefully designed
 and group data and related logic together. They work well with other models in your
-application. There is a model in your application that you wish to manipulate in 
-more discrete points during it's lifecycle, which are defined by states that your
-object can be in. You can identify your domain models by their unique
+application. 
+
+You can identify your domain models by their unique
 id in the application, possibly related to storage in a database. You manipulate 
 them via gui's, cron jobs, message queues and they perform all kinds of magic.
+
 But they don't hold state very well.
+And you would like them to be stateful.
+
+There is a model in your application that you wish to manipulate in 
+more discrete points during it's lifecycle, which are defined by states that your
+object can be in. 
+
 This is where the statemachine shines. It's only function is to use your domain model
 and query it for information about transitions that it wants to make between states.
 It can/will store data seperately from your domain object OR can integrate with
