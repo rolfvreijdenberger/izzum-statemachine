@@ -5,6 +5,7 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachi
 - see [documentup.com for a navigable version of this document](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com").
 - Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)
 - Visually oriented? Know uml? see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
+- *new*: a fully functional PDO relational database implementation, with the sql for both postgresql and sqlite.
 
 ##about
 ###A superior, extensible and flexible statemachine library
@@ -58,6 +59,7 @@ It makes it easy for teams to work on discrete parts of the lifecycle of the dom
 ###Battle proven, fully unittested with high code coverage
 Quality first! Using industry best practices for writing code with tests to back it up. 
 Making use of proven design patterns to allow you to tailor it to your needs.
+Go to the `/tests` directory and execute the command `phpunit -c phpunit.xml` to run the tests.
 
 It is used in a high load commercial environment with a postgresql backend 
 for one of the best Dutch fiber ISP organisations for their order management system.
@@ -257,9 +259,10 @@ A persistance adapter is an adapter that is specifically tailored for your
 applications' design to store and retrieve the data associated by the statemachine
 with your domain model. 
 
-Currently there is a fully functional and tested Postgres database adapter that 
-both loads the configuration and stores the data. An sql file for the data
-definitions is also provided in `/assets/sql/postgres.sql`
+Currently there is a fully functional and tested PDO (php database objects) adapter that 
+both loads the configuration and stores the data in a backend of choice. An sql file for the data
+definitions is also provided in `/assets/sql/postgres.sql` for the postgres database and
+there is also one available for sqlite. Other ports are more than welcome if you want to contribute.
 We also provide an in memory adapter that stores data for a single php process
 and a session adapter that stores data for a session (can be used for GUI wizards)
 
