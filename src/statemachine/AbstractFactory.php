@@ -1,11 +1,7 @@
 <?php
-namespace izzum\statemachine\factory;
-use izzum\statemachine\StateMachine;
-use izzum\statemachine\Context;
+namespace izzum\statemachine;
 use izzum\statemachine\loader\Loader;
 use izzum\statemachine\persistence\Adapter;
-use izzum\statemachine\Exception;
-use izzum\statemachine\EntityBuilder;
 
 /**
  * This class (or it's subclasses) should be the preferred way to get a statemachine.
@@ -28,22 +24,23 @@ abstract class AbstractFactory {
       * Gets the concrete Loader.
       * @return Loader An implementation of a Loader class
       */
-     abstract protected function getLoader();
+     abstract protected function createLoader();
      
      /**
       * Returns an implementation of an Adapter class for the persistence layer
       * @return Adapter
       */
-     abstract protected function getPersistenceAdapter();
+     abstract protected function createAdapter();
      
      /**
       * Get a reference builder to build your domain objects
       * @return EntityBuilder
       */
-     abstract protected function getEntityBuilder();
+     abstract protected function createBuilder();
 
      /**
-      * get the machine name for the machines that are produced by this factory
+      * get the machine name for the machines that are produced by this factory.
+      * will be used by the Context
       * @return string
       */
      abstract protected function getMachineName();
@@ -77,9 +74,9 @@ abstract class AbstractFactory {
      */
     public function getStateMachine($id)
     {
-        $context = $this->getContext($id);
+        $context = $this->createContext($id);
         $machine = $this->createMachine($context);
-        $loader = $this->getLoader();
+        $loader = $this->createLoader();
         $loader->load($machine);
         return $machine;
     }
@@ -104,13 +101,13 @@ abstract class AbstractFactory {
      * @link https://en.wikipedia.org/wiki/Abstract_factory_pattern
      * @link https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    protected function getContext($id)
+    protected function createContext($id)
     {
         $context = new Context(
                 $id, 
                 $this->getMachineName(), 
-                $this->getEntityBuilder(), 
-                $this->getPersistenceAdapter()
+                $this->createBuilder(), 
+                $this->createAdapter()
                 );
         return $context;
         

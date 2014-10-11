@@ -1,6 +1,6 @@
 <?php
 namespace izzum\examples\trafficlight;
-use izzum\statemachine\factory\AbstractFactory;
+use izzum\statemachine\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\loader\LoaderArray;
@@ -13,11 +13,11 @@ use izzum\statemachine\Transition;
  */
 class TrafficLightFactory extends AbstractFactory{
     
-    protected function getEntityBuilder() {
+    protected function createBuilder() {
         return new EntityBuilderTrafficLight();
     }
 
-    protected function getLoader() {
+    protected function createLoader() {
         //we use the array loader
         //in a non-example situation we would use a backend like a
         //database for example
@@ -53,7 +53,7 @@ class TrafficLightFactory extends AbstractFactory{
         return 'traffic-light';
     }
 
-    protected function getPersistenceAdapter() {
+    protected function createAdapter() {
         //we use the inmemory adapter
         //in real life we would use some persisten storage like 
         //a relational database.

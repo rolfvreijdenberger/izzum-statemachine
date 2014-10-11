@@ -1,6 +1,5 @@
 <?php
 namespace izzum\statemachine;
-use izzum\statemachine\factory\AbstractFactory;
 use izzum\statemachine\utils\Utils;
 
 
@@ -45,10 +44,9 @@ class FactoryTest extends \PHPUnit_Framework_TestCase {
 }
 
 namespace izzum\statemachine;
-use izzum\statemachine\factory\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
 class SimpleTestFactory extends AbstractFactory{
-    protected function getLoader() {
+    protected function createLoader() {
             //this is only for the tests.
             //normally you'd create a specific loader, which would get the data
             //from a backend somewhere.
@@ -114,14 +112,14 @@ class SimpleTestFactory extends AbstractFactory{
        return 'factory-test';
     }
 
-    protected function getPersistenceAdapter() {
+    protected function createAdapter() {
         $io = new Memory();
         $io->clear();
         return $io;
     }
 
 
-    protected function getEntityBuilder() {
+    protected function createBuilder() {
         return new EntityBuilder();
     }
 

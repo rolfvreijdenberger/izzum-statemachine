@@ -1,0 +1,153 @@
+@startuml
+
+package izzum.statemachine {
+    Class StateMachine {
+      # states: State[]
+      # transitions: Transition[]
+      # context: Context
+      + can(transition:string):boolean
+      + apply(transition:string)
+      + run()
+      + runToCompletion()
+      + getTransitions():Transition[]
+      + getStates(): State[]
+      + addTransition(): Transition[]
+      + changeContext(Context)
+      + getContext():Context
+      + getCurrentState():State
+      + getInitialState(): State
+      # setCurrentState(State)
+      # checkGuard(Transition)
+      # preProcess(Transition)
+      # postProcess(Transition)
+      # handleTransitionException(Exception, transition:string)
+      
+    }
+    Class State {
+        # name: string
+        # type:string
+        # transitions: Transition[]
+        + getName():string
+        + getType():string
+        + getTransitions():Transition[]
+        + hasTransition(name:string):boolean
+    }
+    Class Transition {
+        # state_from:State
+        # state_to:State
+        # rule:string
+        # command:string
+        + can(Context)
+        + process(Context)
+        + getRule(Context):Rule
+        + getCommand(Context): Command
+        + getRuleName():string
+        + getCommandName():string
+    }
+    Class Context {
+        # entity_id:string
+        # builder: EntityBuilder
+        # adapter: Adapter
+        # statemachine:StateMachine
+        + getEntity():*
+        + getEntityId():string
+        + getState():string
+        + setState(state)
+        + getBuilder():EntityBuilder
+        + getAdapter():Adapter
+        + setStateMachine(StateMachine)
+        + setFailedTransition(Exception, transition:string)
+    }
+
+    Class EntityBuilder {
+        + getEntity(Context):*
+        # build():*
+    }
+    package persistence {
+      abstract Class Adapter {
+        + {abstract} getEntityIds(machine:string, state:string):string[]
+        + {abstract} add(Context):boolean
+        + getInitialState(Context):string
+        + setState(Context):boolean
+        + getState(Context)
+        + {abstract} add(Context)
+        # {abstract} processSetState(Context):boolean
+        # {abstract} processGetState(Context)
+      }
+
+      Class PDO {
+        #dsn:string
+      }
+
+      Class Memory {
+
+      }
+
+      Class Session {
+
+      }
+
+    }
+
+        abstract Class AbstractFactory {
+            + getStateMachine(id):StateMachine
+            # {abstract} createLoader(): Loader
+            # {abstract} createAdapter(): Adapter
+            # {abstract} createBuilder(): EntityBuilder
+            # {abstract} getMachineName(): string
+            # createMachine(Context): StateMachine
+            # createContext(id): Context
+            +add(Context)
+        }
+
+    package loader {
+        Interface Loader {
+          +load(StateMachine)
+        }
+        Class LoaderArray {
+          # data: LoaderData[]
+          + load(StateMachine)
+        }
+        Class LoaderData {
+        }
+    }
+
+    Class Exception
+
+    package command {
+      Class Command {
+        +execute()
+        #{abstract}_execute()
+      }
+    }
+
+    package rules {
+      Class Rule {
+        +applies():boolean
+        #{abstract}_applies():boolean
+      }
+    }
+
+}
+    StateMachine "1" o-- "n" State : uses
+    StateMachine "1" o-- "n" Transition : does
+    StateMachine "1" o-- "1" Context : needs and uses
+    StateMachine "1" --> "n" Exception: throws
+    Context "n" o-- "1" EntityBuilder : gets domain object (alias: DO)
+    Context "n" o-- "1" Adapter : read/write state info
+    State "n" -- "n" Transition : need each other
+    Adapter <|-- Memory
+    Adapter <|-- PDO : database interfacing
+    Adapter <|-- Session
+    Loader <|.. PDO : storage and loading
+    Loader <|.. LoaderArray 
+    Transition *-- Command : logic to process transitions (DO)
+    Transition *-- Rule : check if transition allowed (DO)
+    Transition "n" --> "1" Context : acts on
+    AbstractFactory "1" --> "n" StateMachine: creates SM, Adapter, Loader, Context, EntityBuilder
+    Loader "1" --> "n" StateMachine : adds transitions
+
+
+
+@enduml
+
