@@ -41,22 +41,6 @@ with the code and the sql definitions provided in `assets/sql/*.sql`
 Clients of your code (your application) will only need to use a couple of lines
 of code to interact with your statemachine and have access to a well designed
 interface in case there is a need for more advanced manipulation.
-```php
-//interface overview for the statemachine
-$machine = new StateMachine($context);
-$machine->apply('new_to_initialize');
-$machine->run();
-$machine->runToCompletion();
-$machine->can('new_to_initialize');
-$machine->getContext();
-$machine->getStates();
-$machine->getTransitions();
-$machine->getCurrentState();
-$machine->getInitialState();
-$machine->toString();
-$machine->addTransition($transition);
-$machine->changeContext($context);
-```
 
 ###Formal ways to encapsulate the logic for transitions
 All logic for a single transition is encapsulated in two classes:
@@ -99,8 +83,8 @@ It is a great way to visualize your machine with all the Rule/Command logic,
 making it easy to communicate with business users or stakeholders.
 
 ###installation
-use [composer](https://getcomposer.org/) to install the project
-create a file called composer.json
+use [composer](https://getcomposer.org/) to install the project.
+Create a file called composer.json
 ```
 {
     "require": {
@@ -112,7 +96,8 @@ and install it with
 ```
 composer install
 ```
-you will find the izzum package in ./vendor/rolfvreijdenberger/izzum-statemachine
+You will find the izzum package in ./vendor/rolfvreijdenberger/izzum-statemachine.
+You can also download it directly from github.
 
 ##Usage: a working example
 
