@@ -1,11 +1,11 @@
--- https://sqlite.org/
--- sql for the creation of sqlite tables for storing statemachine data.
+-- https://www.mysql.com/
+-- sql for the creation of mysql tables for storing statemachine data.
 
 -- for full explanation and comments, see the postgresql.sql file
 
 -- this database can be used with the izzum\statemachine\persistence\PDO adapter with
--- a correct dsn to connect to sqlite ("sqlite:path/to/sqlite.db")
--- http://php.net/manual/en/ref.pdo-sqlite.php
+-- a correct dsn(data source name) to connect to mysql ("mysql:host=localhost;dbname=test")
+-- http://php.net/manual/en/ref.pdo-mysql.connection.php
 
 DROP TABLE IF EXISTS statemachine_history;
 DROP TABLE IF EXISTS statemachine_entities;
@@ -17,16 +17,16 @@ DROP TABLE IF EXISTS statemachine_machines;
 
 -- machines
 CREATE TABLE statemachine_machines (
-	machine VARCHAR NOT NULL PRIMARY KEY, 
+	machine VARCHAR(255) NOT NULL PRIMARY KEY, 
         description text,
 	factory text 
 );
 
 -- states
 CREATE TABLE statemachine_states (
-	machine VARCHAR NOT NULL, 
-	state VARCHAR NOT NULL, 
-	type VARCHAR DEFAULT 'normal' NOT NULL CHECK(type IN ('final','initial','normal')), 
+	machine VARCHAR(255) NOT NULL, 
+	state VARCHAR(255) NOT NULL, 
+	type VARCHAR(255) DEFAULT 'normal' NOT NULL CHECK(type IN ('final','initial','normal')), 
 	description text,
         PRIMARY KEY (machine, state),
         FOREIGN KEY (machine) REFERENCES statemachine_machines(machine) ON UPDATE CASCADE
@@ -34,12 +34,12 @@ CREATE TABLE statemachine_states (
 
 --transitions
 CREATE TABLE statemachine_transitions (
-	machine VARCHAR  NOT NULL, 
-	state_from VARCHAR  NOT NULL,
-	state_to VARCHAR  NOT NULL, 
-	rule VARCHAR  DEFAULT '\izzum\rules\True' NOT NULL,
-	command VARCHAR  DEFAULT '\izzum\command\Null' NOT NULL,
-	priority int4 DEFAULT 1 NOT NULL, 
+	machine VARCHAR(255) NOT NULL, 
+	state_from VARCHAR(255) NOT NULL,
+	state_to VARCHAR(255) NOT NULL, 
+	rule VARCHAR(255) DEFAULT '\izzum\rules\True' NOT NULL,
+	command VARCHAR(255) DEFAULT '\izzum\command\Null' NOT NULL,
+	priority TINYINT DEFAULT 1 NOT NULL, 
 	description text,
         PRIMARY KEY (machine, state_from, state_to),
         FOREIGN KEY (machine, state_from) REFERENCES statemachine_states(machine, state) ON UPDATE CASCADE,
@@ -48,9 +48,9 @@ CREATE TABLE statemachine_transitions (
 
 --entities
 CREATE TABLE statemachine_entities (
-	machine VARCHAR NOT NULL,
-	entity_id VARCHAR NOT NULL, 
-	state VARCHAR NOT NULL, 
+	machine VARCHAR(255) NOT NULL,
+	entity_id VARCHAR(255) NOT NULL, 
+	state VARCHAR(255) NOT NULL, 
 	changetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
         PRIMARY KEY (machine, entity_id),
         FOREIGN KEY (machine, state) REFERENCES statemachine_states(machine, state)
@@ -58,12 +58,11 @@ CREATE TABLE statemachine_entities (
 CREATE INDEX i_statemachine_entities_entity_id ON statemachine_entities (entity_id);
 
 --history
-CREATE SEQUENCE s_statemachine_history_id;
 CREATE TABLE statemachine_history (
-	id INTEGER PRIMARY KEY, 
-	machine VARCHAR  NOT NULL,
-	entity_id VARCHAR NOT NULL,
-	state VARCHAR NOT NULL, 
+	id INTEGER PRIMARY KEY auto_increment NOT NULL, 
+	machine VARCHAR(255)  NOT NULL,
+	entity_id VARCHAR(255) NOT NULL,
+	state VARCHAR(255) NOT NULL, 
 	changetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	message text 	
 );
@@ -79,7 +78,7 @@ CREATE INDEX i_statemachine_history_entity_id ON statemachine_history (entity_id
 INSERT INTO statemachine_machines
 (machine, factory, description)
 VALUES 
-('izzum', '\izzum\statemachine\factory\SqliteExampleFactory', 'this izzum: an example statemachine');
+('izzum', '\\izzum\\statemachine\\factory\\MysqlExampleFactory', 'this izzum: an example statemachine');
 
 -- insert states into the izzum machine
 INSERT INTO statemachine_states
@@ -95,15 +94,15 @@ VALUES
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
-('izzum', 'new', 'ok','\izzum\rules\True', 'izzum\command\Null', 1, 'new_to_ok transition'),
-('izzum', 'ok', 'fine','\izzum\rules\True', 'izzum\command\Null', 2, 'ok_to_fine transition'),
-('izzum', 'fine', 'excellent','\izzum\rules\True', 'izzum\command\Null', 2, 'fine_to_excellent transition'),
-('izzum', 'excellent', 'done','\izzum\rules\True', 'izzum\command\Null', 2, 'excellent_to_done transition'),
-('izzum', 'new', 'bad','\izzum\rules\True', 'izzum\command\Null', 2, 'new_to_bad transition'),
-('izzum', 'ok', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'ok_to_bad transition'),
-('izzum', 'fine', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'fine_to_bad transition'),
-('izzum', 'excellent', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'excellent_to_bad transition'),
-('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\Null', 1, 'bad_to_done transition');
+('izzum', 'new', 'ok','\\izzum\\rules\\True', 'izzum\\command\\Null', 1, 'new_to_ok transition'),
+('izzum', 'ok', 'fine','\\izzum\\rules\\True', 'izzum\\command\\Null', 2, 'ok_to_fine transition'),
+('izzum', 'fine', 'excellent','\\izzum\\rules\\True', 'izzum\\command\\Null', 2, 'fine_to_excellent transition'),
+('izzum', 'excellent', 'done','\\izzum\\rules\\True', 'izzum\\command\\Null', 2, 'excellent_to_done transition'),
+('izzum', 'new', 'bad','\\izzum\\rules\\True', 'izzum\\command\\Null', 2, 'new_to_bad transition'),
+('izzum', 'ok', 'bad','\\izzum\\rules\\False', 'izzum\\command\\Null', 1, 'ok_to_bad transition'),
+('izzum', 'fine', 'bad','\\izzum\\rules\\False', 'izzum\\command\\Null', 1, 'fine_to_bad transition'),
+('izzum', 'excellent', 'bad','\\izzum\\rules\\False', 'izzum\\command\\Null', 1, 'excellent_to_bad transition'),
+('izzum', 'bad', 'done','\\izzum\\rules\\ExceptionRule', 'izzum\\command\\Null', 1, 'bad_to_done transition');
 
 INSERT INTO statemachine_entities
 (machine, entity_id, state)

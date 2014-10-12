@@ -4,9 +4,14 @@ use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\Exception;
 /**
- * Context is an object that holds information about a stateful entity, which is
- * basically an application domain specific object like 'Order' or 'Customer' that
- * goes through some finite states in it's lifecycle.
+ * Context is an object that holds the contextual information for the statemachine.
+ * Important are:
+ * - the stateful entity, which is  an application domain specific  object 
+ * like 'Order' or 'Customer' that goes through some finite states in it's lifecycle.
+ * - the machine name, which is the type identifier for the machine and related
+ * to the entity (eg: 'order-machine')
+ * - persistence adapter, which reads/writes to/from a storage facility
+ * - builder, which constructs the stateful entity.
  * 
  * The entity is the object that will be acted upon by the 
  * Statemachine. This stateful object will be uniquely identified by it's id, 

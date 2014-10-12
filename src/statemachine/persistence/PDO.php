@@ -13,12 +13,15 @@ use izzum\statemachine\Exception;
  * sqlite, MSSQL, oracle etc). 
  * By providing a DSN connection string, you can connect to different backends.
  * 
- * This specific adapter uses the schema as defined in /assets/sql/postgres.sql
- * or /assets/sql/sqlite.sql
+ * This specific adapter uses the schema as defined in 
+ * - /assets/sql/postgres.sql
+ * - /assets/sql/sqlite.sql
+ * - /assets/sql/mysql.sql
  * but can be used on tables for a different database vendor as long as
- * the table names, fields and constraints are the same.
+ * the table names, fields and constraints are the same. Optionally, 
+ * a prefix can be set.
  * 
- * TRICKY: this Adapter does double duty as a Loader since both use the 
+ * This Adapter does double duty as a Loader since both use the 
  * same backend. You could use two seperate classes for this, but you can 
  * implement both in one class.
  * Loader::load(), Adapter::getEntityIds(), Adapter::processGetState()
@@ -27,6 +30,10 @@ use izzum\statemachine\Exception;
  * This is not a highly optimized adapter, but serves as something you can use 
  * out of the box. If you need an adapter more specialized to your 
  * needs/framework/system you can easily write one yourself.
+ * 
+ * More functionality related to a backend can be implemented here:
+ * - get the history of transitions from the history table
+ * - get the factories for machines from the machine table
  * 
  * @link http://php.net/manual/en/pdo.drivers.php
  * @link http://php.net/manual/en/book.pdo.php
@@ -62,12 +69,18 @@ class PDO extends Adapter implements  Loader {
     private $connection;
     
     /**
+     * table prefix
+     * @var string
+     */
+    private $prefix = '';
+    
+    /**
      * 
      * @param string $dsn a PDO data source name
      *      example: 'pgsql:host=localhost;port=5432;dbname=izzum'
      * @param string $user optional, defaults to null
      * @param string $password optional, defaults to null
-     * @param array $options optional, defaults to empty array
+     * @param array $options optional, defaults to empty array.
      * @link http://php.net/manual/en/pdo.connections.php
      */
     public function __construct($dsn, $user = null, $password = null, $options = array()) {
@@ -105,8 +118,19 @@ class PDO extends Adapter implements  Loader {
          * - set PRAGMA on sqlite
          * - etc.. whatever is the need to do a setup on, the first time 
          * you create a connection
+         *  - SET UTF-8 on mysql can be done with an option in the $options
+         * constructor argument
          */
         
+    }
+    
+    public final function setPrefix($prefix) {
+        $this->prefix = $prefix;
+    }
+    
+    public final function getPrefix()
+    {
+        return $this->prefix;
     }
     
     /**
@@ -116,8 +140,9 @@ class PDO extends Adapter implements  Loader {
      */
     protected function processGetState(Context $context) {
         $connection = $this->getConnection();
+        $prefix = $this->getPrefix();
         try {
-            $query = 'SELECT state FROM statemachine_entities WHERE machine = '
+            $query = 'SELECT state FROM ' . $prefix . 'statemachine_entities WHERE machine = '
                     . ':machine AND entity_id = :entity_id';
             $statement = $connection->prepare($query);
             $statement->bindParam(":machine", $context->getMachine());
@@ -178,8 +203,9 @@ class PDO extends Adapter implements  Loader {
      */
     public function isPersisted(Context $context) {
         $connection = $this->getConnection();
+        $prefix = $this->getPrefix();
         try {
-            $query = 'SELECT entity_id FROM statemachine_entities WHERE '
+            $query = 'SELECT entity_id FROM ' . $prefix . 'statemachine_entities WHERE '
                     . 'machine = :machine AND entity_id = :entity_id';
             $statement = $connection->prepare($query);
             $statement->bindParam(":machine", $context->getMachine());
@@ -216,8 +242,9 @@ class PDO extends Adapter implements  Loader {
         $this->addHistory($context, $state);
         
         $connection = $this->getConnection();
+        $prefix = $this->getPrefix();
         try {
-            $query = 'INSERT INTO statemachine_entities
+            $query = 'INSERT INTO ' . $prefix . 'statemachine_entities
                 (machine, entity_id, state, changetime)
                     VALUES
                 (:machine, :entity_id, :state, :timestamp)';
@@ -268,8 +295,9 @@ class PDO extends Adapter implements  Loader {
         $this->addHistory($context, $state);
         
         $connection = $this->getConnection();
+        $prefix = $this->getPrefix();
         try {
-            $query = 'UPDATE statemachine_entities SET state = :state, 
+            $query = 'UPDATE ' . $prefix . 'statemachine_entities SET state = :state, 
                 changetime = :timestamp WHERE entity_id = :entity_id 
                 AND machine = :machine';
             $statement = $connection->prepare($query);
@@ -298,8 +326,9 @@ class PDO extends Adapter implements  Loader {
     public function addHistory(Context $context, $state, $message = null)
     {
         $connection = $this->getConnection();
+        $prefix = $this->getPrefix();
         try {
-            $query = 'INSERT INTO statemachine_history
+            $query = 'INSERT INTO ' . $prefix . 'statemachine_history
                     (machine, entity_id, state, message, changetime)
                         VALUES
                     (:machine, :entity_id, :state, :message, :timestamp)';
@@ -354,8 +383,9 @@ class PDO extends Adapter implements  Loader {
      */
     public function getEntityIds($machine, $state = null) {
         $connection = $this->getConnection();
-        $query = 'SELECT se.entity_id FROM statemachine_entities AS se
-                JOIN statemachine_states AS ss ON (se.state = ss.state AND 
+        $prefix = $this->getPrefix();
+        $query = 'SELECT se.entity_id FROM ' . $prefix . 'statemachine_entities AS se
+                JOIN ' . $prefix . 'statemachine_states AS ss ON (se.state = ss.state AND 
                 se.machine = ss.machine) WHERE se.machine = :machine';
         $output = array();
         try {
@@ -414,7 +444,8 @@ class PDO extends Adapter implements  Loader {
     public function getTransitions($machine)
     {
         $connection = $this->getConnection();
-        $query = "SELECT st.machine, 
+        $prefix = $this->getPrefix();
+        $query = 'SELECT st.machine, 
                         st.state_from AS state_from, st.state_to AS state_to, 
                         st.rule, st.command,
                         ss_to.type AS state_type_to,ss.type AS state_type_from,
@@ -422,16 +453,16 @@ class PDO extends Adapter implements  Loader {
                         ss.description AS description_state_from,
                         ss_to.description AS description_state_to,
                         st.description AS description_transition
-                    FROM  statemachine_transitions AS st
+                    FROM  ' . $prefix . 'statemachine_transitions AS st
                     LEFT JOIN
-                        statemachine_states AS ss
+                        ' . $prefix . 'statemachine_states AS ss
                         ON (st.state_from = ss.state AND st.machine = ss.machine)
                     LEFT JOIN
-                        statemachine_states AS ss_to
+                        ' . $prefix . 'statemachine_states AS ss_to
                         ON (st.state_to = ss_to.state AND st.machine = ss_to.machine)
                     WHERE
                         st.machine = :machine
-                    ORDER BY st.state_from ASC, st.priority ASC";
+                    ORDER BY st.state_from ASC, st.priority ASC';
         try {
             $statement = $connection->prepare($query);
             $statement->bindParam(":machine", $machine);

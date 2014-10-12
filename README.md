@@ -5,7 +5,9 @@ izzum [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachi
 - see [documentup.com for a navigable version of this document](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com").
 - Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)
 - Visually oriented? Know uml? see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
-- *new*: a fully functional PDO relational database implementation, with the sql for both postgresql and sqlite.
+- **`new`**: a fully functional PDO relational database implementation with the sql provided for 
+[mysql](https://www.mysql.com), [postgresql](http://www.postgresql.org) and 
+[sqlite](https://sqlite.org/) backends, providing access the full statemachine history.
 
 ##about
 ###A superior, extensible and flexible statemachine library
@@ -86,7 +88,7 @@ making it easy to communicate with business users or stakeholders.
 
 ###installation
 use [composer](https://getcomposer.org/) to install the project.
-Create a file called composer.json
+Create a file called composer.json with these lines: 
 ```
 {
     "require": {
@@ -94,7 +96,7 @@ Create a file called composer.json
     }
 }
 ```
-and install it with
+and install the package with:
 ```
 composer install
 ```
@@ -104,7 +106,7 @@ You can also download it directly from github.
 ##Usage: a working example
 
 ###demo
-see the `/examples/trafficlight` directory for a working implementation of a 
+see the `./examples/trafficlight` directory for a working implementation of a 
 traffic light that you can easily run from the command line.
 In the directory, type ```php -f index.php```
 
@@ -150,7 +152,7 @@ class TrafficLight {
     public function setGreen() {
         $this->setColor('green');
     }
-    ...also some methods for red and orange
+    //there are also some methods for red and orange (not shown here)
     protected function setColor($color) {
         $this->setSwitchTime();
         $this->color = $color;
@@ -163,7 +165,7 @@ class TrafficLight {
                 if($this->onColorFor(self::TIME_GREEN)){
                     return true;
                 }
-                ...same for orange and red
+                //same for orange and red (not shown here)
         }
         return false;
     }
@@ -179,12 +181,15 @@ class TrafficLight {
 }
 ```
 ###rules: check if a transition is allowed
-A rule will query your domain object for information to decide whether it is allowed
-to make a transition (by returning true or false).
+A (business) rule will query your domain object for information to decide whether it is allowed
+to make a transition (by returning true or false). It will be associated to a 
+transition definition by providing the fully qualified classname. The statemachine
+will construct the Rule at runtime only when it needs to check if a transition is possible.
 
 Create a rule by subclassing `izzum\rules\Rule` and by accepting a domain object in 
 the newly created rules' constructor. Override the `_applies()` method to query
 the  domain object and return true/false.
+
 ```php
 namespace izzum\examples\trafficlight\rules;
 use izzum\rules\Rule;
@@ -206,12 +211,16 @@ class CanSwitch extends Rule {
 A command will execute the logic associated with the transition and this is the
 place where your domain model (or associated objects) will be manipulated.
 
+It will be associated to a transition definition by providing the fully qualified classname. 
+The statemachine will construct the Command at runtime only when a transition is made.
+
 Create Commands for your domain model by subclassing `izzum\command\Command` and
 by accepting a domain model via the constructor. store the domain model on your
 concrete command. It is advisable to create a superclass for your statemachine
 commands that stores the domain object so you can use it in your subclasses.
 Then override the `_execute` method in each Command to do the magic necessary 
-for that step.
+for that step. (examples: talking to remote services, creating new objects, store
+data in database etc.)
 ```php
 <?php
 namespace izzum\examples\trafficlight\command;
@@ -260,9 +269,10 @@ applications' design to store and retrieve the data associated by the statemachi
 with your domain model. 
 
 Currently there is a fully functional and tested PDO (php database objects) adapter that 
-both loads the configuration and stores the data in a backend of choice. An sql file for the data
-definitions is also provided in `/assets/sql/postgres.sql` for the postgres database and
-there is also one available for sqlite. Other ports are more than welcome if you want to contribute.
+both loads the configuration and stores the data in a backend of choice. Sql files for the data
+definitions are provided in `/assets/sql/*.sql` (postgresql, mysql, sqlite). 
+Other ports are more than welcome if you want to contribute.
+
 We also provide an in memory adapter that stores data for a single php process
 and a session adapter that stores data for a session (can be used for GUI wizards)
 
@@ -284,7 +294,7 @@ your custom Loader class and then delegate the actual loading in the `load` meth
 to the `izzum\statemachine\loader\LoaderArray` class.
 
 Since a Loader and a Persistence adapter are probably tightly coupled, you can 
-integrate both of them in one class (see the izzum\statemachine\persistence\Postgres
+integrate both of them in one class (see the izzum\statemachine\persistence\PDO
 class for an example of that)
 ```php
         $data = array();
@@ -309,14 +319,15 @@ class for an example of that)
 ```
 
 ###factories: creating related classes
-An Factory can be used to create a family of related classes. In our case, all
-the classes that are needed for your application domain. The factory should provide
-you with a statemachine, which is dependent on a Context object. The Context object
-works with an EntityBuilder that actually creates your domain model. The context
-object also works with a Persistance adapter that reads and writes to the underlying
-storage facility. A loader will load up your statemachine with all the State and
-Transition models and their associated Rules and Commands for the statemachine
-to use. 
+A [Factory can be used to create a family of related classes](https://en.wikipedia.org/wiki/Abstract_factory_pattern). 
+In our case, all the classes that are needed for your application domain.
+ 
+The factory should provide you with a statemachine, which is dependent on a Context object. 
+The Context object works with an EntityBuilder that actually creates your domain model. 
+The context object also works with a Persistance adapter that reads and writes 
+to the underlying storage facility. 
+A Loader will load up your statemachine with all the State and Transition models
+ and their associated Rules and Commands for the statemachine to use. 
 
 Since creating a statemachine involces creating different types of objects, 
 it is advisable to use a factory for your application domain but it is not necessary.
@@ -333,19 +344,19 @@ use izzum\statemachine\loader\LoaderArray;
  * the Factory to build the statemachines for TrafficLight domain models.
  */
 class TrafficLightFactory extends AbstractFactory{
-    protected function getEntityBuilder() {
+    protected function createBuilder() {
         return new EntityBuilderTrafficLight();
     }
-    protected function getLoader() {
+    protected function createLoader() {
         $data = array();
-        ... see earlier example
+        //see earlier example, full code not shown here
         $loader = new LoaderArray($data);
         return $loader;
     }
     protected function getMachineName() {
         return 'traffic-light';
     }
-    protected function getPersistenceAdapter() {
+    protected function createAdapter() {
         return new Memory();
     }
 }
@@ -381,7 +392,7 @@ while(true) {
 ##Examples
 
 ###examples section in the code###
-Check out the `/examples/trafficlight/` directory. Here you will find a 
+Check out the `./examples/trafficlight/` directory. Here you will find a 
 working example of a functioning application with a Factory, Builder and some
 Rules and Commands in action. This can guide you to building your own implementation.
 
@@ -390,8 +401,8 @@ Rules and Commands in action. This can guide you to building your own implementa
 
 
 ###howto create a state diagram via plantuml from the code
+feed a constructed statemachine to the PlantUml class:
 ```php
-<?php
 use izzum\statemachine\StateMachine;
 use izzum\statemachine\LoaderData;
 use izzum\statemachine\LoaderArray;

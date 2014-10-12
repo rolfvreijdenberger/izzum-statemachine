@@ -1,8 +1,11 @@
+-- http://www.postgresql.org/
 -- This file contains a fully normalized, indexed and functioning backend implementation 
--- for the izzum statemachine for a postgresql database (www.postgresql.org)
+-- for the izzum statemachine for a postgresql database
 
 -- this database can be used with the izzum\statemachine\persistence\PDO adapter with
 -- a correct dsn to connect to postgres.
+-- http://php.net/manual/en/ref.pdo-pgsql.php
+
 
 -- each table has extensive comments on what data they contain and what it means
 -- and also on how to use them from the application code.

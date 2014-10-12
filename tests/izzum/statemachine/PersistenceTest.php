@@ -237,13 +237,18 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
     /**
      * helper method for different backend adapters
      * that use a database (postgres, pdo)
-     * @param Adapter $adapter
+     * @param PDO $adapter
      * @param string $machine
      */
-    protected function assertPersistenceAdapter($adapter, $machine) {
+    protected function assertPersistenceAdapterPDO($adapter, $machine) {
          //transitions
         $this->assertCount(9, $adapter->getTransitions($machine));
         $this->assertCount(9, $adapter->getLoaderData($machine));
+        
+        $this->assertEquals('', $adapter->getPrefix());
+        $adapter->setPrefix('testing 123');
+        $this->assertEquals('testing 123', $adapter->getPrefix());
+        $adapter->setPrefix('');
         
         
         //get all the entitty ids.
@@ -360,15 +365,17 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      * executed on a postgres backend, providing test data.
      * @group not-on-production
      * @group pdo
+     * @group postgresql
      */
     public function testPDOAdapterPOSTGRES()
     {
+        echo "PLEASE CREATE THE CORRECT POSTGRES DATABASE AND USE THE RIGHT DSN" . PHP_EOL;
         $machine = 'izzum';
         $user = 'postgres';
         $password = "izzum";
         $dsn = "pgsql:host=localhost;port=5432;dbname=postgres";
         $adapter = new PDO($dsn, $user, $password);   
-        $this->assertPersistenceAdapter($adapter, $machine);
+        $this->assertPersistenceAdapterPDO($adapter, $machine);
     }
     
        /**
@@ -379,10 +386,35 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function testPDOAdapterSQLITE()
     {
+        echo "PLEASE CREATE THE CORRECT SQLITE DATABASE AND USE THE RIGHT DSN" . PHP_EOL;
         $machine = 'izzum';
         $dsn = "sqlite:sqlite.db";
         $adapter = new PDO($dsn);   
-        $this->assertPersistenceAdapter($adapter, $machine);
+        $this->assertPersistenceAdapterPDO($adapter, $machine);
+    }
+       
+    /**
+     * this test will only run when the \assets\sql\mysql.sql file has been 
+     * executed on a mysql backend, providing test data.
+     * @group not-on-production
+     * @group mysql
+     */
+    public function testPDOAdapterMYSQL()
+    {
+        echo "PLEASE CREATE THE CORRECT MYSQL DATABASE AND USE THE RIGHT DSN" . PHP_EOL;
+        $dsn = 'mysql:host=localhost;dbname=test';
+        $username = null;
+        $password = null;
+        $options = array(
+            \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8',
+        );
+
+        $machine = 'izzum';
+        $adapter = new PDO($dsn, $username, $password, $options); 
+        $adapter->setPrefix('izzum_');
+        $adapter->setPrefix('');
+        $this->assertPersistenceAdapterPDO($adapter, $machine);
+
     }
     
     
