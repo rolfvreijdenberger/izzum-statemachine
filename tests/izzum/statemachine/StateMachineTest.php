@@ -493,13 +493,10 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $machine->addTransition($t_b_to_d);
         $machine->addTransition($t_c_to_d);
         $machine->addTransition($t_d_done);
-        
-        echo PHP_EOL;
-        echo __METHOD__ . PHP_EOL;
-        echo PHP_EOL;
+
         $plant = new PlantUml();
-        echo $plant->createStateDiagram($machine);
-        echo PHP_EOL;
+        $result =  $plant->createStateDiagram($machine);
+        $this->assertPlantUml($result);
     }
     
 
@@ -525,8 +522,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         $plant = new PlantUml();
         $result = $plant->createStateDiagram($machine);
-        $this->assertNotNull($result);
-        $this->assertTrue(is_string($result));
+        $this->assertPlantUml($result);
+        
         if($output) {
             echo PHP_EOL;
             echo __METHOD__ . PHP_EOL;
@@ -540,13 +537,15 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     public function testPlantUml() {
         $this->doPlant(false);
     }
-     /**
-     * @test
-     * @group not-on-production
-     * @group plantuml
-     */
-    public function testPlantUmlWithOutput()
-    {
-        $this->doPlant(true);
+    
+    public function assertPlantUml($result) {
+        $this->assertNotNull($result);
+        $this->assertTrue(is_string($result));
+        $this->assertContains("@startuml", $result);
+        $this->assertContains("@enduml", $result);
+        $this->assertContains("new", $result);
+        $this->assertContains("rule", $result);
+        $this->assertContains("command", $result);
+        $this->assertContains("_to_", $result);
     }
 }

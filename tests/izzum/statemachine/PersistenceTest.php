@@ -241,6 +241,13 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      * @param string $machine
      */
     protected function assertPersistenceAdapterPDO($adapter, $machine) {
+        
+        $type = $adapter->getType();
+        echo PHP_EOL;
+        echo "Database tests for type '$type'." . PHP_EOL;
+        echo "php drivers present? database and tables created?" . PHP_EOL;
+        echo "correct permissions set? dns correct for the PDO driver?" . PHP_EOL;
+        
          //transitions
         $this->assertCount(9, $adapter->getTransitions($machine));
         $this->assertCount(9, $adapter->getLoaderData($machine));
@@ -357,6 +364,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         } catch (Exception $e) {
             $this->assertEquals(Exception::RULE_APPLY_FAILURE, $e->getCode());
         }
+        echo "tests for type '$type' OK" . PHP_EOL;
     }
     
     
@@ -369,7 +377,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function testPDOAdapterPOSTGRES()
     {
-        echo "PLEASE CREATE THE CORRECT POSTGRES DATABASE AND USE THE RIGHT DSN" . PHP_EOL;
         $machine = 'izzum';
         $user = 'postgres';
         $password = "izzum";
@@ -386,7 +393,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function testPDOAdapterSQLITE()
     {
-        echo "PLEASE CREATE THE CORRECT SQLITE DATABASE AND USE THE RIGHT DSN" . PHP_EOL;
         $machine = 'izzum';
         $dsn = "sqlite:sqlite.db";
         $adapter = new PDO($dsn);   
@@ -401,7 +407,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function testPDOAdapterMYSQL()
     {
-        echo "PLEASE CREATE THE CORRECT MYSQL DATABASE AND USE THE RIGHT DSN" . PHP_EOL;
         $dsn = 'mysql:host=localhost;dbname=test';
         $username = null;
         $password = null;
@@ -411,8 +416,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
 
         $machine = 'izzum';
         $adapter = new PDO($dsn, $username, $password, $options); 
-        $adapter->setPrefix('izzum_');
-        $adapter->setPrefix('');
         $this->assertPersistenceAdapterPDO($adapter, $machine);
 
     }

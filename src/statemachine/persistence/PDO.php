@@ -124,10 +124,27 @@ class PDO extends Adapter implements  Loader {
         
     }
     
+    /**
+     * @return string the type of backend we connect to
+     */
+    public function getType()
+    {
+        $index = strpos($this->dsn, ":");
+        return $index ? substr($this->dsn, 0, $index) : $this->dsn;
+    }
+    
+    /**
+     * set the table prefix to be used
+     * @param string $prefix
+     */
     public final function setPrefix($prefix) {
         $this->prefix = $prefix;
     }
     
+    /**
+     * get the table prefix
+     * @return string
+     */
     public final function getPrefix()
     {
         return $this->prefix;

@@ -17,6 +17,10 @@ use izzum\statemachine\Exception;
  * for modification. For that purpose, we provide Loader interfaces, Builders and
  * Persistence Adapters for the backend implementation.
  * 
+ * Following the same philosophy: if you want more functionality in the statemachine,
+ * you can use the provided methods and override them in your subclass. multiple
+ * hooks are provided.
+ * 
  * The statemachine acts as a manager/service to tie all objects it works with together.
  * 
  * The statemachine should be loaded with States and Transitions, which define
@@ -36,9 +40,9 @@ use izzum\statemachine\Exception;
  * allows the transition, after which the Command is executed and can actually
  * alter data in the underlying domain models, call services etc.
  * 
- * Preferably use the StateMachineFactory to get a StateMachine.
+ * Preferably use a subclass of the AbstractFactory to get a StateMachine.
  * 
- * All high level interaction we can expect a client to conduct with a statemachine, 
+ * All high level interactions that a client conducts with a statemachine
  * should expect exceptions. Exceptions that bubble up from this statemachine are
  * always izzum\statemachine\Exception types.
  * 
@@ -53,8 +57,6 @@ use izzum\statemachine\Exception;
  * A good naming convention for transitions is to bind the input and exit state
  * with the string '_to_' which is done automatically by this package.
  * 
- * Having good naming conventions allows easy automation of generating transition
- * names from states etc.
  * 
  * @author Rolf Vreijdenberger
  * @see izzum\command\Command
@@ -147,9 +149,9 @@ class StateMachine {
      * Apply a transition by name. (<state-from>_to_<state-to>)
      * The transition should be possible and it is checked in this method.
      * 
-     * @throws Exception in case something went wrong. The exceptions are logged.
-     *     Furthermore,an exception will lead to a failed transition and the failed
-     *     transition will lead to a notification to the Context
+     * @throws Exception in case something went wrong.
+     *     An exception will lead to a failed transition and the failed
+     *     transition will lead to a notification to the Context and it's adapter
      * @return void
      */
     public function apply($transition_name) {
@@ -311,7 +313,7 @@ class StateMachine {
      * 
      * this method should be package visibility for the Loader, but since php
      * does not support that, it can also be used to add a Transition directly.
-     * Make sure that transitions how share a common State use the same instance
+     * Make sure that transitions that share a common State use the same instance
      * of that State object and vice versa.
      * @param Transition $transition
      */
