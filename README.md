@@ -12,7 +12,7 @@
 [sqlite](https://sqlite.org/) backends. Store your configuration, read and write 
 states for your domain models and store the full transition history.
 - Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)
-- Visually oriented? Know uml? see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
+- Visually oriented? Know uml? TLDR; see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
 - see [documentup.com](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com") for a navigable and pretty version of this document.
 
 ##about
