@@ -103,7 +103,7 @@ class StateMachine {
       * @param Context $context a fully configured context providing all the relevant parameters/dependencies
       * 	to be able to run this statemachine for an entity.
      */
-    public function __construct(Context $context, $create_fresh_entity = false)
+    public function __construct(Context $context)
     {
         //sets up bidirectional association
         $this->setContext($context);
