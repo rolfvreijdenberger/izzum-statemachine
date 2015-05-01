@@ -70,7 +70,7 @@ class Context {
      * @param EntityBuilder $entity_builder A specific builder class to create a reference to the entity we wish to manipulate.
      * @param Adapter $persistance_adapter A specific reader/writer class can be used to generate different 'read/write' behaviour
      */
-    public function __construct($identifier, $entity_builder = null, $persistance_adapter = null)
+    public function __construct(Identifier $identifier, $entity_builder = null, $persistance_adapter = null)
     {
         $this->identifier           = $identifier;
         $this->entity_builder       = $entity_builder;
