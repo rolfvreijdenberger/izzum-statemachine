@@ -2,3 +2,6 @@
 tests/report
 tests/sqlite.db
 /vendor/
+.buildpath
+.project
+.settings/

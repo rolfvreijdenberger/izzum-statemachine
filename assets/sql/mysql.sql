@@ -64,7 +64,8 @@ CREATE TABLE statemachine_history (
 	entity_id VARCHAR(255) NOT NULL,
 	state VARCHAR(255) NOT NULL, 
 	changetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	message text 	
+	message text,
+	exception TINYINT DEFAULT 0 	
 );
 CREATE INDEX i_statemachine_history_entity_id ON statemachine_history (entity_id);
 

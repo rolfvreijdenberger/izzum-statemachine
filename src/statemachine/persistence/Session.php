@@ -1,6 +1,6 @@
 <?php
 namespace izzum\statemachine\persistence;
-use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 use izzum\statemachine\State;
 /**
  * the Session persistence adapter uses php sessions for persistence.
@@ -47,39 +47,39 @@ class Session extends Adapter {
         }
     }
     
-    protected function processGetState(Context $context) {
-        $key = $context->getId();
+    protected function processGetState(Identifier $identifier) {
+        $key = $identifier->getId();
         if(isset($_SESSION[$this->namespace][$key])){
             $state =  $_SESSION[$this->namespace][$key]->state;       
         } else {
-            $state = $this->getInitialState($context); 
+            $state = $this->getInitialState($identifier); 
         }
         return $state;
     }
     
 
-    protected function processSetState(Context $context, $state) {
+    protected function processSetState(Identifier $identifier, $state) {
         $already_stored = true;
-        //session key is a unique string from the Context
-        $key = $context->getId();
+        //session key is a unique string from the Identifier
+        $key = $identifier->getId();
         if(!isset($_SESSION[$this->namespace][$key])){ 
             $already_stored = false;
         }
         //set object on the session
-        $data = StorageData::get($context, $state);
+        $data = StorageData::get($identifier, $state);
         $_SESSION[$this->namespace][$key] = $data;
         return !$already_stored;
     }
 
 
-    public function add(Context $context) {
-        $key = $context->getId();
+    public function add(Identifier $identifier) {
+        $key = $identifier->getId();
         if(isset($_SESSION[$this->namespace][$key])){
             return false;
         }
         $data = new StorageData(
-                    $context->getMachine(), 
-                    $context->getEntityId(), 
+                    $identifier->getMachine(), 
+                    $identifier->getEntityId(), 
                     State::STATE_NEW, 
                     null);
         $_SESSION[$this->namespace][$key] = $data;

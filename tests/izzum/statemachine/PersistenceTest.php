@@ -1,6 +1,5 @@
 <?php
 namespace izzum\statemachine;
-use izzum\statemachine\utils\ContextNull;
 use izzum\statemachine\Context;
 use izzum\statemachine\EntityBuilder;
 use izzum\statemachine\State;
@@ -27,21 +26,19 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //scenario:  constructor with all params
         $time = time();
-        $data = new StorageData($machine, $id, $state, $state_from);
+        $data = new StorageData($machine, $id, $state);
         $this->assertEquals($id, $data->id);
         $this->assertEquals($machine, $data->machine);
         $this->assertEquals($state, $data->state);
-        $this->assertEquals($state_from, $data->state_from);
         $this->assertEquals($time, $data->timestamp);
         
         //scenario: use the factory method
-        $object = ContextNull::get($id, $machine);
+        $object = new Identifier($id, $machine);
         $time = time();
         $data = StorageData::get($object, $state);
         $this->assertEquals($id, $data->id);
         $this->assertEquals($machine, $data->machine);
         $this->assertEquals($state, $data->state);
-        $this->assertEquals(State::STATE_NEW, $data->state_from);
         $this->assertEquals($time, $data->timestamp);
         
         
@@ -60,9 +57,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
     
     public function testMemoryAdapter()
     {
-        //create Context in default state. this is enough to pass it 
-        //to the reader object
-        $object = ContextNull::get(-1, 'order', 'ordermachine');
+        $object = new Identifier(-1, 'order');
         
         $io = new Memory();
         $state = $io->getState($object);
@@ -72,9 +67,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
 
         
-        //create Context in default state. this is enough to pass it
-        //to the writer object
-        $object = ContextNull::get(-1, 'order', 'ordermachine');
+        $object = new Identifier(-1, 'order');
         $io = new Memory();
         $result = $io->setState($object, "test");
         $this->assertTrue($result, 'default writer returns true when not present');
@@ -89,7 +82,13 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         
         $io = new Memory();
-        $output = Memory::get();//for coverage
+        $output = Memory::get();
+        //var_dump($output);
+        $this->assertEquals('test', $io->getState($object), 'shares the storage space in a central registry');
+        $result = $io->setState($object, "joho");
+        $this->assertEquals('joho', $io->getState($object));
+        $output = Memory::get();
+        //var_dump($output);
         Memory::clear();
         
         //scenario
@@ -102,8 +101,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $machine = 'a-machine';
         $id1 = '555';
         $id2 = '666';
-        $object1 = ContextNull::get($id1, $machine);
-        $object2 = ContextNull::get($id2, $machine);
+        $object1 = new Identifier($id1, $machine);
+        $object2 = new Identifier($id2, $machine);
     
         
         $state = $io->getState($object1);
@@ -147,16 +146,14 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function testMemoryAdapterSubclassFunctionality()
     {
-        //create Entity in default state. this is enough to pass it
-        //to the writer object
-        $object = ContextNull::get(-1,'smt');
+        $identifier = new Identifier(-1, 'null-machine');
         
         //internal test class
         $io = new MemoryEntityConcatenator();
         
         Memory::clear();
-        $result = $io->setState($object, "TEST");
-        $this->assertEquals("smt_-1_TEST", $result, 'concatenated stuff');
+        $result = $io->setState($identifier, "TEST");
+        $this->assertEquals("null-machine_-1_TEST", $result, 'concatenated stuff');
         $this->assertContains('MemoryEntityConcatenator', $io->toString());
     }
     
@@ -181,10 +178,10 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $id = '1234124sdf';
         $machine = "new-machine";
         $builder = new EntityBuilder();
-        $object = new Context($id, $machine, $builder, $io);
-        $this->assertTrue($io->setState($object, 'bogus'));
-        $this->assertFalse($io->setState($object, 'bogus2'));
-        $this->assertFalse($io->add($object), 'already there');
+        $object = new Context(new Identifier($id, $machine), $builder, $io);
+        $this->assertTrue($io->setState($object->getIdentifier(), 'bogus'));
+        $this->assertFalse($io->setState($object->getIdentifier(), 'bogus2'));
+        $this->assertFalse($io->add($object->getIdentifier()), 'already there');
         //we should have started output buffering in the bootstrap file
         ob_flush();
     }
@@ -199,18 +196,19 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldThrowExceptions()
     {
-        $context = ContextNull::forTest();
+        $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $identifier = $context->getIdentifier();
         $io = new MemoryException(true);
         
         try {
-            $io->setState($context, 'new');
+            $io->setState($identifier, 'new');
             $this->fail('should throw exception');
         } catch (Exception $e) {
             $this->assertEquals(Exception::IO_FAILURE_SET, $e->getCode());
         }
         
         try {
-            $io->getState($context);
+            $io->getState($identifier);
             $this->fail('should throw exception');
         } catch (Exception $e) {
             $this->assertEquals(Exception::IO_FAILURE_GET, $e->getCode());
@@ -219,14 +217,14 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $io = new MemoryException(false);
         
         try {
-            $io->setState($context, 'new');
+            $io->setState($identifier, 'new');
             $this->fail('should throw exception');
         } catch (Exception $e) {
             $this->assertEquals(123, $e->getCode());
         }
         
         try {
-            $io->getState($context);
+            $io->getState($identifier);
             $this->fail('should throw exception');
         } catch (Exception $e) {
             $this->assertEquals(345, $e->getCode());
@@ -244,8 +242,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         $type = $adapter->getType();
         echo PHP_EOL;
-        echo "Database tests for type '$type'." . PHP_EOL;
-        echo "php drivers present? database and tables created?" . PHP_EOL;
+        echo "Executing Database tests for type '$type'." . PHP_EOL;
+        echo "Please check the following: php drivers present? database and tables created?" . PHP_EOL;
         echo "correct permissions set? dns correct for the PDO driver?" . PHP_EOL;
         
          //transitions
@@ -282,7 +280,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //diverse tests for the persistance of anon existing fully random id
         $random_id = rand(1,999999999) . "-" . microtime();
-        $context = new Context($random_id, $machine, null, $adapter);
+        $identifier = new Identifier($random_id, $machine);
+        $context = new Context($identifier, null, $adapter);
         try {
             $this->assertEquals(State::STATE_NEW, $context->getState());
             $this->fail('should not come here');
@@ -291,11 +290,11 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('no state found for', $e->getMessage());
             $this->assertContains('Did you add', $e->getMessage());
         }
-        $this->assertFalse($adapter->isPersisted($context), 'not persisted yet');
+        $this->assertFalse($adapter->isPersisted($identifier), 'not persisted yet');
         $count = count($adapter->getEntityIds($machine, 'new'));
-        $this->assertTrue($adapter->add($context), 'first time');
+        $this->assertTrue($adapter->add($identifier), 'first time');
         $this->assertCount($count + 1, $adapter->getEntityIds($machine, 'new'), '1 extra in state new');
-        $this->assertFalse($adapter->add($context), 'already added');
+        $this->assertFalse($adapter->add($identifier), 'already added');
         $this->assertEquals(State::STATE_NEW, $context->getState(), 'state is now new');
         
         
@@ -318,7 +317,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //create a new context to take the unhappy flow
         $random_id = rand(1, 999999999) . "-" . microtime();
-        $other_context = new Context($random_id, $machine, null, $adapter);
+        $identifier = new Identifier($random_id, $machine);
+        $other_context = new Context($identifier, null, $adapter);
         $sm->changeContext($other_context);
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
@@ -326,7 +326,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $adapter->load($sm);
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
-        $this->assertFalse($adapter->isPersisted($other_context));
+        $this->assertFalse($adapter->isPersisted($identifier));
         
         
         //run via 'bad' path, priority 2, this will also 'add' it to the backend
@@ -346,7 +346,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         }
         //do this directly on adapter to see if will actually insert into the history
         //and entity tables
-        $this->assertTrue($adapter->setState($other_context, 'new'));
+        $this->assertTrue($adapter->setState($identifier, 'new'));
         $this->assertEquals($other_context->getState(), 'new');
         $this->assertTrue($sm->can('new_to_bad'));
         $this->assertTrue($sm->can('new_to_ok'));
@@ -385,14 +385,18 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertPersistenceAdapterPDO($adapter, $machine);
     }
     
-       /**
+      /**
      * this test will only run when the \assets\sql\sqlite.sql file has been 
-     * executed on a sqlite backend, providing test data.
+     * executed on a sqlite backend, providing test data 
+     * 
+     * create file 'sqlite.db' in 'tests' directory (# sqlite3 sqlite.db) and load the assets\sql\sqlite.sql file
+     * 
      * @group not-on-production
      * @group sqlite
      */
     public function testPDOAdapterSQLITE()
     {
+        //create file 'sqlite.db' in 'tests' directory and load the assets/sql/sqlite.sql file
         $machine = 'izzum';
         $dsn = "sqlite:sqlite.db";
         $adapter = new PDO($dsn);   
@@ -430,14 +434,14 @@ class MemoryEntityConcatenator extends Memory {
     /**
      * overriden implementation
      */
-    protected function processSetState(Context $context, $state){
-        return $context->getMachine() . "_" . 
-        $context->getEntityId() . "_" .
+    protected function processSetState(Identifier $identifier, $state){
+        return $identifier->getMachine() . "_" . 
+        $identifier->getEntityId() . "_" .
         $state;
     }
     
-    protected function processGetState(Context $context) {
-        return $context->getMachine() .  "_" . $context->getEntityId();
+    protected function processGetState(Identifier $identifier) {
+        return $identifier->getMachine() .  "_" . $identifier->getEntityId();
     }
 }
 
@@ -446,7 +450,7 @@ class MemoryException extends Memory {
     public function __construct($bool) {
         $this->bool = $bool;
     }
-    protected function processSetState(Context $context, $state){
+    protected function processSetState(Identifier $identifier, $state){
         if($this->bool) {
             throw new \Exception('processing setstate exception');
         } else {
@@ -454,7 +458,7 @@ class MemoryException extends Memory {
         }
     }
     
-    protected function processGetState(Context $context) {
+    protected function processGetState(Identifier $identifier) {
        if($this->bool) {
             throw new \Exception('processing setstate exception');
         } else {

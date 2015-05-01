@@ -4,7 +4,12 @@
     </testsuite>
     <groups>
         <exclude>
-            <group></group>
+           <!--   
+            <group>uses-sessions</group>
+            <group>mysql</group>
+            <group>sqlite</group>
+            <group>postgresql</group>
+            -->
         </exclude>
     </groups>
 </phpunit>

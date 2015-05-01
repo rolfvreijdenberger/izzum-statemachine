@@ -98,7 +98,7 @@ Create a file called composer.json with these lines:
 ```
 {
     "require": {
-        "rolfvreijdenberger/izzum-statemachine": "~1.0"
+        "rolfvreijdenberger/izzum-statemachine": "~2.0"
     }
 }
 ```
@@ -248,13 +248,13 @@ class SwitchRed extends Command {
 ###entity builders: build your domain model
 An EntityBuilder builds your domain model on which you operate, in our case it's
 a TrafficLight. A domain object will always be representable by it's type and a 
-unique id. It's the duty of the EntityBuilder to create one for your statemachine
-and set the correct (entity)id on it.
+unique id (stored in an `Identifier` object). It's the duty of the EntityBuilder to create a domain model for your statemachine
+and use the (entity)id to build it.
 
 Create a specific EntityBuilder for your domain model by subclassing `izzum\statemachine\EntityBuilder`.
-override the `build(Context $context)` method to return a domainmodel of choice. 
-The method accepts an `izzum\statemachine\Context` model that can be queried 
-for the id of the domain model via `Context::getEntityId()`. 
+override the `build(Identifier $identifier)` method to return a domainmodel of choice. 
+The method accepts an `izzum\statemachine\Identifier` model that can be queried 
+for the id of the domain model via `Identfier::getEntityId()`. 
 The concrete EntityBuilder for your application should be set on the Context object.
 
 The object that is returned by the EntityBuilder is the object that will be 
@@ -262,10 +262,10 @@ injected at runtime in the Rules and Command associated with a transition.
 ```php
 namespace izzum\examples\trafficlight;
 use izzum\statemachine\EntityBuilder;
-use \izzum\statemachine\Context;
+use \izzum\statemachine\Identifier;
 class EntityBuilderTrafficLight extends EntityBuilder{
-    protected function build(Context $context) {
-        return new TrafficLight($context->getEntityId());
+    protected function build(Identifier $identifier) {
+        return new TrafficLight($identifier->getEntityId());
     }
 }
 ```
@@ -412,10 +412,12 @@ feed a constructed statemachine to the PlantUml class:
 use izzum\statemachine\StateMachine;
 use izzum\statemachine\LoaderData;
 use izzum\statemachine\LoaderArray;
+use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 //this was used to create the uml example diagram as seen below
 $machine = 'coffee-machine';
 $id = $this->getCoffeeCount();
-$context = new Context($id, $machine);
+$context = new Context(new Identifier($id, $machine));
 $machine = new StateMachine($context);
 $data = array();
 $data[] = new LoaderData('new', 'initialize', Transition::RULE_TRUE, 'izzum\command\Initialize', 'initial');

@@ -124,7 +124,7 @@ class Transition {
     }
 
     /**
-     * returns the associated (chained 'and') Rule for this Transition,
+     * returns the associated Rule for this Transition,
      * configured with a 'reference' (stateful) object
      *
      * @param Context $object the associated stateful object for a our statemachine
@@ -165,8 +165,8 @@ class Transition {
 
     
     /**
-     * returns the associated (composite) Command for this Transition.
-     * each Command in the composite will be configured with the 'reference' of the stateful object
+     * returns the associated Command for this Transition.
+     * the Command will be configured with the 'reference' of the stateful object
      *
      * @param Context $object the associated stateful object for a our statemachine
      * @return izzum\command\ICommand

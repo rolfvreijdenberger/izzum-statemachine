@@ -167,12 +167,13 @@ CREATE TABLE statemachine_history (
 	entity_id varchar NOT NULL,
 	state varchar NOT NULL, -- the state to which the transition was done
 	changetime timestamp(6) DEFAULT now() NOT NULL, -- when the transition was made
-	message text 	-- optional: this should only be set when there is an error thrown from the statemachine.
+	message text, 	-- optional: this should only be set when there is an error thrown from the statemachine.
 			-- both state_from and state_to will then be the same AND this field will be filled,
 			-- preferably with json, to store both exception code and message.
 			-- application code will then be able to display this.
 			-- If/when state_to and state_from are the same AND this field is empty,
 			-- it will mean a succesfull self transition has been made.
+	exception boolean DEFAULT FALSE -- if it is an exceptional transition or not. 
 );
 COMMENT ON TABLE statemachine_history IS '
 Each transition made by a state machine should write a record in this table and 
@@ -189,10 +190,13 @@ The message column is used to store information about transition failures.
 A transition failure will occur when there is an exception during the transition phase, 
 possibly thrown or generated from a command. 
 This should result in one or multiple records in this table with 
-the same state_from as state_to.
+the exception field set and a message (the same state will be there multiple times:
+one for entering the state, one or more for staying in 
+that state because of a failed transitions)
 
 This is different from a self transition, since the message field will be 
-filled with exception data. 
+filled with exception data and the exception field will be used.
+
 The message column could store json so we can use the exception code 
 and message in this field.
 

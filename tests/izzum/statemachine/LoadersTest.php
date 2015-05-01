@@ -3,7 +3,6 @@ namespace izzum\statemachine;
 use izzum\statemachine\Transition;
 use izzum\statemachine\State;
 use izzum\statemachine\Entity;
-use izzum\statemachine\utils\ContextNull;
 use izzum\statemachine\loader\Loader;
 use izzum\statemachine\loader\LoaderArray;
 use izzum\statemachine\loader\LoaderData;
@@ -132,7 +131,7 @@ class LoadersTest extends \PHPUnit_Framework_TestCase {
         $objects[] =  LoaderData::get("2", "3");
         $loader = new LoaderArray($objects);
         $this->assertEquals(count($objects), $loader->count());
-        $context = ContextNull::forTest();
+        $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         $loader->load($machine);
         $this->assertCount(2, $machine->getTransitions());

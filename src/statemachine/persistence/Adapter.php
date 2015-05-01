@@ -1,6 +1,6 @@
 <?php
 namespace izzum\statemachine\persistence;
-use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 use izzum\statemachine\Exception;
 use izzum\statemachine\State;
 /**
@@ -41,10 +41,10 @@ abstract class Adapter {
       * misconfiguration from the storage facility which dynamically retrieves 
       * data)
       *
-      * @param Context $context
+      * @param Identifier $identifier
       * @return string
      */
-    public function getInitialState(Context $context) {
+    public function getInitialState(Identifier $identifier) {
         return State::STATE_NEW;
     }
     
@@ -74,11 +74,11 @@ abstract class Adapter {
      * It can then be manipulated via other methods via this Adapter or via
      * the statemachine itself eg: via 'getEntityIds' etc.
       * 
-     * @param Context $context
+     * @param Identifier $identifier
      * @boolean true if it was added, false if it was already there.
      * @throws Exception
      */
-    abstract public function add(Context $context);
+    abstract public function add(Identifier $identifier);
     
      /**
       * A hook to be able to precess the setting of the current state.
@@ -89,28 +89,28 @@ abstract class Adapter {
       * A storage facility could store a timestamp and the state the transition
       * was made to, for extra statistical information.
       * 
-      * @param Context $context
+      * @param Identifier $identifier
       * @param string $state
      * @return boolean true if just added to storage, false if stored before
      */
-    abstract protected function processSetState(Context $context, $state);
+    abstract protected function processSetState(Identifier $identifier, $state);
     
      /**
       * A hook to be able to process the getting of the current state.
       * Implement this method for specifying how you want to get a state from a
       * storage facility.
       * 
-      * @param Context $context
+      * @param Identifier $identifier
       * @return string the current state of the entity represented in the context
      */
-    abstract protected function processGetState(Context $context);
+    abstract protected function processGetState(Identifier $identifier);
     
      /**
-     * Get the current state for an Context
-     * @param Context $context
+     * Get the current state for an Identifier
+     * @param Identifier $identifier
      * @return string the state
      */
-    public final function getState(Context $context)
+    public final function getState(Identifier $identifier)
     {
         try {
             //execute a hook that should be implemented in a subclass.
@@ -119,7 +119,7 @@ abstract class Adapter {
             //something else that is used internally in legacy 
             //systems (eg: order.order_status)
             
-            $state = $this->processGetState($context);
+            $state = $this->processGetState($identifier);
             return $state;
         } catch (Exception $e) {
             //already a statemachine exception, just rethrow
@@ -132,17 +132,17 @@ abstract class Adapter {
     }
     
     /**
-     * Sets the new state for an Context in the storage facility.
+     * Sets the new state for an Identifier in the storage facility.
      * Will only be called by the statemachine.
      * 
-     * @param Context $context Assume this object has the old state
+     * @param Identifier $identifier (old state can be retrieved via the identifier and this class)
      * @param string $state this is the new state
      * @return boolan false if already stored before, true if just added
      * @throws Exception
      */
-    public final function setState(Context $context, $state){
+    public final function setState(Identifier $identifier, $state){
         try {
-            return $this->processSetState($context, $state);
+            return $this->processSetState($identifier, $state);
         } catch (Exception $e) {
             //might be a database failure or network failure from a subclass
             //already a statemachine exception, just rethrow, it is logged
@@ -155,12 +155,12 @@ abstract class Adapter {
     }
     
     /**
-     * Stores a failed transition in the storage facility.
-     * @param Context $context
-     * @param Exception $e
+     * Stores a failed transition in the storage facility for historical/analytical purposes.
+     * @param Identifier $identifier
+     * @param \Exception $e
      * @param string $transition_name
      */
-    public function setFailedTransition(Context $context, Exception $e, $transition_name)
+    public function setFailedTransition(Identifier $identifier, \Exception $e, $transition_name)
     {
         //override in subclasses if necessary
     }

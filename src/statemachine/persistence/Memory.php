@@ -1,6 +1,6 @@
 <?php
 namespace izzum\statemachine\persistence;
-use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 use izzum\statemachine\State;
 /**
  * In memory storage adapter that stores statemachine data.
@@ -14,32 +14,33 @@ use izzum\statemachine\State;
 class Memory extends Adapter {
     
     /**
-     * hashmap. the key is Context->getId()
+     * hashmap. the key is Identifier->getId()
      * @var StorageData[]
      */
     private static $registry = array();
     
 
-    protected function processGetState(Context $context) {
-        return $this->getStateFromRegistry($context);    
+    protected function processGetState(Identifier $identifier) {
+        return $this->getStateFromRegistry($identifier);    
     }
 
-    protected function processSetState(Context $context, $state) {
-        return $this->setStateInRegistry($context, $state);
+    protected function processSetState(Identifier $identifier, $state) {
+        return $this->setStateInRegistry($identifier, $state);
     }
 
-    public function add(Context $context) {
+    public function add(Identifier $identifier) {
+    	//var_dump (debug_backtrace()[2]);
         $added = true;
-        $storage = $this->getStorageFromRegistry($context);
+        $storage = $this->getStorageFromRegistry($identifier);
         if($storage != null) {
             $added = false;
         } else {
            $data = new StorageData(
-                    $context->getMachine(), 
-                    $context->getEntityId(), 
+                    $identifier->getMachine(), 
+                    $identifier->getEntityId(), 
                     State::STATE_NEW, 
                     null);
-           $this->writeRegistry($context->getId(), $data);
+           $this->writeRegistry($identifier->getId(), $data);
         }
         return $added;
     }
@@ -63,10 +64,10 @@ class Memory extends Adapter {
     
     
     
-    protected final function getStateFromRegistry(Context $context) {
-        $storage = $this->getStorageFromRegistry($context);
+    protected final function getStateFromRegistry(Identifier $identifier) {
+        $storage = $this->getStorageFromRegistry($identifier);
         if(!$storage) {
-            $state = $this->getInitialState($context);
+            $state = $this->getInitialState($identifier);
         } else {
             $state = $storage->state;
         }
@@ -76,18 +77,18 @@ class Memory extends Adapter {
     
     /**
      * 
-     * @param Context $context
+     * @param Identifier $identifier
      * @param string $state
      * @return boolan false if already stored and overwritten, true if not stored before
      */
-    protected final function setStateInRegistry(Context $context, $state) {
+    protected final function setStateInRegistry(Identifier $identifier, $state) {
         $already_stored = true;
-        $storage = $this->getStorageFromRegistry($context);
+        $storage = $this->getStorageFromRegistry($identifier);
         if(!$storage) {
             $already_stored = false;   
         } 
-        $data = StorageData::get($context, $state);
-        $this->writeRegistry($context->getId(),$data);
+        $data = StorageData::get($identifier, $state);
+        $this->writeRegistry($identifier->getId(),$data);
         return !$already_stored;
     }
     
@@ -110,12 +111,12 @@ class Memory extends Adapter {
         return self::$registry;
     }
     
-    protected final function getStorageFromRegistry(Context $context){
+    protected final function getStorageFromRegistry(Identifier $identifier){
         $registry = $this->getRegistry();
-        if(!isset($registry[$context->getId()])) {
+        if(!isset($registry[$identifier->getId()])) {
            $storage = null;   
         } else {
-            $storage =  $registry[$context->getId()];
+            $storage =  $registry[$identifier->getId()];
         }
         return $storage;
     }

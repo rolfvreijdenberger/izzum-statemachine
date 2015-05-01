@@ -1,6 +1,5 @@
 <?php
 namespace izzum\statemachine;
-use izzum\statemachine\utils\ContextNull;
 /**
  * Tests the public methods of builders.
  * 
@@ -15,8 +14,8 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
     {
         //create Entity in default state. this is enough to pass it 
         //to the builder
-        $object_1 = ContextNull::get(-1, 'order', 'ordermachine');
-        $object_2 = ContextNull::get(-2, 'order', 'ordermachine');
+        $object_1 = new Identifier(-1, 'order');
+        $object_2 = new Identifier(-2, 'order');
         $this->assertNotEquals($object_1, $object_2);
         
         
@@ -49,8 +48,8 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
     {
         //create Entity in default state. this is enough to pass it
         //to the builder
-        $object_1 = ContextNull::get(-1, 'order', 'ordermachine');
-        $object_2 = ContextNull::get(-2, 'order', 'ordermachine');
+        $object_1 = new Identifier(-1, 'order');
+        $object_2 = new Identifier(-2, 'order');
         $this->assertNotEquals($object_1, $object_2);
         
         
@@ -84,10 +83,10 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldThrowException()
     {
-        $context = ContextNull::forTest();
+        $identifier = new Identifier(-1, 'order');
         $builder = new EntityBuilderException(true);
         try {
-            $builder->getEntity($context);
+            $builder->getEntity($identifier);
             $this->fail('should  throw exception');
         } catch (Exception $e) {
             $this->assertEquals(0, $e->getCode());
@@ -95,7 +94,7 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
         
         $builder = new EntityBuilderException(false);
         try {
-            $builder->getEntity($context);
+            $builder->getEntity($identifier);
             $this->fail('should  throw exception');
         } catch (Exception $e) {
             $this->assertEquals(Exception::BUILDER_FAILURE, $e->getCode());
@@ -107,11 +106,11 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
  * helper class. this reference builder builds a stdClss.
  */
 class EntityBuilderStdClss extends EntityBuilder {
-    protected function build(Context $context)
+    protected function build(Identifier $identifier)
     {
         $output = new \stdClass();
-        $output->entity_id = $context->getEntityId();
-        $output->machine = $context->getMachine();
+        $output->entity_id = $identifier->getEntityId();
+        $output->machine = $identifier->getMachine();
         return $output;
     }
 }
@@ -124,7 +123,7 @@ class EntityBuilderException extends EntityBuilder {
     public function __construct($bool) {
         $this->bool = $bool;
     }
-    protected function build(Context $context)
+    protected function build(Identifier $identifier)
     {
         if($this->bool) {
             throw new Exception('oops', 0);

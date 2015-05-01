@@ -1,5 +1,5 @@
 <?php
-namespace izzum\statemachine\utils\uml;
+namespace izzum\statemachine\utils;
 use izzum\statemachine\StateMachine;
 use izzum\statemachine\Transition;
 use izzum\statemachine\State;

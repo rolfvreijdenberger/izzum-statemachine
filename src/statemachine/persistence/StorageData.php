@@ -1,6 +1,6 @@
 <?php
 namespace izzum\statemachine\persistence;
-use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 /**
  * Simple Helper class for storing data. A value object
  * It does not have to be used by subclasses of Adapter, but it is used for
@@ -20,13 +20,7 @@ class StorageData {
      * @var string
      */
     public $state;
-    /**
-     * the state the transition was made from if any.
-     * A null value implies that the entity was just added to the statemachine
-     * storage facility.
-     * @var string
-     */
-    public $state_from;
+
     /**
      * the statemachine name
      * @var string
@@ -45,25 +39,23 @@ class StorageData {
      * @param string $state
      * @param string $state_from optional
      */
-    public function __construct($machine, $id, $state, $state_from = null) {
+    public function __construct($machine, $id, $state) {
         $this->id = $id;
         $this->machine = $machine;
         $this->state = $state;
-        $this->state_from = $state_from;
         $this->timestamp = time();
     }
     
     /**
      * factory method
-     * @param Context $object this holds the current 'old' state (state_from)
+     * @param Identifier $identifier 
      * @param string $state
      * @return StorageData
      */
-    public static function get(Context $object, $state = null) {
+    public static function get(Identifier $identifier, $state = null) {
         return new static(
-                $object->getMachine(), 
-                $object->getEntityId(), 
-                $state, 
-                $object->getState());
+                $identifier->getMachine(), 
+                $identifier->getEntityId(), 
+                $state);
     }
 }

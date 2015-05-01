@@ -2,7 +2,7 @@
 namespace izzum\statemachine\persistence;
 use izzum\statemachine\loader\Loader;
 use izzum\statemachine\StateMachine;
-use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 use izzum\statemachine\loader\LoaderArray;
 use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\Exception;
@@ -152,18 +152,18 @@ class PDO extends Adapter implements  Loader {
     
     /**
      * implementation of the hook in the Adapter::getState() template method
-     * @param Context $context
+     * @param Identifier $identifier
      * @param string $state
      */
-    protected function processGetState(Context $context) {
+    protected function processGetState(Identifier $identifier) {
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
         try {
             $query = 'SELECT state FROM ' . $prefix . 'statemachine_entities WHERE machine = '
                     . ':machine AND entity_id = :entity_id';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $context->getMachine());
-            $statement->bindParam(":entity_id", $context->getEntityId());
+            $statement->bindParam(":machine", $identifier->getMachine());
+            $statement->bindParam(":entity_id", $identifier->getEntityId());
             $result = $statement->execute();
             if($result === false) {
                 throw new Exception($this->getErrorInfo($statement));
@@ -176,7 +176,7 @@ class PDO extends Adapter implements  Loader {
         if($row === false) {
              throw new Exception(sprintf('no state found for [%s]. '
                      . 'Did you add it to the persistence layer?', 
-                    $context->getId(true)), 
+                    $identifier->toString()), 
                     Exception::PERSISTENCE_LAYER_EXCEPTION);   
         }
         return $row['state'];
@@ -184,49 +184,49 @@ class PDO extends Adapter implements  Loader {
 
     /**
      * implementation of the hook in the Adapter::setState() template method
-     * @param Context $context
+     * @param Identifier $identifier
      * @param string $state
      * @return boolean true if not already present, false if stored before
      */
-    protected function processSetState(Context $context, $state) {
-        if($this->isPersisted($context)) {
-            $this->updateState($context, $state);
+    protected function processSetState(Identifier $identifier, $state) {
+        if($this->isPersisted($identifier)) {
+            $this->updateState($identifier, $state);
             return false;
         } else {
-            $this->insertState($context, $state);      
+            $this->insertState($identifier, $state);      
             return true;
         }
     }
 
     /**
-     * adds Context info to the persistance layer.
+     * adds Identifier info to the persistance layer.
      * Thereby marking the time when the object was created.
-     * @param Context $context
+     * @param Identifier $identifier
      * @return boolean
      */
-    public function add(Context $context) {
-        if($this->isPersisted($context)) {
+    public function add(Identifier $identifier) {
+        if($this->isPersisted($identifier)) {
             return false;
         } 
-        $this->insertState($context, $this->getInitialState($context));
+        $this->insertState($identifier, $this->getInitialState($identifier));
         return true;
     }
     
     /**
      * is the context already persisted?
-     * @param Context $context
+     * @param Identifier $identifier
      * @return boolean
      * @throws Exception
      */
-    public function isPersisted(Context $context) {
+    public function isPersisted(Identifier $identifier) {
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
         try {
             $query = 'SELECT entity_id FROM ' . $prefix . 'statemachine_entities WHERE '
                     . 'machine = :machine AND entity_id = :entity_id';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $context->getMachine());
-            $statement->bindParam(":entity_id", $context->getEntityId());
+            $statement->bindParam(":machine", $identifier->getMachine());
+            $statement->bindParam(":entity_id", $identifier->getEntityId());
             $result = $statement->execute();
             if($result === false) {
                 throw new Exception($this->getErrorInfo($statement));
@@ -237,7 +237,7 @@ class PDO extends Adapter implements  Loader {
             if($row === false) {
                 return false;
             }
-            return ($row['entity_id'] == $context->getEntityId());
+            return ($row['entity_id'] == $identifier->getEntityId());
         } catch (\Exception $e) {
             throw new Exception(
                     sprintf('query for getting persistence info failed: [%s]', 
@@ -249,14 +249,14 @@ class PDO extends Adapter implements  Loader {
     /**
      * insert state for context into persistance layer.
      * This method is public for testing purposes
-     * @param Context $context
+     * @param Identifier $identifier
      * @param string $state
      */
-    public function insertState(Context $context, $state)
+    public function insertState(Identifier $identifier, $state)
     {
 
         //add a history record
-        $this->addHistory($context, $state);
+        $this->addHistory($identifier, $state);
         
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
@@ -266,8 +266,8 @@ class PDO extends Adapter implements  Loader {
                     VALUES
                 (:machine, :entity_id, :state, :timestamp)';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $context->getMachine());
-            $statement->bindParam(":entity_id", $context->getEntityId());
+            $statement->bindParam(":machine", $identifier->getMachine());
+            $statement->bindParam(":entity_id", $identifier->getEntityId());
             $statement->bindParam(":state", $state);
             $statement->bindParam(":timestamp", $this->getTimestampForDriver());
             $result = $statement->execute();
@@ -287,6 +287,10 @@ class PDO extends Adapter implements  Loader {
         return $output;
     } 
     
+    /**
+     * hook method
+     * @return number|string
+     */
     protected function getTimestampForDriver()
     {
         //yuk, seems postgres and sqlite need some different input.
@@ -300,16 +304,30 @@ class PDO extends Adapter implements  Loader {
     }
     
     /**
+     * hook method. not all drivers have the same boolean datatype. convert here.
+     * @param boolean $boolean
+     * @return boolean|int|string
+     */
+    protected function getBooleanForDriver($boolean)
+    {
+    	if(strstr($this->dsn, 'sqlite:') || strstr($this->dsn, 'mysql:')) {
+    		return $boolean ? 1 : 0;
+    	}
+    	//might have to be overriden for certain drivers.
+    	return $boolean;
+    }
+    
+    /**
      * update state for context into persistance layer
      * This method is public for testing purposes
-     * @param Context $context
+     * @param Identifier $identifier
      * @param string $state
      * @throws Exception
      */
-    public function updateState(Context $context, $state)
+    public function updateState(Identifier $identifier, $state)
     {
         //add a history record
-        $this->addHistory($context, $state);
+        $this->addHistory($identifier, $state);
         
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
@@ -318,8 +336,8 @@ class PDO extends Adapter implements  Loader {
                 changetime = :timestamp WHERE entity_id = :entity_id 
                 AND machine = :machine';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $context->getMachine());
-            $statement->bindParam(":entity_id", $context->getEntityId());
+            $statement->bindParam(":machine", $identifier->getMachine());
+            $statement->bindParam(":entity_id", $identifier->getEntityId());
             $statement->bindParam(":state", $state);
             $statement->bindParam(":timestamp", $this->getTimestampForDriver());
             $result = $statement->execute();
@@ -335,26 +353,30 @@ class PDO extends Adapter implements  Loader {
     
      /**
       * Adds a history record for a transition
-      * @param Context $context
+      * @param Identifier $identifier
       * @param string $state
-      * @param string $message an optional message. which would imply an error.
+      * @param string $message an optional message (which might be exception data or not). 
+	  * @param boolean $is_exception an optional value, specifying if there was something exceptional or not.
+	  * 	this can be used to signify an exception for storage in the backend so we can analyze the history
+	  * 	for regular transitions and failed transitions
       * @throws Exception
       */
-    public function addHistory(Context $context, $state, $message = null)
+    public function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
         try {
             $query = 'INSERT INTO ' . $prefix . 'statemachine_history
-                    (machine, entity_id, state, message, changetime)
+                    (machine, entity_id, state, message, changetime, exception)
                         VALUES
-                    (:machine, :entity_id, :state, :message, :timestamp)';
+                    (:machine, :entity_id, :state, :message, :timestamp, :exception)';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $context->getMachine());
-            $statement->bindParam(":entity_id", $context->getEntityId());
+            $statement->bindParam(":machine", $identifier->getMachine());
+            $statement->bindParam(":entity_id", $identifier->getEntityId());
             $statement->bindParam(":state", $state);
             $statement->bindParam(":message", $message);
             $statement->bindParam(":timestamp", $this->getTimestampForDriver());
+            $statement->bindParam(":exception", $this->getBooleanForDriver($is_exception));
             $result = $statement->execute();
             if($result === false) {
               throw new Exception($this->getErrorInfo($statement));  
@@ -367,28 +389,30 @@ class PDO extends Adapter implements  Loader {
     }
     
     
-       /**
+      /**
      * Stores a failed transition in the storage facility.
-     * @param Context $context
-     * @param Exception $e
+     * @param Identifier $identifier
+     * @param \Exception $e
      * @param string $transition_name
      */
-    public function setFailedTransition(Context $context, Exception $e, 
-            $transition_name)
+    public function setFailedTransition(Identifier $identifier, \Exception $e, $transition_name)
     {
         //check if it is persisted, otherwise we cannot get the current state
-        if($this->isPersisted($context)) {
+        if($this->isPersisted($identifier)) {
             $message = new \stdClass();
             $message->code = $e->getCode();
             $message->transition = $transition_name;
             $message->message = $e->getMessage();          
             $message->file = $e->getFile();
             $message->line = $e->getLine();
-            //convert to json for storage
+            $state = $this->getState($identifier);
+            $message->state = $state;
+            //convert to json for storage (text field with json can be searched via sql)
             $json = json_encode($message);
-            $state = $context->getState();
-            $this->addHistory($context, $state, $json);
-        } 
+            $this->addHistory($identifier, $state, $json, true);
+        } else {
+        	//not persisted...
+        }
     }
 
     /**

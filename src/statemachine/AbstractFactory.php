@@ -22,7 +22,7 @@ abstract class AbstractFactory {
      
      /**
       * Gets the concrete Loader.
-      * @return Loader An implementation of a Loader class
+      * @return Loader An implementation of a Loader class (might be implemented on the persistence adapter)
       */
      abstract protected function createLoader();
      
@@ -37,10 +37,11 @@ abstract class AbstractFactory {
       * @return EntityBuilder
       */
      abstract protected function createBuilder();
+     
 
      /**
       * get the machine name for the machines that are produced by this factory.
-      * will be used by the Context
+      * will be used by the Identifier and Context
       * @return string
       */
      abstract protected function getMachineName();
@@ -67,6 +68,7 @@ abstract class AbstractFactory {
      * they can safely be reused and shared.
      *
      * @param string $id the entity id for the Context entity
+     * @param bool $cache_entity for every statemachine transition. this is relevant if you want to 
      * @return StateMachine a statemachine ready to go
      * @throws Exception
      * @link https://en.wikipedia.org/wiki/Abstract_factory_pattern
@@ -74,7 +76,7 @@ abstract class AbstractFactory {
      */
     public function getStateMachine($id)
     {
-        $context = $this->createContext($id);
+        $context = $this->createContext(new Identifier($id, $this->getMachineName()));
         $machine = $this->createMachine($context);
         $loader = $this->createLoader();
         $loader->load($machine);
@@ -95,17 +97,17 @@ abstract class AbstractFactory {
      * and persistence adapter for a concrete statemachine type.
      * 
      * 
-     * @param mixed $id the entity id for the Context
+     * @param mixed $id the entity id (the machine name will be retrieved for 
+     * 	the machine by the factory itself)
      * @return Context
      * @throws Exception
      * @link https://en.wikipedia.org/wiki/Abstract_factory_pattern
      * @link https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    protected function createContext($id)
+    protected function createContext(Identifier $identifier)
     {
         $context = new Context(
-                $id, 
-                $this->getMachineName(), 
+        		$identifier, 
                 $this->createBuilder(), 
                 $this->createAdapter()
                 );
@@ -114,11 +116,11 @@ abstract class AbstractFactory {
     }
     
     /**
-     * add Context data to the persistence layer.
+     * add data to the persistence layer.
      * This is a convenience method since it delegates to the Context
-     * @param Context $object
+     * @param Identifier $identifier
      */
-    public final function add(Context $object) {
-        $object->add();
+    public final function add(Identifier $identifier) {
+        $context = $this->createContext($identifier)->add();
     }
 }

@@ -4,14 +4,18 @@ use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\Exception;
 /**
- * Context is an object that holds the contextual information for the statemachine.
+ * Context is an object that holds all the contextual information for the statemachine
+ * to do it's work with the help of the relevant dependencies.
+ * A Context is created by your application to provide the right dependencies ('context')
+ * for the statemachine to work with.
+ * 
  * Important are:
  * - the stateful entity, which is  an application domain specific  object 
  * like 'Order' or 'Customer' that goes through some finite states in it's lifecycle.
  * - the machine name, which is the type identifier for the machine and related
  * to the entity (eg: 'order-machine')
  * - persistence adapter, which reads/writes to/from a storage facility
- * - builder, which constructs the stateful entity.
+ * - entity_builder, which constructs the stateful entity.
  * 
  * The entity is the object that will be acted upon by the 
  * Statemachine. This stateful object will be uniquely identified by it's id, 
@@ -30,27 +34,19 @@ use izzum\statemachine\Exception;
  *
  */
 class Context {
+	
     
     /**
-     * an entity id that represents the unique identifier for an application
-     * domain specific object like 'Order', 'Customer' etc.
-     * @var string
+     * the Identifier that uniquely identifies the statemachine
+     * @var Identifier
      */
-    protected $entity_id;
-    
-    /**
-     * the statemachine that governs the state behaviour for this entity (eg 'order').
-     * this is the name of the statemachine itself and is used in conjunction
-     * with the entity_id to define what a statemachine is about.
-     * @var string
-     */
-    protected $machine;
+    protected $identifier;
     
     /**
      * the builder to get the reference to the entity.
      * @var EntityBuilder
      */
-    protected $builder;
+    protected $entity_builder;
     
     /**
      * the instance for getting to the persistence layer
@@ -67,19 +63,17 @@ class Context {
      */
     protected $statemachine;
     
+    
     /**
      * Constructor
-     * @param mixed $id the id of the domain specific entity (it will internally be converted to a string)
-     * @param string $machine the name of the statemachine (eg: 'order')
-     * @param EntityBuilder $builder A specific builder class to create a reference to the entity we wish to manipulate.
+     * @param Identifier $identifier the identifier for the statemachine
+     * @param EntityBuilder $entity_builder A specific builder class to create a reference to the entity we wish to manipulate.
      * @param Adapter $persistance_adapter A specific reader/writer class can be used to generate different 'read/write' behaviour
      */
-    public function __construct($id, $machine, $builder = null, $persistance_adapter = null)
+    public function __construct($identifier, $entity_builder = null, $persistance_adapter = null)
     {
-        //convert id to string (it will likely be an int but a string gives more flexibility)
-        $this->entity_id            = "$id";
-        $this->machine              = $machine;
-        $this->builder              = $builder;
+        $this->identifier           = $identifier;
+        $this->entity_builder       = $entity_builder;
         $this->persistance_adapter  = $persistance_adapter;
     }
     
@@ -108,12 +102,14 @@ class Context {
      * for example an 'Order' or 'Customer' that transitions through states in
      * it's lifecycle.
      * 
+     * 
+     * @param boolean $create_fresh_entity optional
      * @return mixed
      */
-    public function getEntity()
+    public function getEntity($create_fresh_entity = false)
     {
         //use a specialized builder object to create the (cached) reference.
-        return $this->getBuilder()->getEntity($this);
+        return $this->getBuilder()->getEntity($this->getIdentifier(), $create_fresh_entity);
     }
     
     
@@ -125,7 +121,7 @@ class Context {
     public function getState()
     {
         //get the state by delegating to a specific reader
-        return $this->getPersistenceAdapter()->getState($this);
+        return $this->getPersistenceAdapter()->getState($this->getIdentifier());
     }
     
     /**
@@ -138,7 +134,7 @@ class Context {
     public function setState($state)
     {
         //set the state by delegating to a specific writer
-        return $this->getPersistenceAdapter()->setState($this, $state);
+        return $this->getPersistenceAdapter()->setState($this->getIdentifier(), $state);
     }
 
     /**
@@ -147,12 +143,12 @@ class Context {
      */
     public function getBuilder()
     {
-        if($this->builder === null || !is_a($this->builder, 
+        if($this->entity_builder === null || !is_a($this->entity_builder, 
                 'izzum\statemachine\EntityBuilder')) {
             //the default is the default builder.
-            $this->builder = new EntityBuilder();
+            $this->entity_builder = new EntityBuilder();
         }
-        return $this->builder;
+        return $this->entity_builder;
     }
     
     
@@ -180,7 +176,16 @@ class Context {
      */
     public function getEntityId() 
     {
-        return $this->entity_id;
+        return $this->getIdentifier()->getEntityId();
+    }
+    
+    /**
+     * get the Identifier
+     * @return Identifier
+     */
+    public function getIdentifier()
+    {
+    	return $this->identifier;
     }
     
    
@@ -190,13 +195,13 @@ class Context {
      */
     public function getMachine()
     {
-        return $this->machine;
+        return $this->getIdentifier()->getMachine();
     }
 
-    public static function get($id, $machine, $builder = null, $persistence_adapter = null)
+    public static function get($identifier, $entity_builder = null, $persistence_adapter = null)
     {
         //return a new instance of this (sub)class
-        return new static($id, $machine, $builder, $persistence_adapter);
+        return new static($identifier, $entity_builder, $persistence_adapter);
     }
     
     /**
@@ -209,7 +214,7 @@ class Context {
     
     /**
      * get the unique identifier for an Context, which consists of the machine
-     * name and the entity_id in parseable form.
+     * name and the entity_id in parseable form, with an optional state
      * 
      * @param boolean $readable human readable or not. defaults to false
      * @param boolean $with_state append current state. defaults to false
@@ -217,14 +222,12 @@ class Context {
      */
     public function getId($readable = false, $with_state = false)
     {
-        $output = '';
+        $output = $this->getIdentifier()->getId($readable);
         if($readable) {
-            $output =  "machine: '" . $this->getMachine() . "', id: '". $this->getEntityId()  . "'";
             if($with_state) {
-                $output .= ", state: : '" . $this->getState();
+                $output .= ", state: '" . $this->getState() ."'";
             }
         } else {
-            $output =   $this->getMachine() . "_" . $this->getEntityId() ;
             if($with_state) {
                 $output .=  "_" . $this->getState();
             }
@@ -244,7 +247,7 @@ class Context {
      */
     public function add()
     {
-       return $this->getPersistenceAdapter()->add($this);
+       return $this->getPersistenceAdapter()->add($this->getIdentifier());
     }
     
     /**
@@ -258,6 +261,6 @@ class Context {
      */
     public function setFailedTransition(Exception $e, $transition_name)
     {
-        $this->getPersistenceAdapter()->setFailedTransition($this, $e, $transition_name);
+        $this->getPersistenceAdapter()->setFailedTransition($this->getIdentifier(), $e, $transition_name);
     }
 }

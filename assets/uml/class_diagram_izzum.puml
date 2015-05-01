@@ -20,9 +20,9 @@ package izzum.statemachine {
       # checkGuard(Transition)
       # preProcess(Transition)
       # postProcess(Transition)
-      # handleTransitionException(Exception, transition:string)
-      
+      # handleTransitionException(Exception, transition:string)   
     }
+    
     Class State {
         # name: string
         # type:string
@@ -45,34 +45,45 @@ package izzum.statemachine {
         + getCommandName():string
     }
     Class Context {
-        # entity_id:string
-        # builder: EntityBuilder
-        # adapter: Adapter
+        # identifier:Identifier
+        # entity_builder: EntityBuilder
+        # persistence_adapter: Adapter
         # statemachine:StateMachine
         + getEntity():*
         + getEntityId():string
+        + getMachine():string
+        + getStateMachine():StateMachine
         + getState():string
         + setState(state)
         + getBuilder():EntityBuilder
-        + getAdapter():Adapter
+        + getPersistenceAdapter():Adapter
         + setStateMachine(StateMachine)
         + setFailedTransition(Exception, transition:string)
     }
+    
+    Class Identifier {
+    	# entity_id:string
+    	# machine_name:string
+    	+ getEntityId():string
+    	+ getMachine():string
+    	+ getId():string
+    }
 
     Class EntityBuilder {
-        + getEntity(Context):*
+        + getEntity(Identifier):*
         # build():*
     }
     package persistence {
       abstract Class Adapter {
         + {abstract} getEntityIds(machine:string, state:string):string[]
-        + {abstract} add(Context):boolean
-        + getInitialState(Context):string
-        + setState(Context):boolean
-        + getState(Context)
-        + {abstract} add(Context)
-        # {abstract} processSetState(Context):boolean
-        # {abstract} processGetState(Context)
+        + {abstract} add(Identifier):boolean
+        + getInitialState(Identifier):string
+        + setState(Identifier):boolean
+        + getState(Identifier)
+        + setFailedTransition(Exception, transition:string)
+        + {abstract} add(Identifier)
+        # {abstract} processSetState(Identifier):boolean
+        # {abstract} processGetState(Identifier)
       }
 
       Class PDO {
@@ -96,7 +107,7 @@ package izzum.statemachine {
             # {abstract} createBuilder(): EntityBuilder
             # {abstract} getMachineName(): string
             # createMachine(Context): StateMachine
-            # createContext(id): Context
+            # createContext(Identifier): Context
             +add(Context)
         }
 
@@ -135,6 +146,7 @@ package izzum.statemachine {
     StateMachine "1" --> "n" Exception: throws
     Context "n" o-- "1" EntityBuilder : gets domain object (alias: DO)
     Context "n" o-- "1" Adapter : read/write state info
+    Context "1" o-- "1" Identifier : identification data
     State "n" -- "n" Transition : need each other
     Adapter <|-- Memory
     Adapter <|-- PDO : database interfacing
@@ -144,7 +156,7 @@ package izzum.statemachine {
     Transition *-- Command : logic to process transitions (DO)
     Transition *-- Rule : check if transition allowed (DO)
     Transition "n" --> "1" Context : acts on
-    AbstractFactory "1" --> "n" StateMachine: creates SM, Adapter, Loader, Context, EntityBuilder
+    AbstractFactory "1" --> "n" StateMachine: creates SM, Adapter, Loader, Context, Identifier, EntityBuilder
     Loader "1" --> "n" StateMachine : adds transitions
 
 

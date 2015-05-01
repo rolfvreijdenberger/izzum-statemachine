@@ -2,10 +2,10 @@
 namespace izzum\statemachine;
 use izzum\statemachine\Transition;
 use izzum\statemachine\Exception;
-use izzum\statemachine\utils\ContextNull;
+use izzum\statemachine\Context;
 use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\persistence\Memory;
-use izzum\statemachine\utils\uml\PlantUml;
+use izzum\statemachine\utils\PlantUml;
 use izzum\statemachine\loader\LoaderArray;
 
 /**
@@ -26,9 +26,9 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldWorkWhenInitialized()
     {
-        $object = ContextNull::forTest();
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
-        $this->assertEquals($machine->getMachine(), ContextNull::NULL_STATEMACHINE);
+        $this->assertEquals($machine->getMachine(), Identifier::NULL_STATEMACHINE);
         $this->assertEquals($machine->getContext(), $object);
         $this->assertCount(0, $machine->getStates());
         $this->assertCount(0, $machine->getTransitions());
@@ -49,7 +49,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseApply()
     {
-        $object = ContextNull::forTest();
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         
@@ -76,7 +76,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseAddTransitions()
     {
-        $object = ContextNull::forTest();
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
@@ -133,7 +133,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     
     public function testGetInitialState()
     {
-        $object = ContextNull::forTest();
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         try {
         $machine->getInitialState();
@@ -149,14 +149,13 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     
     public function testReferencesOnStatesAndTransitions()
     {
-        $object = ContextNull::forTest();
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         $transitions = $machine->getTransitions();
         $states = $machine->getStates();
         $this->assertCount(6, $states);
         $this->assertCount(6, $transitions);
-        
         $transition_1 = $machine->getTransition('a_to_b');
         $sa = $transition_1->getStateFrom();
         $this->assertEquals('a', $sa->getName());
@@ -216,7 +215,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     public function testMultipleTransitionsFromOneState ()
     {
         
-        $context = new ContextNull(54321, ContextNull::NULL_STATEMACHINE);
+        $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         $context->add();
         
@@ -284,7 +283,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     public function shouldBeAbleToSwitchContext()
     {
         
-        $context_1 = new ContextNull(1, ContextNull::NULL_STATEMACHINE);
+        $context_1 = new Context(new Identifier(1, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context_1);
         $context_1->add();
         $this->assertEquals($context_1, $machine->getContext());
@@ -307,7 +306,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($machine->getCurrentState()->isFinal());
         
         //new context object, reuse statemachine
-        $context_2 = new ContextNull(123, ContextNull::NULL_STATEMACHINE);
+        $context_2 = new Context(new Identifier(123, Identifier::NULL_STATEMACHINE));
         $context_2->add();
         $machine->changeContext($context_2);
         $this->assertEquals($machine->getCurrentState()->getName(), State::STATE_NEW);
@@ -322,7 +321,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         //switch to different machine for context
         try {
-            $context_3 = new ContextNull(123, 'different machine');
+            $context_3 = new Context(new Identifier(123, 'different machine'));
             $context_3->add();
             $machine->changeContext($context_3);
             $this->fail("cannot switch context with different machine");
@@ -337,7 +336,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     
     public function testGettersAndCounts()
     {
-        $context = new ContextNull(54321, ContextNull::NULL_STATEMACHINE);
+        $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         $this->addTransitionsToMachine($machine);
         $this->assertCount(6, $machine->getTransitions());
@@ -387,7 +386,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseRunAndCanAndTestStateTypes()
     {
-        $object = ContextNull::forTest();
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         
@@ -428,7 +427,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      * @test
      */
     public function shouldThrowExceptionFromRuleOrCommand(){
-        $context = new ContextNull(54321, ContextNull::NULL_STATEMACHINE);
+        $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         $context->add();
         
@@ -471,7 +470,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $machine = 'order-flow';
         $id = 123;
-        $context = new Context($id, $machine);
+        $context = new Context(new Identifier($id, $machine));
         $machine = new StateMachine($context);
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
         $s_a = new State('order-confirmation', State::TYPE_NORMAL);
@@ -504,7 +503,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $machine = 'coffee-machine';
         $id = 123;
-        $context = new Context($id, $machine);
+        $context = new Context(new Identifier($id, $machine));
         $machine = new StateMachine($context);
         $data = array();
         $data[] = new LoaderData('new', 'initialize', Transition::RULE_TRUE, 'izzum\command\Initialize', 'initial');

@@ -100,9 +100,10 @@ class StateMachine {
       * create a statemachine associated with a stateful context that has been 
       * fully configured
       * 
-      * @param Context $context a fully configured context
+      * @param Context $context a fully configured context providing all the relevant parameters/dependencies
+      * 	to be able to run this statemachine for an entity.
      */
-    public function __construct(Context $context)
+    public function __construct(Context $context, $create_fresh_entity = false)
     {
         //sets up bidirectional association
         $this->setContext($context);
@@ -110,7 +111,8 @@ class StateMachine {
     
     
     /**
-     * @param string $transition name
+     * Check if a transition is possible by using the transition name (convention: <state-from>_to_<state-to>)
+     * @param string $transition_name
      * @return boolean
      * @throws Exception in case something went wrong. The exceptions are logged.
      */
@@ -146,9 +148,11 @@ class StateMachine {
     }
 
     /**
-     * Apply a transition by name. (<state-from>_to_<state-to>)
-     * The transition should be possible and it is checked in this method.
+     * Apply a transition by name. (convention: <state-from>_to_<state-to>)
+     * The transition should be possible (we check the 'rule' guard), else it will throw an exception. 
+	 * 
      * 
+     * @param string $transition_name the name of the transition (analagous to an 'event' name)
      * @throws Exception in case something went wrong.
      *     An exception will lead to a failed transition and the failed
      *     transition will lead to a notification to the Context and it's adapter
@@ -500,11 +504,11 @@ class StateMachine {
     /**
      * called after each transition has run.
      * a hook to implement in subclasses if necessary, to do stuff such as
-     * event handling, locking an entity, logging, cleanup etc.
+     * event handling, unlocking an entity, logging, cleanup etc.
      * @param Transition $transition
      */
     protected function postProcess(Transition $transition) {
-        //dispatch events, log, lock entity, cleanup, 
+        //dispatch events, log, unlock entity, cleanup, 
         //commit transaction via persistence layer etc.
     }
     
@@ -526,11 +530,11 @@ class StateMachine {
      */
     protected final function setContext(Context $context)
     {
-        if($this->context){
-            if($this->context->getMachine() !== $context->getMachine()) {
+        if($this->getContext()){
+            if($this->getContext()->getMachine() !== $context->getMachine()) {
                 throw new Exception(
                     sprintf("Trying to set context for a different machine. currently '%s' and new '%s'",
-                        $this->context->getMachine(), $context->getMachine()), 
+                        $this->getContext()->getMachine(), $context->getMachine()), 
                     Exception::SM_CONTEXT_DIFFERENT_MACHINE);
             }
         }
