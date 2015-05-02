@@ -7,10 +7,13 @@ use izzum\statemachine\Exception;
 /**
  * StateMachine class.
  * 
- * The statemachine is used to do transitions from state to state for
+ * The statemachine is used to do transitions from one state to another state for
  * an entity that represents a domain object. This application domain specific 
  * object can be created by means of a Context instance and it's 
  * associated EntityBuilder.
+ * 
+ * Each transition will take place only if the transition guard (Rule) allows it.
+ * Each transition will then execute specific logic (Command).
  * 
  * This whole package strives to follow the open/closed principle, making it
  * open for extension (adding your own logic through subclassing) but closed 
@@ -37,10 +40,11 @@ use izzum\statemachine\Exception;
  * the Command associated with the transitions.
  * 
  * The Rule checks if the domain model (or it's derived data) applies and therefore
- * allows the transition, after which the Command is executed and can actually
+ * allows the transition, after which the Command is executed that can actually
  * alter data in the underlying domain models, call services etc.
  * 
- * Preferably use a subclass of the AbstractFactory to get a StateMachine.
+ * Preferably use a subclass of the AbstractFactory to get a StateMachine, since that
+ * will put the creation of all the relevant classes in a reusable model.
  * 
  * All high level interactions that a client conducts with a statemachine
  * should expect exceptions. Exceptions that bubble up from this statemachine are
@@ -111,8 +115,8 @@ class StateMachine {
     
     
     /**
-     * Check if a transition is possible by using the transition name (convention: <state-from>_to_<state-to>)
-     * @param string $transition_name
+     * Check if a transition is possible by using the transition name.
+     * @param string $transition_name convention: <state-from>_to_<state-to>
      * @return boolean
      * @throws Exception in case something went wrong. The exceptions are logged.
      */
@@ -128,14 +132,15 @@ class StateMachine {
             $transition = $this->getTransition($transition_name);
             if($transition === null) {
                 throw new Exception(sprintf("transition '%s' has not been found", 
-                        $transition_name), Exception::SM_NO_TRANSITION_FOUND);
+                	$transition_name), Exception::SM_NO_TRANSITION_FOUND);
             }
             
-            //possible hook
+            //possible hook so your application can place an extra guard for the transition.
             if(!$this->checkGuard($transition)) {
                 return false;
             }
-            //this will check the Rule defined for the transition
+            //this will check the Rule defined for the transition.
+            //if the Rule applies, then this is seen as a green light to start the transition.
             return $transition->can($this->getContext());
         } catch (Exception $e) {
             //already a statemachine exception, just rethrow
@@ -148,11 +153,15 @@ class StateMachine {
     }
 
     /**
-     * Apply a transition by name. (convention: <state-from>_to_<state-to>)
-     * The transition should be possible (we check the 'rule' guard), else it will throw an exception. 
-	 * 
+     * Apply a transition by name.
+     * If the transition is not possible (we check the 'Rule' guard to see if the 
+     * machine is allowed to transition) it will throw an exception.
+     * If it is allowed:
+     * - optionally perform state exit logic
+     * - perform transition logic (Command)
+     * - optionally porform state entry logic
      * 
-     * @param string $transition_name the name of the transition (analagous to an 'event' name)
+     * @param string $transition_name convention: <state-from>_to_<state-to>
      * @throws Exception in case something went wrong.
      *     An exception will lead to a failed transition and the failed
      *     transition will lead to a notification to the Context and it's adapter
@@ -172,7 +181,9 @@ class StateMachine {
      * querying the Context (via it's associated persistence layer).
      * 
      * TRICKY: Be careful when using this function,
-     * since all rules must be mutually exclusive!
+     * since all rules must be mutually exclusive! If not, you might end up
+     * performing the state transition with priority n when you really want 
+     * to perform transition n+1.
      *
      * An alternative is to use the 'apply' method: 
      *     $statemachine->apply('a_to_b');
@@ -225,8 +236,11 @@ class StateMachine {
 
     
     /**
-     * run a statemachine until it cannot run the next transition or until
-     * it is in a final state.
+     * run a statemachine until it cannot run any transition in the current state 
+     * or until it is in a final state.
+     * 
+     * when using cyclic graphs, you could get into an infinite loop between states. 
+     * design your machine correctly.
      * 
      * preconditions: 
      *     - the transitions should be defined for each state
@@ -242,8 +256,7 @@ class StateMachine {
         try {
             $run = true;
             while ($run) {
-               //when using cyclic graphs, you can get into an infinite loop. 
-               //design your machine correctly (with the right rules)
+	       //run the first transition possible       
                $run = $this->run();
                if($run) {
                    //increment after succesful transition
@@ -262,9 +275,12 @@ class StateMachine {
     }
     
     /**
-     * This method is the beating hart of the statemachine: apply a transition by name.
-     * @param string $transition_name
-     * @param boolean $check_allowed to specify if we want to do the check to see
+     * Perform a transition by specifiying the transitions' name from a state that the 
+     * transition is allowed to run.
+     * 
+     * 
+     * @param string $transition_name convention: <state-from>_to_<state-to>
+     * @param boolean $check_allowed optional: to specify if we want to do the check to see
      *      if the transition is allowed or not. This is a performance optimalization
      *      so in case we call 'can' directly, we can use 'transition' directly 
      *      after that without doing the checks (including expensive Rules) twice.
@@ -286,12 +302,15 @@ class StateMachine {
             }
             $transition = $this->getTransition($transition_name);
 
-            //possible hook for subclasses to implement
+	    //fms exit action: performed when exiting the state
+            //possible hook for subclasses to implement 
             $this->preProcess($transition);
             
+            //the transition is performed, with the associated logic
             $transition->process($this->getContext());
             $this->setCurrentState($transition->getStateTo());
             
+            //fms entry action: performed when entering the state
             //possible hook for subclasses to implement
             $this->postProcess($transition);
             
@@ -491,8 +510,9 @@ class StateMachine {
     }
 
      /**
-     * called before each transition will try to run.
-     * a hook to implement in subclasses if necessary, to do stuff such as
+     * This is a statemachine exit action: performed when exiting the current state.
+     * Called before each transition will run and execute the associated transition logic.
+     * A hook to implement in subclasses if necessary, to do stuff such as
      * event handling, locking an entity, logging, cleanup etc.
      * @param Transition $transition
      */
@@ -502,7 +522,8 @@ class StateMachine {
     }
     
     /**
-     * called after each transition has run.
+     * This is a statemachine entry action: performed when entering the new state.
+     * Called after each transition has run and has executed the associated transition logic..
      * a hook to implement in subclasses if necessary, to do stuff such as
      * event handling, unlocking an entity, logging, cleanup etc.
      * @param Transition $transition
