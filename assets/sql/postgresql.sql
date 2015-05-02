@@ -59,6 +59,8 @@ CREATE TABLE statemachine_states (
 	machine varchar NOT NULL, -- a foreign key to the machine name.
 	state varchar NOT NULL, -- a state for the machine. use lowercase and hyphen seperated. eg: my-state
 	type varchar DEFAULT 'normal'::character varying NOT NULL, -- one of initial, normal or final
+	entry_command varchar NULL, -- the fully qualified name of a Command class to execute as part of entering this state 
+	exit_command varchar NULL, -- the fully qualified name of a Command class to instantiate as part of exiting this state
 	description text -- optional: a descriptive text
 );
 COMMENT ON TABLE statemachine_states IS 'Valid states for a specific machine type.
@@ -66,6 +68,8 @@ Each statemachine MUST have ONE state of type "initial".
 This is used to create the initial state if an entity is not yet represented in this system.
 The implicit assumption is that a statemachine always has (and can only have) ONE initial state,
 which is the entry point. The default name for this state is "new".
+As part of a transition a state can have an exit action and the new state an entry action.
+These actions will execute a command. The order is: exit-command, transition-command, entry-command
 All states must be lowercase and use hyphens instead of spaces eg: my-state.
 changes in the name of a state will be cascaded through the other tables';
 CREATE UNIQUE INDEX u_statemachine_states_m_s ON statemachine_states (machine, state);

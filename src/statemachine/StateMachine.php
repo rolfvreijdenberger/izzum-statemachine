@@ -302,15 +302,17 @@ class StateMachine {
             }
             $transition = $this->getTransition($transition_name);
 
-	    //fms exit action: performed when exiting the state
             //possible hook for subclasses to implement 
             $this->preProcess($transition);
+	    	//fms exit action: performed when exiting the state
+            $transition->getStateFrom()->exitAction($this->getContext());
             
             //the transition is performed, with the associated logic
             $transition->process($this->getContext());
             $this->setCurrentState($transition->getStateTo());
             
             //fms entry action: performed when entering the state
+            $transition->getStateTo()->entryAction($this->getContext());
             //possible hook for subclasses to implement
             $this->postProcess($transition);
             

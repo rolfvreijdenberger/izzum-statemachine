@@ -27,6 +27,8 @@ CREATE TABLE statemachine_states (
 	machine VARCHAR(255) NOT NULL, 
 	state VARCHAR(255) NOT NULL, 
 	type VARCHAR(255) DEFAULT 'normal' NOT NULL CHECK(type IN ('final','initial','normal')), 
+	entry_command VARCHAR(255) NULL,
+	exit_command VARCHAR(255) NULL,
 	description text,
         PRIMARY KEY (machine, state),
         FOREIGN KEY (machine) REFERENCES statemachine_machines(machine) ON UPDATE CASCADE

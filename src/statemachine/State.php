@@ -1,5 +1,7 @@
 <?php
 namespace izzum\statemachine;
+use izzum\command\ICommand;
+use izzum\command\Null;
 /**
  * This class holds the finite state data:
  * - the name of the state
@@ -34,6 +36,8 @@ class State {
      * @var string
      */
     const STATE_DONE    = 'done';
+    
+    const COMMAND_NULL = 'izzum\command\Null';
     
     /**
      * the state types:
@@ -79,6 +83,20 @@ class State {
      * @var string
      */
     protected $name;
+    
+    /**
+     * fully qualified command name for the command to be executed
+     * when entering a state as part of a transition
+     * @var string
+     */
+    protected $command_entry_name;
+    
+    /**
+     * fully qualified command name for the command to be executed
+     * when exiting a state as part of a transition
+     * @var string
+     */
+    protected $command_exit_name;
    
      /**
      * 
@@ -195,4 +213,101 @@ class State {
         }
         return $has;
     }
+    
+    /**
+     * action executed every time a state is entered
+     * @param Context $context
+     * @throws Exception
+     */
+    public function entryAction(Context $context)
+    {
+    	$this->getCommand($this->getEntryCommandName(), $context)->execute();
+    }
+    
+    /**
+     * action executed every time a state is exited
+     * @param Context $context
+     * @throws Exception
+     */
+    public function exitAction(Context $context)
+    {
+    	 $this->getCommand($this->getExitCommandName(), $context)->execute();
+    }
+    
+    /**
+     * returns the associated Command for the entry/exit action.
+     * the Command will be configured with the 'reference' of the stateful object
+     *
+     * @param string $command_name entry or exit command name
+     * @param Context $object
+     * @return ICommand
+     * @throws Exception
+     */
+    public function getCommand($command_name, Context $object)
+    {
+    	$reference = $object->getEntity();
+    
+    	//it's oke to have no command
+    	if($command_name === '' || $command_name === null) {
+    		//return a command without side effects
+    		$command_name = self::COMMAND_NULL;
+    	}
+    
+    	if(class_exists($command_name)) {
+    		try {
+    			$command = new $command_name($reference);
+    		} catch (\Exception $e) {
+    			$e = new Exception(
+    					sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",
+    							$command_name, $object->toString(), $e->getMessage()),
+    					Exception::COMMAND_CREATION_FAILURE);
+    			throw $e;
+    		}
+    	} else {
+    		//misconfiguration
+    		$e = new Exception(
+    				sprintf("failed command creation, class does not exist: (%s) for Context (%s)",
+    						$command_name, $object->toString()),
+    				Exception::COMMAND_CREATION_FAILURE);
+    		throw $e;
+    	}
+    	return $command;
+    }
+    
+    /**
+     * set the fully qualified command name for entry of the state
+     * @param string $name
+     */
+    public function setEntryCommandName($name) 
+    {
+    	$this->command_entry_name = $name;
+    }
+    
+    /**
+     * set the fully qualified command name for exit of the state
+     * @param string $name
+     */
+    public function setExitCommandName($name)
+    {
+    	$this->command_exit_name = $name;
+    }
+    
+    /**
+     * get the fully qualified command name for entry of the state
+     * @return string
+     */
+    public function getEntryCommandName()
+    {
+    	return $this->command_entry_name;
+    }
+    
+    /**
+     * get the fully qualified command name for entry of the state
+     * @return string
+     */
+    public function getExitCommandName()
+    {
+    	return $this->command_exit_name;
+    }
+    
 }
