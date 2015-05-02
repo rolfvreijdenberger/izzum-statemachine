@@ -10,7 +10,7 @@ use izzum\statemachine\Context;
  * An abstraction for everything that is needed to make an allowed and succesful
  * transition.
  *  
- * It has functionality to accept a (composite) Rule and a (composite) Command.
+ * It has functionality to accept a Rule (guard logic) and a Command (transition logic).
  *
  * The Rule is used to check whether a transition can take place (a guard)
  * The Command is used to execute the transition logic.
@@ -128,7 +128,7 @@ class Transition {
      * configured with a 'reference' (stateful) object
      *
      * @param Context $object the associated stateful object for a our statemachine
-     * @return \izzum\rules\Rule or a subclass
+     * @return \izzum\rules\IRule
      * @throws Exception
      */
     public function getRule(Context $object)

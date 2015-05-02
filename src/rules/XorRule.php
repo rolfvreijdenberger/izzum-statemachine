@@ -6,7 +6,7 @@ namespace izzum\rules;
  * When a rule is chained using the 'XOR' operator one of the rules given in the 
  * constructor should apply.
  *
- * @author romuald
+ * @author romuald villetet
  */
 class XorRule extends Rule
 {

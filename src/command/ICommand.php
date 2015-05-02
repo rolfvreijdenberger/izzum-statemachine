@@ -15,9 +15,12 @@ interface ICommand {
      * command is invoked.
      * Traditionally you should not provide any context to the execute method, 
      * as this implies knowledge of where the command is invoked.
-     * Any context should be provided at command creation time, not execution time. 
+     * 
+     * Any context should be provided at command creation time via dependency injection. 
      * The context provided might know how to get additional information at 
-     * execution time from objects it knows about.
+     * execution time from objects it knows about. 
+     * 
+     * Context provided can also be a mock (for unittesting)
      * @throws izzum\Exception
      */
     public function execute();

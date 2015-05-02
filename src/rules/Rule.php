@@ -12,7 +12,7 @@ use izzum\rules\Exception;
  * and centralizing the logic in a class and making it reusable through it's interface.
  * 
  * This is a way of seperating mechanism and policy of code.
- * In other words: how it is done vs what should be done. The mechanism is a rule
+ * In other words: how it is done versus what should be done. The mechanism is a rule
  * library, the policy is what is defined in the rule.
  * https://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy
  * 
@@ -42,7 +42,7 @@ use izzum\rules\Exception;
  * @author Richard Ruiter
  * @link https://en.wikipedia.org/wiki/Separation_of_mechanism_and_policy
  */
-abstract class Rule
+abstract class Rule implements IRule
 {
     /**
      * contains results that a concrete Rule can set.
@@ -194,7 +194,8 @@ abstract class Rule
      * Gets an array of RuleResult to check if a rule has set a certain result
      * for the client of the rule.
      * This will mostly be useful to check what actually happened when a rule
-     * has failed.
+     * has failed and if the _applies() method actually calls 'addResult()' to
+     * state what has happened in a rule.
      * 
      * @return RuleResult[]
      */
@@ -218,7 +219,7 @@ abstract class Rule
     /**
      * Check if this rule contains a certain expected result.
      * This is only matched on the string, not on the class that generated
-     * the result
+     * the result. you can check this against constants in a class eg: Rule::RESULT_<*>.
      * In case you want to also know the class or classname, use getResults()
      * @see Rule::getResults()
      * @param string $expected

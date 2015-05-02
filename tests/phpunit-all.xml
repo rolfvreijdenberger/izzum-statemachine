@@ -5,9 +5,9 @@
     <groups>
         <exclude>
            <!--   
+            <group>sqlite</group>
             <group>uses-sessions</group>
             <group>mysql</group>
-            <group>sqlite</group>
             <group>postgresql</group>
             -->
         </exclude>
