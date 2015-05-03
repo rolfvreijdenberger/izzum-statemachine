@@ -5,7 +5,6 @@ use izzum\statemachine\State;
 use izzum\statemachine\Entity;
 use izzum\statemachine\loader\Loader;
 use izzum\statemachine\loader\LoaderArray;
-use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\utils\Utils;
 /**
  * Tests the loading mechanisms objects
@@ -15,82 +14,6 @@ use izzum\statemachine\utils\Utils;
  */
 class LoadersTest extends \PHPUnit_Framework_TestCase {
     
-    /**
-     * tests the use of the factory method with only default parameters
-     */
-    public function testLoaderDataFactoryDefault()
-    {
-
-        $from = 'new';
-        $to = 'end';
-        
-        $object = LoaderData::get($from, $to);
-        //sanity check the public methods;
-        $this->assertEquals($to, $object->getStateTo());
-        $this->assertEquals($from, $object->getStateFrom());
-        $this->assertEquals(Utils::getTransitionName($from, $to), $object->getTransition());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeFrom());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeTo());
-        $this->assertEquals(Transition::COMMAND_NULL, $object->getCommand());
-        $this->assertEquals(Transition::RULE_FALSE, $object->getRule());
-    }
-    
-    /**
-     * @test
-     */
-    public function testLoaderDataTransitionRulesAndCommands()
-    {
-        $from = 'new';
-        $to = 'end';
-        
-        //scenario: rule configured correctly
-        $rule = 'izzum\rules\Bogus';
-        $object = LoaderData::get($from, $to, $rule);
-        $this->assertEquals($to, $object->getStateTo());
-        $this->assertEquals($from, $object->getStateFrom());
-        $this->assertEquals(Utils::getTransitionName($from, $to), $object->getTransition());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeFrom());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeTo());
-        $this->assertEquals(Transition::COMMAND_NULL, $object->getCommand());
-        $this->assertEquals($rule, $object->getRule());
-        
-        //scenario: rule configured correctly (True rule)
-        $rule = 'izzum\rules\True';
-        $object = LoaderData::get($from, $to, $rule);
-        $this->assertEquals($to, $object->getStateTo());
-        $this->assertEquals($from, $object->getStateFrom());
-        $this->assertEquals(Utils::getTransitionName($from, $to), $object->getTransition());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeFrom());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeTo());
-        $this->assertEquals(Transition::COMMAND_NULL, $object->getCommand());
-        $this->assertEquals(Transition::RULE_TRUE, $object->getRule());
-        
-        //scenario: command configured correctly (Null
-        $command = 'izzum\command\Bogus';
-        $rule = 'izzum\rules\True';
-        $object = LoaderData::get($from, $to, $rule, $command);
-        $this->assertEquals($to, $object->getStateTo());
-        $this->assertEquals($from, $object->getStateFrom());
-        $this->assertEquals(Utils::getTransitionName($from, $to), $object->getTransition());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeFrom());
-        $this->assertEquals(State::TYPE_NORMAL, $object->getStateTypeTo());
-        $this->assertEquals($command, $object->getCommand());
-        $this->assertEquals(Transition::RULE_TRUE, $object->getRule());
-        
-    }
-    
-    /**
-     * tests the properly configured state objects that are retreived from a loaderObject
-     */
-    public function testLoaderDataStatesReturned (){
- 
-        $from = 'new';
-        $to = 'end';
-        $data = new LoaderData($from, $to, '', '', State::TYPE_INITIAL, State::TYPE_FINAL);
-        $this->assertEquals(State::TYPE_INITIAL, $data->getStateTypeFrom());
-        $this->assertEquals(State::TYPE_FINAL, $data->getStateTypeTo());
-
-    }
     
     
     public function testLoaderArray()
@@ -100,23 +23,25 @@ class LoadersTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(0, $loader->count());
 
         
-        //scenario: configure loader with loader objects
-        $objects = array();
-        $objects[] =  LoaderData::get("1", "2");
-        $objects[] =  LoaderData::get("2", "3");
-        $loader = new LoaderArray($objects);
-        $this->assertEquals(count($objects), $loader->count());
+        //scenario: configure loader
+        $transitions = array();
+        $s1 = new State("1");
+        $s2 = new State("2");
+        $s3 = new State("3");
+        $transitions[] = new Transition($s1, $s2);
+        $transitions[] = new Transition($s2, $s3);
+        $loader = new LoaderArray($transitions);
+        $this->assertEquals(count($transitions), $loader->count());
         
         
         //scenario: configure loader with bad object types
-        $objects = array();
-        $objects[] =  LoaderData::get("2", "3");
-        $objects[] =  new \stdClass();
+        $transitions = array();
+        $transitions[] = new Transition($s2, $s3);
+        $transitions[] =  new \stdClass();
         try {
-            $loader = new LoaderArray($objects);
+            $loader = new LoaderArray($transitions);
             $this->fail('fails cause not the right type');
         }catch (Exception $e) {
-            $this->assertContains("Expected LoaderData", $e->getMessage());
             $this->assertEquals(Exception::BAD_LOADERDATA, $e->getCode());
         }
     }
@@ -126,11 +51,15 @@ class LoadersTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldLoadStateMachine()
     {
-        $objects = array();
-        $objects[] =  LoaderData::get("1", "2");
-        $objects[] =  LoaderData::get("2", "3");
-        $loader = new LoaderArray($objects);
-        $this->assertEquals(count($objects), $loader->count());
+        $transitions = array();
+        $s1 = new State("1");
+        $s2 = new State("2");
+        $s3 = new State("3");
+        $transitions[] = new Transition($s1, $s2);
+        $transitions[] = new Transition($s2, $s3);
+        $loader = new LoaderArray($transitions);
+        $this->assertEquals(count($transitions), $loader->count());
+        $this->assertEquals(count($loader->getTransitions()), $loader->count());
         $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         $loader->load($machine);
@@ -138,5 +67,30 @@ class LoadersTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(3, $machine->getStates());
     }
     
+    /**
+     * @test
+     */
+    public function shouldAddToLoader()
+    {
+    	$transitions = array();
+    	$s1 = new State("1");
+    	$s2 = new State("2");
+    	$s3 = new State("3");
+    	$transitions[] = new Transition($s1, $s2);
+    	$transitions[] = new Transition($s2, $s3);
+    	$loader = new LoaderArray($transitions);
+    	$this->assertEquals(count($transitions), $loader->count());
+    	$this->assertEquals(2, $loader->count());
+    	
+    	//add existing transition (not the same instance, but same name)
+    	$loader->add(new Transition($s1, $s2));
+    	$this->assertEquals(count($transitions), $loader->count());
+    	$this->assertEquals(2, $loader->count());
+    	
+    	//add new transition
+    	$loader->add(new Transition($s2, $s1));
+    	$this->assertEquals(count($loader->getTransitions()), $loader->count());
+    	$this->assertEquals(3, $loader->count());
+    }
 
 }

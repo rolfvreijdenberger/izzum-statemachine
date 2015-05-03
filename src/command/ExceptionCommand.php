@@ -11,7 +11,10 @@ class ExceptionCommand extends Command {
     
     private $exception;
     
-    public function __construct($message, $code = 0, $previous = null)
+    const NULL_MESSAGE = 'null exception';
+    const NULL_CODE = '1234567890';
+    
+    public function __construct($message = self::NULL_MESSAGE, $code = self::NULL_CODE, $previous = null)
     {
         $this->exception = new \Exception($message, $code, $previous);
     }

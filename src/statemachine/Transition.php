@@ -17,16 +17,8 @@ use izzum\statemachine\Context;
  * 
  * Rules and commands should be able to be found/autoloaded by the application
  * 
- * A transition will be unique per StateMachine and is uniquely defined by the 
- * tuple of a starting state name and a destination state name.
- * The data of the rule, command or the identity (===) of the states does not matter
- * when a Transition is added to a StateMachine. The machine will react on a first come
- * first serve basis. In short, just make sure your configuration data is ok.
- * 
- * TRICKY: if multiple transitions share the same State object 
- * (for example as their origin/from state), make sure it is the exact same reference to 
- * that State object and vice versa. 
- * The LoaderArray class will take care of this itself.
+ * If transitions share the same states (both to and from) then they should point
+ * to the same object reference (same states should share the exact same state configuration)/].
  * 
  * A subclassof Transition might provide alternative behaviour eg: 
  * - an application performance optimized prioritized transition, 
@@ -72,6 +64,12 @@ class Transition {
      * @var string 
      */
     protected $command;
+    
+    /**
+     * a description for the state
+     * @var string
+     */
+    protected $description;
 
     /**
      * @param State $state_from
@@ -79,7 +77,7 @@ class Transition {
      * @param string $rule a fully qualified Rule (sub)class name to check to see if we are allowed to transition
      * @param string $command a fully qualified command (sub)class name to execute for a transition
      */
-    public function __construct($state_from, $state_to, $rule = self::RULE_TRUE, $command = self::COMMAND_NULL)
+    public function __construct(State $state_from, State $state_to, $rule = self::RULE_TRUE, $command = self::COMMAND_NULL)
     {
        $this->state_to = $state_to;
        $this->state_from = $state_from;
@@ -246,10 +244,10 @@ class Transition {
      */
     public function getName()
     {
-        return Utils::getTransitionName(
+    	$name = Utils::getTransitionName(
                     $this->getStateFrom()->getName(),
-                    $this->getStateTo()->getName()
-                );
+                    $this->getStateTo()->getName());
+        return  $name;
     }
     
     public function getCommandName()
@@ -260,6 +258,24 @@ class Transition {
     public function getRuleName()
     {
         return $this->rule;
+    }
+    
+    /**
+     * set the description of the transition (for uml generation for example)
+     * @param string $description
+     */
+    public function setDescription($description)
+    {
+    	$this->description = $description;
+    }
+    
+    /**
+     * get the description for this transition (if any)
+     * @return string
+     */
+    public function getDescription()
+    {
+    	return $this->description;
     }
 
     

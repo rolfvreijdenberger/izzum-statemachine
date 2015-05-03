@@ -53,56 +53,19 @@ class SimpleTestFactory extends AbstractFactory{
         
             // 6 transitions, 5 states
             $transitions = array();
-            $data = loader\LoaderData::get( 
-                         'new', 'a', 
-                         'izzum\rules\True', 'izzum\command\Null', 
-                         \izzum\statemachine\State::TYPE_INITIAL, 
-                         \izzum\statemachine\State::TYPE_NORMAL);
-            
-            $transitions[] = $data;
-            
-            $data = loader\LoaderData::get(
-                         'a', 'b', 
-                         'izzum\rules\True', 'izzum\command\Null', 
-                         \izzum\statemachine\State::TYPE_NORMAL, 
-                         \izzum\statemachine\State::TYPE_NORMAL);
-            
-            $transitions[] = $data;
-            
+            $new = new State('new', \izzum\statemachine\State::TYPE_INITIAL);
+            $a = new State('a');
+            $b = new State('b');
+            $c = new State('c');
+            $done = new State('done', \izzum\statemachine\State::TYPE_FINAL);
+            $transitions[] = new Transition($new, $a, 'izzum\rules\True', 'izzum\command\Null');
             //can never go, a false rule
-            $data = loader\LoaderData::get(
-                         'a', 'done', 
-                         'izzum\rules\False', 'izzum\command\Null', 
-                         \izzum\statemachine\State::TYPE_NORMAL, 
-                         \izzum\statemachine\State::TYPE_FINAL);
-            
-            $transitions[] = $data;
-            
-            
+            $transitions[] = new Transition($a, $done, 'izzum\rules\False', 'izzum\command\Null');
+            $transitions[] = new Transition($a, $b, 'izzum\rules\True', 'izzum\command\Null');
             //can never go, a false rule
-            $data = loader\LoaderData::get(
-                         'b', 'c', 
-                         'izzum\rules\False', 'izzum\command\Null', 
-                         \izzum\statemachine\State::TYPE_NORMAL, 
-                         \izzum\statemachine\State::TYPE_NORMAL);
-            
-            $transitions[] = $data;
-            
-            $data = loader\LoaderData::get( 
-                         'c', 'done', 
-                         'izzum\rules\True', 'izzum\command\Null', 
-                         \izzum\statemachine\State::TYPE_NORMAL, 
-                         \izzum\statemachine\State::TYPE_FINAL);
-            
-            $transitions[] = $data;
-            
-            $data = loader\LoaderData::get( 
-                         'b', 'done', 
-                         'izzum\rules\True', 'izzum\command\Null', 
-                         \izzum\statemachine\State::TYPE_NORMAL, 
-                         \izzum\statemachine\State::TYPE_FINAL);
-            
-            $transitions[] = $data;
+            $transitions[] = new Transition($b, $c, 'izzum\rules\False', 'izzum\command\Null');
+            $transitions[] = new Transition($c, $done, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($b, $done, 'izzum\rules\True', 'izzum\command\Null');
             return new loader\LoaderArray($transitions);
             
         

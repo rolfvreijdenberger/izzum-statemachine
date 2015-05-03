@@ -8,9 +8,10 @@ use izzum\statemachine\Exception;
  * StateMachine class.
  * 
  * The statemachine is used to do transitions from one state to another state for
- * an entity that represents a domain object. This application domain specific 
- * object can be created by means of a Context instance and it's 
- * associated EntityBuilder.
+ * an entity that represents a domain object. 
+ * 
+ * An application domain specific object can be created by means of a Context 
+ * instance and it's associated EntityBuilder.
  * 
  * Each transition will take place only if the transition guard (Rule) allows it.
  * Each transition will then execute specific logic (Command).
@@ -28,8 +29,11 @@ use izzum\statemachine\Exception;
  * 
  * The statemachine should be loaded with States and Transitions, which define
  * from what state to what other state transitions are allowed. The transitions 
- * are specified by a guard clause -in the form of a business Rule- and a transition
- * Command.
+ * are specified by a guard clause (in the form of a business Rule instance) and transition
+ * logic (in the form of a Command instance).
+ * 
+ * Transitions can also trigger an exit action for the current state and an entry 
+ * action for the new state (also via Command instances)
  * 
  * We have provided a fully functional, normalized and indexed set of tables
  * for the postgresql relational database to function as a backend to store all
@@ -157,9 +161,9 @@ class StateMachine {
      * If the transition is not possible (we check the 'Rule' guard to see if the 
      * machine is allowed to transition) it will throw an exception.
      * If it is allowed:
-     * - optionally perform state exit logic
-     * - perform transition logic (Command)
-     * - optionally porform state entry logic
+     * - perform state exit logic for the current state (optional)
+     * - perform transition logic
+     * - perform state entry logic for the new state (optional)
      * 
      * @param string $transition_name convention: <state-from>_to_<state-to>
      * @throws Exception in case something went wrong.
@@ -304,15 +308,17 @@ class StateMachine {
 
             //possible hook for subclasses to implement 
             $this->preProcess($transition);
-	    	//fms exit action: performed when exiting the state
+            
+	    	//state exit action: performed when exiting the state
             $transition->getStateFrom()->exitAction($this->getContext());
             
             //the transition is performed, with the associated logic
             $transition->process($this->getContext());
             $this->setCurrentState($transition->getStateTo());
             
-            //fms entry action: performed when entering the state
+            //state entry action: performed when entering the state
             $transition->getStateTo()->entryAction($this->getContext());
+            
             //possible hook for subclasses to implement
             $this->postProcess($transition);
             
@@ -331,7 +337,12 @@ class StateMachine {
     
         
     /**
-     * add a transition. 
+     * Add a fully configured transition to the machine.
+     * 
+     * the order in which transitions are added actually does matter.
+     * it matters insofar that when a StateMachine::run() is called,
+     * the first Transition for the current State will be tried first.
+     * 
      * Since a transition has complete knowledge about it's states,
      * the addition of a transition will also trigger the adding of the
      * to and from state on this class.
@@ -340,10 +351,12 @@ class StateMachine {
      * does not support that, it can also be used to add a Transition directly.
      * Make sure that transitions that share a common State use the same instance
      * of that State object and vice versa.
+     * 
      * @param Transition $transition
      */
     public function addTransition(Transition $transition) 
     {
+    	//add/overwrite transition
         $this->transitions[$transition->getName()] = $transition;
         
         $from = $transition->getStateFrom();

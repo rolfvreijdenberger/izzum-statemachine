@@ -7,6 +7,7 @@ use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\StorageData;
 use izzum\statemachine\persistence\Session;
+use izzum\statemachine\utils\PlantUml;
 
 use izzum\statemachine\persistence\PDO;
 /**
@@ -238,7 +239,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      * @param PDO $adapter
      * @param string $machine
      */
-    protected function assertPersistenceAdapterPDO($adapter, $machine) {
+    protected function assertPersistenceAdapterPDO($adapter, $machine, $output_plant = false) {
         
         $type = $adapter->getType();
         echo PHP_EOL;
@@ -305,6 +306,15 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(0, $sm->getTransitions());
         $this->assertCount(0, $sm->getStates());
         $adapter->load($sm);
+        if($output_plant) {
+        	$plant = new PlantUml();
+        	$output = $plant->createStateDiagram($sm);
+        	echo PHP_EOL;
+        	echo PHP_EOL;
+        	echo $output;
+        	echo PHP_EOL;
+        	echo PHP_EOL;
+        }
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
         $count_done = count($adapter->getEntityIds($machine, 'done'));
@@ -382,7 +392,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $password = "izzum";
         $dsn = "pgsql:host=localhost;port=5432;dbname=postgres";
         $adapter = new PDO($dsn, $user, $password);   
-        $this->assertPersistenceAdapterPDO($adapter, $machine);
+        $this->assertPersistenceAdapterPDO($adapter, $machine, false);
     }
     
       /**
@@ -400,7 +410,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $machine = 'izzum';
         $dsn = "sqlite:sqlite.db";
         $adapter = new PDO($dsn);   
-        $this->assertPersistenceAdapterPDO($adapter, $machine);
+        $this->assertPersistenceAdapterPDO($adapter, $machine, false);
     }
        
     /**

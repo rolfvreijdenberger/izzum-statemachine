@@ -4,7 +4,7 @@
     </testsuite>
     <groups>
         <exclude>
-           <!--   
+           <!--
             <group>sqlite</group>
             <group>uses-sessions</group>
             <group>mysql</group>

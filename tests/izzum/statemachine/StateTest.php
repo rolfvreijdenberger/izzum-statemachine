@@ -1,6 +1,7 @@
 <?php
 namespace izzum\statemachine;
 use izzum\statemachine\utils\EntityNull;
+use izzum\command\ExceptionCommand;
 
 /**
  * @group statemachine
@@ -39,7 +40,10 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($sc->hasTransition($t1->getName()),'no bidirectional association on incoming transition');
         $this->assertFalse($sc->hasTransition($t2->getName()),'no bidirectional association on incoming transition');
         
-        
+        $this->assertEquals('', $state->getDescription());
+        $description = 'test description';
+        $state->setDescription($description);
+        $this->assertEquals($description, $state->getDescription());
         
         
         $this->assertFalse($state->hasTransition('bogus'));
@@ -66,6 +70,93 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($state->isInitial());
         $this->assertTrue($state->isFinal());
         $this->assertFalse($state->isNormal());
+    }
+    
+    
+    /**
+     * @test
+     */
+    public function shoulExecuteEntryAndExitAction()
+    {
+    	//scenario 1
+    	$context = new Context(new Identifier('1', 'test'));
+    	$command_name = 'izzum\command\ExceptionCommand';
+    	$state = new State('a', State::TYPE_INITIAL, $command_name);
+    	$this->assertEquals($command_name, $state->getEntryCommandName());
+    	$this->assertEquals('', $state->getExitCommandName());
+    	
+    	try {
+    		$state->entryAction($context);
+    		$this->fail('should not come here');
+    	} catch (\Exception $e) {
+    		$this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
+    	}
+
+    	//null command
+    	$state->exitAction($context);
+    	
+    	
+    	
+    	//scenario 2
+    	$context = new Context(new Identifier('1', 'test'));
+    	$command_name = 'izzum\command\ExceptionCommand';
+    	$state = new State('a', State::TYPE_INITIAL, State::COMMAND_EMPTY, $command_name);
+    	$this->assertEquals($command_name, $state->getExitCommandName());
+    	$this->assertEquals('', $state->getEntryCommandName());
+    	 
+    	//null command
+    	$state->entryAction($context);
+
+    	try {
+    		$state->exitAction($context);
+    		$this->fail('should not come here');
+    	} catch (\Exception $e) {
+    		$this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
+    	}
+    	
+    }
+    
+    /**
+     * @test
+     */
+    public function shoulFailInvalidAction()
+    {
+    	//scenario 1
+    	$context = new Context(new Identifier('1', 'test'));
+    	$command_name = 'izzum\command\bogus';
+    	$state = new State('a', State::TYPE_INITIAL, $command_name);
+    	$this->assertEquals($command_name, $state->getEntryCommandName());
+    	$this->assertEquals('', $state->getExitCommandName());
+    	 
+    	try {
+    		$state->entryAction($context);
+    		$this->fail('should not come here');
+    	} catch (\Exception $e) {
+    		$this->assertEquals(Exception::COMMAND_CREATION_FAILURE, $e->getCode());
+    	}
+    
+    	//null command
+    	$state->exitAction($context);
+    	 
+    	 
+    	 
+    	//scenario 2
+    	$context = new Context(new Identifier('1', 'test'));
+    	$command_name = 'izzum\command\bogus';
+    	$state = new State('a', State::TYPE_INITIAL, State::COMMAND_EMPTY, $command_name);
+    	$this->assertEquals($command_name, $state->getExitCommandName());
+    	$this->assertEquals('', $state->getEntryCommandName());
+    
+    	//null command
+    	$state->entryAction($context);
+    
+    	try {
+    		$state->exitAction($context);
+    		$this->fail('should not come here');
+    	} catch (\Exception $e) {
+    		$this->assertEquals(Exception::COMMAND_CREATION_FAILURE, $e->getCode());
+    	}
+    	 
     }
 }
 

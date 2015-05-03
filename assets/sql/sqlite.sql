@@ -95,6 +95,13 @@ VALUES
 ('izzum', 'excellent', 'normal', 'excellent: a normal state'),
 ('izzum', 'bad', 'normal', 'bad: do not go here, ');
 
+UPDATE statemachine_states
+SET 
+entry_command = 'izzum\command\Null', exit_command = 'izzum\command\Null'
+WHERE machine = 'izzum'
+AND (state = 'bad' OR state = 'ok');
+
+
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES

@@ -36,6 +36,11 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $this->assertNotNull($transition->toString());
         $this->assertNotNull($transition->__toString());
         
+        $this->assertEquals('', $transition->getDescription());
+        $description = 'test description';
+        $transition->setDescription($description);
+        $this->assertEquals($description, $transition->getDescription());
+        
     }
     
         /**

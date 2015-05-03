@@ -27,16 +27,20 @@ package izzum.statemachine {
         # name: string
         # type:string
         # transitions: Transition[]
+        # description:string
         + getName():string
         + getType():string
         + getTransitions():Transition[]
         + hasTransition(name:string):boolean
+        + exitAction(Context)
+        + entryAction(Context)
     }
     Class Transition {
         # state_from:State
         # state_to:State
         # rule:string
         # command:string
+        # description: string
         + can(Context)
         + process(Context)
         + getRule(Context):Rule
@@ -81,13 +85,13 @@ package izzum.statemachine {
         + setState(Identifier):boolean
         + getState(Identifier)
         + setFailedTransition(Exception, transition:string)
-        + {abstract} add(Identifier)
         # {abstract} processSetState(Identifier):boolean
         # {abstract} processGetState(Identifier)
       }
 
       Class PDO {
         #dsn:string
+        + load(StateMachine)
       }
 
       Class Memory {
@@ -116,10 +120,9 @@ package izzum.statemachine {
           +load(StateMachine)
         }
         Class LoaderArray {
-          # data: LoaderData[]
+          # transitions: Transition[]
           + load(StateMachine)
-        }
-        Class LoaderData {
+          + add(Transition)
         }
     }
 
@@ -146,7 +149,7 @@ package izzum.statemachine {
     StateMachine "1" --> "n" Exception: throws
     Context "n" o-- "1" EntityBuilder : gets domain object (alias: DO)
     Context "n" o-- "1" Adapter : read/write state info
-    Context "1" o-- "1" Identifier : identification data
+    Context "1" o-- "1" Identifier : use to ID the DO/entity
     State "n" -- "n" Transition : need each other
     Adapter <|-- Memory
     Adapter <|-- PDO : database interfacing

@@ -1,5 +1,6 @@
 <?php
 namespace izzum\examples\trafficlight;
+use izzum\statemachine\utils\PlantUml;
 /**
  * run this script from the command line:
  * php -f index.php
@@ -20,6 +21,11 @@ $loader->register();
 $factory = new TrafficLightFactory();
 //get the machine from the factory, for traffic light 1
 $machine = $factory->getStateMachine(1);
+
+//generate the uml diagram
+//$uml = new PlantUml();
+//$output = $uml->createStateDiagram($machine);
+//echo $output . PHP_EOL;
 
 //loop the machine
 while(true) {

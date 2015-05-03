@@ -6,11 +6,10 @@
 [![Code Coverage](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master)
 [![License](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/license.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine)
 #izzum statemachine
-'_Yo man, who gots the izzum for tonights festivities?_'
-- **`new`**: a fully functional PDO relational database implementation with the sql provided for 
+
+- **`new: release of version 2`**: transition guards and actions, (new) state entry and exit actions, a fully functional PDO relational database implementation with the sql provided for 
 [mysql](https://www.mysql.com), [postgresql](http://www.postgresql.org) and 
-[sqlite](https://sqlite.org/) backends. Store your configuration, read and write 
-states for your domain models and store the full transition history.
+[sqlite](https://sqlite.org/) backends, uml diagrams generated from code.
 - Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)
 - Visually oriented? Know uml? TLDR; see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
 - see [documentup.com](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com") for a navigable and pretty version of this document.
@@ -303,25 +302,41 @@ Since a Loader and a Persistence adapter are probably tightly coupled, you can
 integrate both of them in one class (see the izzum\statemachine\persistence\PDO
 class for an example of that)
 ```php
-        $data = array();
-        //from new to green. this will start the cycle. mark 'new' as type initial
-        $data[] = LoaderData::get('new', 'green' , 
-                Transition::RULE_TRUE, Transition::COMMAND_NULL, 
-                State::TYPE_INITIAL, State::TYPE_NORMAL);
-        //from green to orange. use the switch to orange command
-        $data[] = LoaderData::get('green', 'orange' , 
-                'izzum\examples\trafficlight\rules\CanSwitch',
+        //define the states 
+        $new = new State('new', State::TYPE_INITIAL);
+        $green = new State('green', State::TYPE_NORMAL, State::COMMAND_NULL);
+        $orange = new State('orange', State::TYPE_NORMAL);
+        //use a state entry action and a state exit action
+        $red = new State('red', State::TYPE_NORMAL, 'izzum\command\StartCamera', 
+                'izzum\command\StopCamera');
+        
+        //create the transtions by using the states
+        $ng =  new Transition($new, $green, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $go = new Transition($green, $orange, 'izzum\examples\trafficlight\rules\CanSwitch',
                 'izzum\examples\trafficlight\command\SwitchOrange');
-        //from orange to red. use the appropriate command
-        $data[] = LoaderData::get('orange', 'red' , 
-                'izzum\examples\trafficlight\rules\CanSwitch',
+        $or = new Transition($orange, $red, 'izzum\examples\trafficlight\rules\CanSwitch',
                 'izzum\examples\trafficlight\command\SwitchRed');
-        //from red back to green.  The transition from green has already been  defined earlier.
-        $data[] = LoaderData::get('red', 'green' , 
-                'izzum\examples\trafficlight\rules\CanSwitch',
+        $rg = new Transition($red, $green, 'izzum\examples\trafficlight\rules\CanSwitch',
                 'izzum\examples\trafficlight\command\SwitchGreen');
 
-        $loader = new LoaderArray($data);
+        //optional: set some descriptions for uml generation
+        $ng->setDescription("from green to orange. use the switch to orange command");
+        $go->setDescription("from new to green. this will start the cycle");
+        $or->setDescription("from orange to red. use the appropriate command");
+        $rg->setDescription("from red back to green.");
+        
+        $new->setDescription('the init state');
+        $green->setDescription("go!");
+        $orange->setDescription("looks like a shade of green...");
+        $red->setDescription('stop');
+    	
+        $transitions[] = $ng;
+        $transitions[] = $go;
+        $transitions[] = $or;
+        $transitions[] = $rg ;
+
+        $loader = new LoaderArray($transitions);
+        return $loader;
 ```
 
 ###factories: creating related classes
@@ -344,7 +359,6 @@ by implementing the abstract methods necessary.
 namespace izzum\examples\trafficlight;
 use izzum\statemachine\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
-use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\loader\LoaderArray;
 /**
  * the Factory to build the statemachines for TrafficLight domain models.
@@ -354,9 +368,9 @@ class TrafficLightFactory extends AbstractFactory{
         return new EntityBuilderTrafficLight();
     }
     protected function createLoader() {
-        $data = array();
+        $transitions = array();
         //see earlier example, full code not shown here
-        $loader = new LoaderArray($data);
+        $loader = new LoaderArray($transitions);
         return $loader;
     }
     protected function getMachineName() {
@@ -444,11 +458,10 @@ echo $generator->createStateDiagram($machine);
 ![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml-coffee.png )
 
 
-###uml diagram for a fictive order system
-![generated plant uml statediagram from izzum statemachine](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml.png )
 
 
 ##contributors and thank you's
+- urban dictionary: '_Yo man, who gots the izzum for tonights festivities?_'
 - Richard Ruiter, Romuald Villetet, Harm de Jong, Elena van Engelen-Maslova
 - the statemachine package was influenced by the [yohang statemachine](https://github.com/yohang/Finite "Finite on github")
 - creation of README.md markdown with the help of [dillinger.io/](http://dillinger.io/)

@@ -6,6 +6,8 @@ use izzum\statemachine\Identifier;
 use izzum\statemachine\loader\LoaderArray;
 use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\Exception;
+use izzum\statemachine\Transition;
+use izzum\statemachine\State;
 /**
  * A persistence adapter/loader specifically for the PHP Data Objects (PDO) 
  * extension.
@@ -476,8 +478,8 @@ class PDO extends Adapter implements  Loader {
     }
     
     /**
-     * get all the ordered transition information for a specific machine.
-     * This method is made public for testing purposes
+     * get all the ordered transition and state information for a specific machine.
+     * This method is public for testing purposes
      * @param string $machine
      * @return [][] resultset from postgres
      * @throws Exception
@@ -489,10 +491,15 @@ class PDO extends Adapter implements  Loader {
         $query = 'SELECT st.machine, 
                         st.state_from AS state_from, st.state_to AS state_to, 
                         st.rule, st.command,
-                        ss_to.type AS state_type_to,ss.type AS state_type_from,
+                        ss_to.type AS state_to_type, 
+        				ss_to.exit_command as state_to_exit_command,
+        				ss_to.entry_command as state_to_entry_command, 
+        				ss.type AS state_from_type, 
+        				ss.exit_command as state_from_exit_command,
+        				ss.entry_command as state_from_entry_command,
                         st.priority, 
-                        ss.description AS description_state_from,
-                        ss_to.description AS description_state_to,
+                        ss.description AS state_from_description,
+                        ss_to.description AS state_to_description,
                         st.description AS description_transition
                     FROM  ' . $prefix . 'statemachine_transitions AS st
                     LEFT JOIN
@@ -503,7 +510,8 @@ class PDO extends Adapter implements  Loader {
                         ON (st.state_to = ss_to.state AND st.machine = ss_to.machine)
                     WHERE
                         st.machine = :machine
-                    ORDER BY st.state_from ASC, st.priority ASC';
+                    ORDER BY 
+                        st.state_from ASC, st.priority ASC, st.state_to ASC';
         try {
             $statement = $connection->prepare($query);
             $statement->bindParam(":machine", $machine);
@@ -523,18 +531,50 @@ class PDO extends Adapter implements  Loader {
     
     /**
      * gets all data for transitions.
-     * This method is made public for testing purposes
+     * This method is public for testing purposes
      * @param string $machine the machine name
-     * @return LoaderData[]
+     * @return Transition[]
      */
     public function getLoaderData($machine){
         $rows = $this->getTransitions($machine);
+        
         $output = array();
+        //array for local caching of states
+        $states = array();
+        
         foreach($rows as $row) {
-            $output[] = LoaderData::get($row['state_from'], $row['state_to'], 
-                            $row['rule'], $row['command'], 
-                            $row['state_type_from'], $row['state_type_to']);
+        	$state_from = $row['state_from'];
+        	$state_to = $row['state_to'];
+        	
+        	//create the 'from' state
+        	if(isset($states[$state_from])) {
+        		$from = $states[$state_from];
+        	} else {
+        		$from = new State($row['state_from'], $row['state_from_type'], 
+        				$row['state_from_entry_command'], $row['state_from_exit_command']);
+        		$from->setDescription($row['state_from_description']);
+        	}
+        	//cache the 'from' state for the next iterations
+        	$states[$from->getName()] = $from;
+        	
+        	//create the 'to' state
+        	if(isset($states[$state_to])) {
+        		$to = $states[$state_to];
+        	} else {
+        		$to = new State($row['state_to'], $row['state_to_type'], 
+        				$row['state_to_entry_command'], $row['state_to_exit_command']);
+        		$to->setDescription($row['state_to_description']);
+        	}
+        	//cache to 'to' state for the next iterations
+       		$states[$to->getName()] = $to;
+        	 
+       		//build the transition
+        	$transition = new Transition($from, $to, $row['rule'], $row['command']);
+        	$transition->setDescription($row['transition_description']);
+        	
+        	$output[] = $transition;
         }
+
         return $output;
     }
     

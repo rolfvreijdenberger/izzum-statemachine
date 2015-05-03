@@ -2,6 +2,7 @@
 namespace izzum\statemachine;
 use izzum\command\ICommand;
 use izzum\command\Null;
+use izzum\statemachine\Exception;
 /**
  * This class holds the finite state data:
  * - the name of the state
@@ -37,7 +38,17 @@ class State {
      */
     const STATE_DONE    = 'done';
     
+    /**
+     * default exit/entry command
+     * @var string
+     */
     const COMMAND_NULL = 'izzum\command\Null';
+    
+    /**
+     * default exit/entry command for constructor
+     * @var string
+     */
+    const COMMAND_EMPTY= '';
     
     /**
      * the state types:
@@ -86,7 +97,7 @@ class State {
     
     /**
      * fully qualified command name for the command to be executed
-     * when entering a state as part of a transition
+     * when entering a state as part of a transition.
      * @var string
      */
     protected $command_entry_name;
@@ -98,16 +109,24 @@ class State {
      */
     protected $command_exit_name;
    
+    /**
+     * a description for the state
+     * @var string
+     */
+    protected $description;
+    
      /**
      * 
      * @param string $name the name of the state
      * @param string $type the type of the state
      */
-    public function __construct($name, $type = self::TYPE_NORMAL)
+    public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY)
     {
-        $this->name        = $name;
-        $this->type        = $type;
-        $this->transitions = array();
+        $this->name        			= $name;
+        $this->type        			= $type;
+        $this->command_entry_name 	= $command_entry_name;
+        $this->command_exit_name 	= $command_exit_name;
+        $this->transitions 			= array();
         
     }
 
@@ -152,20 +171,21 @@ class State {
      * 
      * TRICKY: this method should be package visibility only,
      * so don't use directly. it is used to set the bidirectional association
-     * for State and Transition
+     * for State and Transition from a Transition instance
      * 
      * @param Transition $transition
      * @return boolan yes in case the transition was not on the State already
      */
     public function addTransition(Transition $transition)
     {
+    	$output = true;
         //check all existing transitions.
         if($this->hasTransition($transition->getName())) {
-            return false;
+            $output = false;
         }
 
         $this->transitions[] = $transition;
-        return true;
+        return $output;
     }
 
 
@@ -215,23 +235,47 @@ class State {
     }
     
     /**
-     * action executed every time a state is entered
+     * An action executed every time a state is entered.
+     * An entry action will not be executed for an 'initial' state.
+     * 
      * @param Context $context
      * @throws Exception
      */
     public function entryAction(Context $context)
     {
-    	$this->getCommand($this->getEntryCommandName(), $context)->execute();
+   		$command = $this->getCommand($this->getEntryCommandName(), $context);
+   		$this->execute($command);
     }
     
+    
     /**
-     * action executed every time a state is exited
+     * An action executed every time a state is exited.
+     * An exit action will not be executed for a 'final' state since a machine
+     * will not leave a 'final' state.
+     * 
      * @param Context $context
      * @throws Exception
      */
     public function exitAction(Context $context)
     {
-    	 $this->getCommand($this->getExitCommandName(), $context)->execute();
+    	$command = $this->getCommand($this->getExitCommandName(), $context);
+    	$this->execute($command);
+    }
+
+    /**
+     * helper method
+     * @param ICommand $command
+     * @throws Exception
+     */
+    protected function execute(ICommand $command)
+    {
+    	try {
+    		$command->execute();
+    	} catch (\Exception $e) {
+    		//command failure
+    		$e = new Exception($e->getMessage(), Exception::COMMAND_EXECUTION_FAILURE, $e);
+    		throw $e;
+    	}
     }
     
     /**
@@ -239,16 +283,16 @@ class State {
      * the Command will be configured with the 'reference' of the stateful object
      *
      * @param string $command_name entry or exit command name
-     * @param Context $object
+     * @param Context $context
      * @return ICommand
      * @throws Exception
      */
-    public function getCommand($command_name, Context $object)
+    protected function getCommand($command_name, Context $context)
     {
-    	$reference = $object->getEntity();
+    	$reference = $context->getEntity();
     
     	//it's oke to have no command
-    	if($command_name === '' || $command_name === null) {
+    	if($command_name === self::COMMAND_EMPTY || $command_name === null) {
     		//return a command without side effects
     		$command_name = self::COMMAND_NULL;
     	}
@@ -259,7 +303,7 @@ class State {
     		} catch (\Exception $e) {
     			$e = new Exception(
     					sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",
-    							$command_name, $object->toString(), $e->getMessage()),
+    							$command_name, $context->toString(), $e->getMessage()),
     					Exception::COMMAND_CREATION_FAILURE);
     			throw $e;
     		}
@@ -267,30 +311,13 @@ class State {
     		//misconfiguration
     		$e = new Exception(
     				sprintf("failed command creation, class does not exist: (%s) for Context (%s)",
-    						$command_name, $object->toString()),
+    						$command_name, $context->toString()),
     				Exception::COMMAND_CREATION_FAILURE);
     		throw $e;
     	}
     	return $command;
     }
     
-    /**
-     * set the fully qualified command name for entry of the state
-     * @param string $name
-     */
-    public function setEntryCommandName($name) 
-    {
-    	$this->command_entry_name = $name;
-    }
-    
-    /**
-     * set the fully qualified command name for exit of the state
-     * @param string $name
-     */
-    public function setExitCommandName($name)
-    {
-    	$this->command_exit_name = $name;
-    }
     
     /**
      * get the fully qualified command name for entry of the state
@@ -308,6 +335,24 @@ class State {
     public function getExitCommandName()
     {
     	return $this->command_exit_name;
+    }
+    
+    /**
+     * set the description of the state (for uml generation for example)
+     * @param string $description
+     */
+    public function setDescription($description)
+    {
+    	$this->description = $description;
+    }
+    
+    /**
+     * get the description for this state (if any)
+     * @return string
+     */
+    public function getDescription()
+    {
+    	return $this->description;
     }
     
 }

@@ -2,7 +2,6 @@
 namespace izzum\examples\trafficlight;
 use izzum\statemachine\AbstractFactory;
 use izzum\statemachine\persistence\Memory;
-use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\loader\LoaderArray;
 use izzum\statemachine\State;
 use izzum\statemachine\Transition;
@@ -21,31 +20,40 @@ class TrafficLightFactory extends AbstractFactory{
         //we use the array loader
         //in a non-example situation we would use a backend like a
         //database for example
+        //@see PDO adapter and loader
         
-        //define the data to load
-        $data = array();
-        //from new to green. this will start the cycle. 
-        //mark 'new' as type initial
-        $data[] = LoaderData::get('new', 'green' , 
-                Transition::RULE_TRUE, Transition::COMMAND_NULL, 
-                State::TYPE_INITIAL, State::TYPE_NORMAL);
-
-        //from green to orange. use the switch to orange command
-        $data[] = LoaderData::get('green', 'orange' , 
-                'izzum\examples\trafficlight\rules\CanSwitch',
+        //define the states 
+        $new = new State('new', State::TYPE_INITIAL);
+        $green = new State('green', State::TYPE_NORMAL, State::COMMAND_NULL);
+        $orange = new State('orange', State::TYPE_NORMAL);
+        $red = new State('red', State::TYPE_NORMAL);
+        
+        //create the transtions by using the states
+        $ng =  new Transition($new, $green, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $go = new Transition($green, $orange, 'izzum\examples\trafficlight\rules\CanSwitch',
                 'izzum\examples\trafficlight\command\SwitchOrange');
-        //from orange to red. use the appropriate command
-        $data[] = LoaderData::get('orange', 'red' , 
-                'izzum\examples\trafficlight\rules\CanSwitch',
+        $or = new Transition($orange, $red, 'izzum\examples\trafficlight\rules\CanSwitch',
                 'izzum\examples\trafficlight\command\SwitchRed');
-
-        //from red back to green.  The transition from green has already been 
-        //defined earlier.
-        $data[] = LoaderData::get('red', 'green' , 
-                'izzum\examples\trafficlight\rules\CanSwitch',
+        $rg = new Transition($red, $green, 'izzum\examples\trafficlight\rules\CanSwitch',
                 'izzum\examples\trafficlight\command\SwitchGreen');
 
-        $loader = new LoaderArray($data);
+        //set some descriptions for uml generation
+        $ng->setDescription("from green to orange. use the switch to orange command");
+        $go->setDescription("from new to green. this will start the cycle");
+        $or->setDescription("from orange to red. use the appropriate command");
+        $rg->setDescription("from red back to green.");
+        
+        $new->setDescription('the init state');
+        $green->setDescription("go!");
+        $orange->setDescription("looks like a shade of green...");
+        $red->setDescription('stop');
+    	
+        $transitions[] = $ng;
+        $transitions[] = $go;
+        $transitions[] = $or;
+        $transitions[] = $rg ;
+
+        $loader = new LoaderArray($transitions);
         return $loader;
     }
 
@@ -54,9 +62,10 @@ class TrafficLightFactory extends AbstractFactory{
     }
 
     protected function createAdapter() {
-        //we use the inmemory adapter
+        //we use the in-memory adapter
         //in real life we would use some persisten storage like 
         //a relational database.
+        //@see PDO adapter
         return new Memory();
     }
 }

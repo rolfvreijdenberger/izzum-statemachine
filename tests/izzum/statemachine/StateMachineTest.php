@@ -3,7 +3,6 @@ namespace izzum\statemachine;
 use izzum\statemachine\Transition;
 use izzum\statemachine\Exception;
 use izzum\statemachine\Context;
-use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\utils\PlantUml;
 use izzum\statemachine\loader\LoaderArray;
@@ -505,18 +504,37 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $id = 123;
         $context = new Context(new Identifier($id, $machine));
         $machine = new StateMachine($context);
-        $data = array();
-        $data[] = new LoaderData('new', 'initialize', Transition::RULE_TRUE, 'izzum\command\Initialize', 'initial');
-        $data[] = new LoaderData('initialize', 'cup', Transition::RULE_TRUE, 'izzum\command\DropCup');
-        $data[] = new LoaderData('cup', 'coffee', Transition::RULE_TRUE, 'izzum\command\AddCoffee');
-        $data[] = new LoaderData('coffee', 'sugar', 'izzum\rules\WantsSugar', 'izzum\command\AddSugar');
-        $data[] = new LoaderData('sugar', 'coffee', Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $data[] = new LoaderData('coffee', 'milk', 'izzum\rules\WantsMilk', 'izzum\command\AddMilk');
-        $data[] = new LoaderData('milk', 'coffee', Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $data[] = new LoaderData('coffee', 'spoon', 'izzum\rules\MilkOrSugar', 'izzum\command\AddSpoon');
-        $data[] = new LoaderData('coffee', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\command\Cleanup', State::TYPE_NORMAL, State::TYPE_FINAL);
-        $data[] = new LoaderData('spoon', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\command\CleanUp', State::TYPE_NORMAL, State::TYPE_FINAL);
-        $loader = new LoaderArray($data);
+        $transitions = array();
+        
+        $new = new State('new', State::TYPE_INITIAL, State::COMMAND_EMPTY, State::COMMAND_NULL);
+        $new->setDescription("the initial state");
+        $initialize = new State('initialize', State::TYPE_NORMAL, "izzum\command\InitializeCommand");
+        $cup = new State('cup');
+        $cup->setDescription("a cup to hold coffee");
+        $coffee = new State('coffee');
+        $coffee->setDescription("we now have a cup of coffee");
+        $sugar = new State('sugar');
+        $sugar->setDescription("we have added sugar");
+        $milk = new State('milk');
+        $milk->setDescription("added milk");
+        $spoon = new State('spoon');
+        $spoon->setDescription("use a spoon to stir");
+        $done = new State('done', State::TYPE_FINAL, "izzum\command\AnEntryCommand");
+        
+        $ni = new Transition($new, $initialize, Transition::RULE_TRUE, 'izzum\command\Initialize');
+        $ni->setDescription("initialize the coffee machine");
+        $transitions[] = $ni;
+        $transitions[] = new Transition($initialize, $cup, Transition::RULE_TRUE, 'izzum\command\DropCup');
+        $transitions[] = new Transition($cup, $coffee, Transition::RULE_TRUE, 'izzum\command\AddCoffee');
+        $transitions[] = new Transition($coffee, $sugar, 'izzum\rules\WantsSugar', 'izzum\command\AddSugar');
+        $transitions[] = new Transition($sugar, $coffee, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $transitions[] = new Transition($coffee, $milk, 'izzum\rules\WantsMilk', 'izzum\command\AddMilk');
+        $transitions[] = new Transition($milk, $coffee, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $transitions[] = new Transition($coffee, $spoon, 'izzum\rules\MilkOrSugar', 'izzum\command\AddSpoon');
+        $transitions[] = new Transition($coffee, $done, 'izzum\rules\CoffeeTakenOut', 'izzum\command\Cleanup');
+        $transitions[] = new Transition($spoon, $done, 'izzum\rules\CoffeeTakenOut', 'izzum\command\CleanUp');
+
+        $loader = new LoaderArray($transitions);
         $loader->load($machine);
         
         $plant = new PlantUml();

@@ -66,6 +66,12 @@ skinparam stateAttribute {
 SKINS;
         return $output;
     }
+    
+    private static function escape($string)
+    {
+    	$string = addslashes($string);
+    	return $string;
+    }
 
     /**
      * creates plantuml state output for a statemachine
@@ -91,20 +97,6 @@ SKINS;
         //skins for colors etc.
         $uml .= $this->getPlantUmlSkins() . PHP_EOL;
 
-        //only one begin state
-        $initial = $machine->getInitialState();
-        $initial = $initial->getName();
-        $initial_alias = $this->plantUmlStateAlias($initial);
-        $aliases[$initial_alias] = $initial_alias;
-        $uml .=  'state "' . $initial . '" as ' . $initial_alias . PHP_EOL;
-        $uml .= "[*] --> $initial_alias". PHP_EOL;
-
-        //note
-        $uml .= "note right of $initial_alias $NEWLINE" ;
-        $uml .= "state diagram for machine '" . $machine->getMachine() . "'$NEWLINE";
-        $uml .= "created by izzum plantuml generator $NEWLINE";
-        $uml .= "@link http://plantuml.sourceforge.net/state.html\"" . $NEWLINE;
-        $uml .= "end note" . $NEWLINE;
 
         //the order in which transitions are executed
         $order = array();
@@ -114,21 +106,30 @@ SKINS;
         {
             //get states and state aliases (plantuml cannot work with certain 
             //characters, so therefore we create an alias for the state name)
-            $from = $t->getStateFrom()->getName();
-            $from_alias = $this->plantUmlStateAlias($from);
+            $from = $t->getStateFrom();
+            $from_alias = $this->plantUmlStateAlias($from->getName());
             $to = $t->getStateTo();
             $to_alias = $this->plantUmlStateAlias($to->getName());
 
             //get some names to display
             $command = $t->getCommandName();
-            $rule = $t->getRuleName();
+            $rule = self::escape($t->getRuleName());
             $name_transition = $t->getName();
+            $description = $t->getDescription() ? $t->getDescription() : ' ';
+            $f_description = $from->getDescription() ? $from->getDescription() : ' ';
+            $t_description = $to->getDescription() ? $to->getDescription() : ' ';
+            $f_exit = $from->getExitCommandName() ? $from->getExitCommandName() : 'none';
+            $f_entry = $from->getEntryCommandName() ? $from->getEntryCommandName() : 'none';
+            $t_exit = $to->getExitCommandName() ? $to->getExitCommandName() : 'none';
+            $t_entry = $to->getEntryCommandName() ? $to->getEntryCommandName() : 'none';
 
 
             //only write aliases if not done before
             if(!isset($aliases[$from_alias])) {
                 $uml .= 'state "' . $from . '" as '. $from_alias . PHP_EOL;
-                $uml .= "$from_alias" . PHP_EOL;
+                $uml .= "$from_alias: description: '" . $f_description. "'". PHP_EOL;
+                $uml .= "$from_alias: entry action: '" . $f_entry . "'". PHP_EOL;
+                $uml .= "$from_alias: exit action: '" . $f_exit . "'". PHP_EOL;
                 $aliases[$from_alias] = $from_alias;
                 
             }
@@ -144,14 +145,18 @@ SKINS;
             if(!isset($aliases[$to_alias])) {
                 $uml .= 'state "' . $to . '" as '. $to_alias . PHP_EOL;
                 $aliases[$to_alias] = $to_alias;
+                $uml .= "$to_alias: description: '" . $t_description. "'". PHP_EOL;
+                $uml .= "$to_alias: entry action: '" . $t_entry . "'". PHP_EOL;
+                $uml .= "$to_alias: exit action: '" . $t_exit . "'". PHP_EOL;
             }
 
             //write transition information
             $uml .= $from_alias .' --> '. $to_alias;
             $uml .= " : <b><size:10>$name_transition</size></b>" . $EOL;
             $uml .= "transition order from '$from': <b>" . $order[$from_alias] . "</b>" . $EOL;
-            $uml .= "rule: $rule" . $EOL;
-            $uml .= "command: $command" . $EOL;
+            $uml .= "rule/guard: '$rule'" . $EOL;
+            $uml .= "command/action: '$command'" . $EOL;
+            $uml .= "description: '" . $description . "'". $EOL;
             $uml .= PHP_EOL;
 
             //store possible end states aliases
@@ -163,6 +168,22 @@ SKINS;
             }
 
         }
+        
+        //only one begin state
+        $initial = $machine->getInitialState();
+        $initial = $initial->getName();
+        $initial_alias = $this->plantUmlStateAlias($initial);
+        if(!isset($aliases[$initial_alias])) {
+       		 $uml .=  'state "' . $initial . '" as ' . $initial_alias . PHP_EOL;
+        }
+        $uml .= "[*] --> $initial_alias". PHP_EOL;
+        
+        //note for initial alias with explanation
+        $uml .= "note right of $initial_alias $NEWLINE" ;
+        $uml .= "state diagram for machine '" . $machine->getMachine() . "'$NEWLINE";
+        $uml .= "created by izzum plantuml generator $NEWLINE";
+        $uml .= "@link http://plantuml.sourceforge.net/state.html\"" . $NEWLINE;
+        $uml .= "end note" . $NEWLINE;
 
         //add end states to diagram
         foreach ($end_states as $end) {
