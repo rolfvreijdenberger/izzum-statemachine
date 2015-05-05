@@ -2,6 +2,8 @@
 namespace izzum\statemachine;
 use izzum\statemachine\utils\EntityNull;
 use izzum\command\ExceptionCommand;
+use izzum\command\Command;
+use izzum\command\Null;
 
 /**
  * @group statemachine
@@ -72,6 +74,36 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($state->isNormal());
     }
     
+    /**
+     * @test
+     */
+    public function shouldReturnTransitionForEvent(){
+    	$a = new State('a');
+    	$b = new State('b');
+    	$c = new State('c');
+    	$tab = new Transition($a, $b);
+    	$tac = new Transition($a, $c);
+    	$tbc = new Transition($b, $c);
+    	$tba = new Transition($b, $a);
+    	$tbb = new Transition($b, $b);//self transition
+    	$tba->setEvent('b-a');//b is the source state
+    	$tbb->setEvent('event-self');
+    	
+    	
+    	$this->assertEquals($tba, $b->getTransitionTriggeredByEvent('b-a'));
+    	$this->assertEquals($tbb, $b->getTransitionTriggeredByEvent('event-self'));
+    	$this->assertNull($a->getTransitionTriggeredByEvent('b-a'));
+    	$this->assertNull($a->getTransitionTriggeredByEvent('even-self'));
+    	$this->assertNull($a->getTransitionTriggeredByEvent('event-self'));
+    	$this->assertNull($b->getTransitionTriggeredByEvent('bogus'));
+    	$this->assertNull($a->getTransitionTriggeredByEvent('bogus'));
+    	$this->assertNull($c->getTransitionTriggeredByEvent('bogus'));
+    	$this->assertNull($c->getTransitionTriggeredByEvent('event-self'));
+    	$this->assertNull($c->getTransitionTriggeredByEvent('b-a'));
+    	
+    	
+    }
+    
     
     /**
      * @test
@@ -113,7 +145,6 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     	} catch (\Exception $e) {
     		$this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
     	}
-    	
     }
     
     /**
@@ -158,5 +189,82 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     	}
     	 
     }
+    
+    
+    /**
+     * @test
+     */
+    public function shouldSetEventOnEntryCommand()
+    {
+    	$context = new Context(new Identifier('1', 'test'));
+    	$a = new State('a');
+    	$b = new State('b');
+    	$command = new EventCommand();
+    	
+    	//entry actions
+    	$this->assertEquals(0, count($command->getEvents()));
+    	$a->setEntryCommandName('izzum\statemachine\EventCommand');
+    	$this->assertEquals(0, count($command->getEvents()));
+    	$this->assertEquals('izzum\statemachine\EventCommand', $a->getEntryCommandName());
+    	$this->assertEquals(State::COMMAND_EMPTY, $a->getExitCommandName());
+    	$a->exitAction($context, $event);
+    	$this->assertEquals(0, count($command->getEvents()));
+    	$a->entryAction($context, '1');
+    	$this->assertEquals(1, count($command->getEvents()));
+    	$a->entryAction($context, '2');
+    	$this->assertEquals(2, count($command->getEvents()));
+    	$this->assertEquals(array(1,2), $command->getEvents());
+    	
+    	$command->reset();
+    	$this->assertEquals(0, count($command->getEvents()));
+    	
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldSetEventOnExitCommand()
+    {
+    	$context = new Context(new Identifier('1', 'test'));
+    	$a = new State('a');
+    	$b = new State('b');
+    	$command = new EventCommand();
+    	 
+    	//entry actions
+    	$this->assertEquals(0, count($command->getEvents()));
+    	$a->setExitCommandName('izzum\statemachine\EventCommand');
+    	$this->assertEquals(0, count($command->getEvents()));
+    	$this->assertEquals('izzum\statemachine\EventCommand', $a->getExitCommandName());
+    	$this->assertEquals(State::COMMAND_EMPTY, $a->getEntryCommandName());
+    	$a->entryAction($context, $event);
+    	$this->assertEquals(0, count($command->getEvents()));
+    	$a->exitAction($context, '1');
+    	$this->assertEquals(1, count($command->getEvents()));
+    	$a->exitAction($context, '2');
+    	$this->assertEquals(2, count($command->getEvents()));
+    	$this->assertEquals(array(1,2), $command->getEvents());
+    	
+    	$command->reset();
+    	$this->assertEquals(0, count($command->getEvents()));
+    	 
+    }
+
+}
+
+//helper class
+class EventCommand extends Null {
+	static $event = array();
+	public function setEvent($event) 
+	{
+		self::$event[] = $event;
+	}
+	public function getEvents()
+	{
+		return self::$event;
+	}
+	
+	public function reset(){
+		self::$event = array();
+	}
 }
 

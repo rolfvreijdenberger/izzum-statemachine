@@ -42,6 +42,7 @@ CREATE TABLE statemachine_transitions (
 	rule VARCHAR  DEFAULT '\izzum\rules\True' NOT NULL,
 	command VARCHAR  DEFAULT '\izzum\command\Null' NOT NULL,
 	priority int4 DEFAULT 1 NOT NULL, 
+	event VARCHAR NULL,
 	description text,
         PRIMARY KEY (machine, state_from, state_to),
         FOREIGN KEY (machine, state_from) REFERENCES statemachine_states(machine, state) ON UPDATE CASCADE,
@@ -102,6 +103,8 @@ WHERE machine = 'izzum'
 AND (state = 'bad' OR state = 'ok');
 
 
+
+
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
@@ -114,6 +117,17 @@ VALUES
 ('izzum', 'fine', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'fine_to_bad transition'),
 ('izzum', 'excellent', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'excellent_to_bad transition'),
 ('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\Null', 1, 'bad_to_done transition');
+
+UPDATE statemachine_transitions
+SET
+event = 'foo' 
+WHERE machine = 'izzum'
+AND 
+(
+	(state_from = 'new' AND state_to = 'ok')
+	OR
+	(state_from = 'excellent' AND state_to = 'done')
+);
 
 INSERT INTO statemachine_entities
 (machine, entity_id, state)

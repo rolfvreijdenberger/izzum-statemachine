@@ -41,6 +41,13 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $transition->setDescription($description);
         $this->assertEquals($description, $transition->getDescription());
         
+        $this->assertNull($transition->getEvent());
+        $event = 'anEvent';
+        $this->assertFalse($transition->isTriggeredBy($event));
+        $transition->setEvent($event);
+        $this->assertEquals($event, $transition->getEvent());
+        $this->assertTrue($transition->isTriggeredBy($event));
+        
     }
     
         /**

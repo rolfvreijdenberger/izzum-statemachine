@@ -500,7 +500,8 @@ class PDO extends Adapter implements  Loader {
                         st.priority, 
                         ss.description AS state_from_description,
                         ss_to.description AS state_to_description,
-                        st.description AS description_transition
+                        st.description AS transition_description,
+        				st.event
                     FROM  ' . $prefix . 'statemachine_transitions AS st
                     LEFT JOIN
                         ' . $prefix . 'statemachine_states AS ss
@@ -571,6 +572,7 @@ class PDO extends Adapter implements  Loader {
        		//build the transition
         	$transition = new Transition($from, $to, $row['rule'], $row['command']);
         	$transition->setDescription($row['transition_description']);
+        	$transition->setEvent($row['event']);
         	
         	$output[] = $transition;
         }

@@ -7,9 +7,9 @@
 [![License](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/license.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine)
 #izzum statemachine
 
-- **`new: release of version 2`**: transition guards and actions, (new) state entry and exit actions, a fully functional PDO relational database implementation with the sql provided for 
+- **`new: release of version 2`**: transition guards and actions, new: state entry and exit actions, a fully functional PDO relational database implementation with the sql provided for 
 [mysql](https://www.mysql.com), [postgresql](http://www.postgresql.org) and 
-[sqlite](https://sqlite.org/) backends, uml diagrams generated from code.
+[sqlite](https://sqlite.org/) backends, uml diagrams generated from code. new: 'event' support added as transition input (mealy and moore machines)
 - Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)
 - Visually oriented? Know uml? TLDR; see the [class diagram of the whole package](#class-diagram-for-the-izzum-package)
 - see [documentup.com](http://documentup.com/rolfvreijdenberger/izzum-statemachine/recompile "navigable version on documentup.com") for a navigable and pretty version of this document.
@@ -385,7 +385,7 @@ class TrafficLightFactory extends AbstractFactory{
 Your application needs to do some work!
 Create the factory and get a statemachine from it. Just pass in the unique id
 for the domain model you want to manipulate to get the correct statemachine.
-Use the `run()`, `apply($transition_name)`, `runToCompletion()` methods on the statemachine. 
+Use the `run()`, `transition($transition_name)`, `runToCompletion()`, `handle($event)`methods on the statemachine. 
 The statemachine will find it's own path through it's
 transitions by using the rules that either allow/disallow a transition and
 by executing the Command logic if a transition is possible.
@@ -433,18 +433,15 @@ $machine = 'coffee-machine';
 $id = $this->getCoffeeCount();
 $context = new Context(new Identifier($id, $machine));
 $machine = new StateMachine($context);
-$data = array();
-$data[] = new LoaderData('new', 'initialize', Transition::RULE_TRUE, 'izzum\command\Initialize', 'initial');
-$data[] = new LoaderData('initialize', 'cup', Transition::RULE_TRUE, 'izzum\command\DropCup');
-$data[] = new LoaderData('cup', 'coffee', Transition::RULE_TRUE, 'izzum\command\AddCoffee');
-$data[] = new LoaderData('coffee', 'sugar', 'izzum\rules\WantsSugar', 'izzum\command\AddSugar');
-$data[] = new LoaderData('sugar', 'coffee', Transition::RULE_TRUE, Transition::COMMAND_NULL);
-$data[] = new LoaderData('coffee', 'milk', 'izzum\rules\WantsMilk', 'izzum\command\AddMilk');
-$data[] = new LoaderData('milk', 'coffee', Transition::RULE_TRUE, Transition::COMMAND_NULL);
-$data[] = new LoaderData('coffee', 'spoon', 'izzum\rules\MilkOrSugar', 'izzum\command\AddSpoon');
-$data[] = new LoaderData('coffee', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\command\Cleanup', State::TYPE_NORMAL, State::TYPE_FINAL);
-$data[] = new LoaderData('spoon', 'done', 'izzum\rules\CoffeeTakenOut', 'izzum\command\CleanUp', State::TYPE_NORMAL, State::TYPE_FINAL);
-$loader = new LoaderArray($data);
+$transitions = array();
+//simplified code for creating the transitions and the states, see other examples
+//create states and transitions
+$a = new State('a');
+$b = new State('b');
+$tab = new Transition($a, $b);
+$transitions[] = $tab;
+//load the statemachine.
+$loader = new LoaderArray($transitions);
 $loader->load($machine);
 //some output for plantuml
 $generator = new PlantUml();

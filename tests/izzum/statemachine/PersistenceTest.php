@@ -311,7 +311,13 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         	$output = $plant->createStateDiagram($sm);
         	echo PHP_EOL;
         	echo PHP_EOL;
+        	echo "**** generating plantuml in persistence test for type " . $type . PHP_EOL;
+        	echo PHP_EOL;
+        	echo PHP_EOL;
         	echo $output;
+        	echo PHP_EOL;
+        	echo PHP_EOL;
+        	echo "**** end generating plantuml in persistence test for type " . $type . PHP_EOL;
         	echo PHP_EOL;
         	echo PHP_EOL;
         }
@@ -349,7 +355,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         
         try {
-            $sm->apply('new_to_bad');
+            $sm->transition('new_to_bad');
             $this->fail('should not come here, not added');
         } catch (Exception $e) {
             $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
@@ -362,7 +368,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($sm->can('new_to_ok'));
         
         $count = count($adapter->getEntityIds($machine, 'bad'));
-        $sm->apply('new_to_bad');
+        $sm->transition('new_to_bad');
         $this->assertCount($count + 1, $adapter->getEntityIds($machine, 'bad'));
         $this->assertTrue(in_array($random_id, $adapter->getEntityIds($machine, 'bad')));
         $this->assertTrue(in_array($random_id, $adapter->getEntityIds($machine)));
@@ -410,7 +416,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $machine = 'izzum';
         $dsn = "sqlite:sqlite.db";
         $adapter = new PDO($dsn);   
-        $this->assertPersistenceAdapterPDO($adapter, $machine, false);
+        $this->assertPersistenceAdapterPDO($adapter, $machine, true);
     }
        
     /**

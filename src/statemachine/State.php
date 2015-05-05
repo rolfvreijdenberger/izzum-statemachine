@@ -8,6 +8,7 @@ use izzum\statemachine\Exception;
  * - the name of the state
  * - the type of the state (initial/normal/final)
  * - what outgoing transitions this state has (bidirectional association initiated by a Transition)
+ * - class names for the entry and exit commands (if any)
  * 
  * TRICKY: a State instance can (and should) be shared by multiple Transition
  * objects when it is the same Staet for their origin/from State.
@@ -118,7 +119,9 @@ class State {
      /**
      * 
      * @param string $name the name of the state
-     * @param string $type the type of the state
+     * @param string $type the type of the state (on of self::TYPE_<*>)
+     * @param $command_entry_name optional: a command to be executed when a transition enters this state
+     * @param $command_exit_name optional: a command to be executed when a transition leaves this state
      */
     public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY)
     {
@@ -239,11 +242,12 @@ class State {
      * An entry action will not be executed for an 'initial' state.
      * 
      * @param Context $context
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @throws Exception
      */
-    public function entryAction(Context $context)
+    public function entryAction(Context $context, $event = null)
     {
-   		$command = $this->getCommand($this->getEntryCommandName(), $context);
+   		$command = $this->getCommand($this->getEntryCommandName(), $context, $event);
    		$this->execute($command);
     }
     
@@ -254,11 +258,12 @@ class State {
      * will not leave a 'final' state.
      * 
      * @param Context $context
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @throws Exception
      */
-    public function exitAction(Context $context)
+    public function exitAction(Context $context, $event = nul)
     {
-    	$command = $this->getCommand($this->getExitCommandName(), $context);
+    	$command = $this->getCommand($this->getExitCommandName(), $context, $event);
     	$this->execute($command);
     }
 
@@ -284,10 +289,11 @@ class State {
      *
      * @param string $command_name entry or exit command name
      * @param Context $context
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @return ICommand
      * @throws Exception
      */
-    protected function getCommand($command_name, Context $context)
+    protected function getCommand($command_name, Context $context, $event = null)
     {
     	$reference = $context->getEntity();
     
@@ -300,6 +306,12 @@ class State {
     	if(class_exists($command_name)) {
     		try {
     			$command = new $command_name($reference);
+    			//a mealy machine might want to use the event in it's transition logic.
+    			//therefore, see if the command expects an event to be set that it can use in it's 'execute' method.
+    			if(method_exists($command, 'setEvent'))
+    			{
+    				$command->setEvent($event);
+    			}
     		} catch (\Exception $e) {
     			$e = new Exception(
     					sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",
@@ -318,6 +330,24 @@ class State {
     	return $command;
     }
     
+    /**
+     * get the transition for this state that can be triggered by an event code.
+     * @param string $event the event code that can trigger a transition (mealy machine)
+     * @return Transition or null if no transition is found
+     */
+    public function getTransitionTriggeredByEvent($event)
+    {
+    	$output = null;
+    	foreach ($this->getTransitions() as $transition) {
+    		if($transition->isTriggeredBy($event)) {
+    			$output =  $transition;
+    			break;
+    		}
+    	}
+    	return $output;
+    }
+    
+    
     
     /**
      * get the fully qualified command name for entry of the state
@@ -335,6 +365,16 @@ class State {
     public function getExitCommandName()
     {
     	return $this->command_exit_name;
+    }
+    
+    public function setExitCommandName($name) 
+    {
+    	$this->command_exit_name = $name;
+    }
+    
+    public function setEntryCommandName($name)
+    {
+    	$this->command_entry_name = $name;
     }
     
     /**

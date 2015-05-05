@@ -89,6 +89,7 @@ CREATE TABLE statemachine_transitions (
 	rule varchar  DEFAULT '\izzum\rules\True'::character varying NOT NULL, -- the fully qualified name of a Rule class to instantiate
 	command varchar  DEFAULT '\izzum\command\Null'::character varying NOT NULL, -- the fully qualified name of a Command class to instantiate
 	priority int4 DEFAULT 1 NOT NULL, -- optional: can be used if you want your rules to be tried in a certain order. make sure to ORDER in your retrieval query.
+	event varchar NULL, --optional: can be used for giving 'event' input to the statemachine.
 	description text -- optional: a descriptive text
 );
 COMMENT ON TABLE statemachine_transitions IS '
@@ -102,6 +103,8 @@ has context in the preferred order of checking rules for the transition from a s
 since this allows you to check a higher priority rule first, followed by transition with a 
 True rule if the first rule does not apply. 
 Priority can be used to order the transitions for the statemachine.
+Event can be used to trigger the statemachine with an event name. event names do not have to be unique for 
+transitions in a statemachine (see the difference in mealy vs moore statemachines).
 
 All data for a statemachine can be retrieved via a join on this 
 table and the statemachine_state table.

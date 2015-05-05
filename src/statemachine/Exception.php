@@ -14,7 +14,7 @@ class Exception extends \Exception {
     const ADD_TO_SM_FAILED                             = 1,
           SM_CAN_FAILED                                = 2,
           SM_FACTORY_GET_INVALID                       = 3,
-          SM_APPLY_FAILED                              = 4,
+          SM_TRANSITION_FAILED                         = 4,
           FACTORY_CREATE_FAILURE                       = 5,
           COMBI_ENTITY_MACHINE_BAD                     = 6,
           BUILDER_FAILURE                              = 7,

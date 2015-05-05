@@ -47,6 +47,12 @@ class TrafficLightFactory extends AbstractFactory{
         $green->setDescription("go!");
         $orange->setDescription("looks like a shade of green...");
         $red->setDescription('stop');
+        
+        //set some events that can trigger transitions
+        $ng->setEvent('go-green');
+        $go->setEvent('go-orange');
+        $or->setEvent('go-red');
+        $rg->setEvent('go-green');
     	
         $transitions[] = $ng;
         $transitions[] = $go;

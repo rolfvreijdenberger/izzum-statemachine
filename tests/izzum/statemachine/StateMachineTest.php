@@ -53,20 +53,20 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->addTransitionsToMachine($machine);
         
         
-        $machine->apply('new_to_a');
+        $machine->transition('new_to_a');
         $this->assertEquals('a', $machine->getCurrentState(), 'this actually works because of __toString');
     
         try {
-            $machine->apply('new_to_a');
+            $machine->transition('new_to_a');
             $this->fail('should not come here');
         } catch (Exception $e) {
             $this->assertEquals(Exception::SM_TRANSITION_NOT_ALLOWED, $e->getCode());
         }
         
-        $machine->apply('a_to_b');
+        $machine->transition('a_to_b');
         $this->assertEquals('b', $machine->getCurrentState(), 'this actually works because of __toString');
     
-        $machine->apply('b_to_c');
+        $machine->transition('b_to_c');
         $this->assertEquals('c', $machine->getCurrentState(), 'this actually works because of __toString');
     }
     
@@ -211,7 +211,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     }
     
     
-    public function testMultipleTransitionsFromOneState ()
+    public function testMultipleTransitionsFromOneStateAndAlsoWithEvents()
     {
         
         $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
@@ -230,6 +230,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $t_new_to_b = new Transition($s_new, $s_b, Transition::RULE_FALSE, Transition::COMMAND_NULL);
         $t_new_to_c = new Transition($s_new, $s_c, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         $t_new_to_d = new Transition($s_new, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        //set an event name. since this transition is not allowed, the event based transition should fail later.
+        $t_new_to_d->setEvent('event-foo-bar');
         $t_d_to_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         $t_c_to_done = new Transition($s_c, $s_done, Transition::RULE_FALSE, Transition::COMMAND_NULL);
         $t_c_to_d = new Transition($s_c, $s_d, Transition::RULE_TRUE, Transition::COMMAND_NULL);
@@ -248,13 +250,29 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(6, $machine->getStates());
         $this->assertEquals($machine->getCurrentState(), State::STATE_NEW);
         $this->assertTrue($machine->can('new_to_c'));
+        //check event returns false
+        $this->assertFalse($machine->handle('event-new-to-c'));
+        $this->assertFalse($machine->handle('event-c-to-d'));
+        $this->assertFalse($machine->handle('bogus'));
+        
         $this->assertFalse($machine->can('new_to_a'));
         $this->assertFalse($machine->can('new_to_done'));
         $this->assertFalse($machine->can('new_to_b'));
         $this->assertFalse($machine->can('new_to_d'));
+        try {
+        	$machine->handle('event-foo-bar');//new to d dissallowed by rule
+        	$this->fail('event exists but dissalowed by rule');
+        }catch (\Exception $e)
+        {
+        	$this->assertEquals(Exception::SM_TRANSITION_NOT_ALLOWED, $e->getCode());
+        }
+        
+        
         $this->assertTrue($machine->run());
         $this->assertEquals($machine->getCurrentState(), 'c');
-        $machine->run();
+        $t_c_to_d->setEvent('event-c-to-d');
+        //do event based transition
+        $this->assertTrue($machine->handle('event-c-to-d'));
         $this->assertEquals($machine->getCurrentState(), 'd');
         $this->assertTrue($machine->run());
         $this->assertEquals($machine->getCurrentState(), 'done');
@@ -271,6 +289,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($machine->can('c_to_done'));
         $this->assertFalse($machine->can('d_to_done'));
         $this->assertFalse($machine->can('c_to_d'));
+        
+        
        
         
     }
@@ -451,7 +471,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         }
         
         try {
-            $machine->apply('new_to_a');
+            $machine->transition('new_to_a');
             $this->fail('will throw an error');
         } catch (Exception $e) {
             $this->assertEquals(Exception::RULE_APPLY_FAILURE, $e->getCode());

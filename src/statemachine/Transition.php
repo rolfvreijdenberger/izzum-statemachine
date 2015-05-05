@@ -70,33 +70,52 @@ class Transition {
      * @var string
      */
     protected $description;
+    
+    /**
+     * an event code that can trigger this transitions
+     * @var string
+     */
+    protected $event;
 
     /**
      * @param State $state_from
      * @param State $state_to
-     * @param string $rule a fully qualified Rule (sub)class name to check to see if we are allowed to transition
-     * @param string $command a fully qualified command (sub)class name to execute for a transition
+     * @param string $rule optional: a fully qualified Rule (sub)class name to check to see if we are allowed to transition
+     * @param string $command optional: a fully qualified command (sub)class name to execute for a transition
+     * @param string $event optional: an event name by which this transition can be triggered
      */
-    public function __construct(State $state_from, State $state_to, $rule = self::RULE_TRUE, $command = self::COMMAND_NULL)
+    public function __construct(State $state_from, State $state_to, $rule = self::RULE_TRUE, $command = self::COMMAND_NULL, $event = null)
     {
-       $this->state_to = $state_to;
-       $this->state_from = $state_from;
-       $this->rule = $rule;
-       $this->command = $command;
+       $this->state_to 		= $state_to;
+       $this->state_from 	= $state_from;
+       $this->rule 			= $rule;
+       $this->command 		= $command;
+       $this->event 		= $event;
        //setup bidirectional relationship with state this transition originates from
        $state_from->addTransition($this);
+    }
+    
+    /**
+     * Can this transition be triggered by a certain event?
+     * @param string $event
+     * @return boolean
+     */
+    public function isTriggeredBy($event) 
+    {
+    	return $this->event === $event && $event !== null && $event !== '';
     }
 
     /**
      * is a transition possible?
      *
      * @param Context $object
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @return boolean
      */
-    public function can(Context $object)
+    public function can(Context $object, $event = null)
     {
         try {
-            return $this->getRule($object)->applies();
+            return $this->getRule($object, $event)->applies();
         } catch (\Exception $e) {
             $e = new Exception($e->getMessage(), Exception::RULE_APPLY_FAILURE, $e);
             throw $e;
@@ -106,14 +125,15 @@ class Transition {
     /**
      * Process the transition for the statemachine
      * @param Context $object
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @return void
      */
-    public function process (Context $object)
+    public function process (Context $object, $event = null)
     {
         //execute, we do not need to check if we 'can' since this is done
         //by the statemachine itself
         try {
-            $this->getCommand($object)->execute();
+        	$this->getCommand($object, $event)->execute();
         } catch (\Exception $e) {
             //command failure
             $e = new Exception($e->getMessage(), Exception::COMMAND_EXECUTION_FAILURE, $e);
@@ -126,10 +146,11 @@ class Transition {
      * configured with a 'reference' (stateful) object
      *
      * @param Context $object the associated stateful object for a our statemachine
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @return \izzum\rules\IRule
      * @throws Exception
      */
-    public function getRule(Context $object)
+    public function getRule(Context $object, $event = null)
     {
 
         //if no rule is defined, just allow the transition by default
@@ -145,6 +166,12 @@ class Transition {
         if(class_exists($this->rule)) {
             try {
                 $rule = new $this->rule($reference);
+            	//a mealy machine might still want to check the event to see if it is the expected event.
+            	//therefore, see if the rule expects an event to be set that it can use in it's 'applies' method.
+                if(method_exists($rule, 'setEvent'))
+                {
+                	$rule->setEvent($event);
+                }
             } catch (\Exception $e) {
                 $e = new Exception(
                         sprintf("failed rule creation, class objects to construction with reference: (%s) for Context (%s). message: %s", $this->rule, $object->toString(), $e->getMessage()),
@@ -167,10 +194,11 @@ class Transition {
      * the Command will be configured with the 'reference' of the stateful object
      *
      * @param Context $object the associated stateful object for a our statemachine
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @return izzum\command\ICommand
      * @throws Exception
      */
-    public function getCommand(Context $object)
+    public function getCommand(Context $object, $event = null)
     {
         //this reference is cached, so we can be sure it is always the same instance
         $reference = $object->getEntity();
@@ -187,6 +215,12 @@ class Transition {
         if(class_exists($this->command)) {
             try {
                 $command = new $this->command($reference);
+                //a mealy machine might want to use the event in it's transition logic.
+                //therefore, see if the command expects an event to be set that it can use in it's 'execute' method.
+                if(method_exists($command, 'setEvent'))
+                {
+                	$command->setEvent($event);
+                }
             } catch (\Exception $e) {
                 $e = new Exception(
                            sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",
@@ -276,6 +310,25 @@ class Transition {
     public function getDescription()
     {
     	return $this->description;
+    }
+    
+    /**
+     * set the event name by which this transition can be triggered
+     * @param string $event
+     */
+    public function setEvent($event)
+    {
+    	$this->event = $event;
+    }
+    
+    /**
+     * get the event name by which this transition can be triggered
+     * 
+     * @return string
+     */
+    public function getEvent()
+    {
+    	return $this->event;
     }
 
     

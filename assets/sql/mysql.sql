@@ -42,6 +42,7 @@ CREATE TABLE statemachine_transitions (
 	rule VARCHAR(255) DEFAULT '\izzum\rules\True' NOT NULL,
 	command VARCHAR(255) DEFAULT '\izzum\command\Null' NOT NULL,
 	priority TINYINT DEFAULT 1 NOT NULL, 
+	event VARCHAR(255) NULL,
 	description text,
         PRIMARY KEY (machine, state_from, state_to),
         FOREIGN KEY (machine, state_from) REFERENCES statemachine_states(machine, state) ON UPDATE CASCADE,

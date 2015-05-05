@@ -7,8 +7,11 @@ use izzum\statemachine\Exception;
 /**
  * StateMachine class.
  * 
- * The statemachine is used to do transitions from one state to another state for
- * an entity that represents a domain object. 
+ * The statemachine is used to execute transitions from one state to another state for
+ * an entity that represents a domain object by applying guard logic and transition logic.
+ * 
+ * The implementation details of this machine make it that it can act both as
+ * a mealy machine and as a moore machine. the concepts can be mixed and matched.
  * 
  * An application domain specific object can be created by means of a Context 
  * instance and it's associated EntityBuilder.
@@ -67,11 +70,13 @@ use izzum\statemachine\Exception;
  * 
  * 
  * @author Rolf Vreijdenberger
- * @see izzum\command\Command
- * @see izzum\rules\Rule
  * @link https://en.wikipedia.org/wiki/Finite-state_machine
+ * @link https://en.wikipedia.org/wiki/Moore_machine
+ * @link https://en.wikipedia.org/wiki/Mealy_machine
  * @link https://en.wikipedia.org/wiki/Open/closed_principle
  *
+ * @see izzum\command\Command
+ * @see izzum\rules\Rule
  */
 class StateMachine {
 
@@ -165,15 +170,45 @@ class StateMachine {
      * - perform transition logic
      * - perform state entry logic for the new state (optional)
      * 
+     * this type of handling is found in moore machines.
+     * @link https://en.wikipedia.org/wiki/Moore_machine
+     * 
      * @param string $transition_name convention: <state-from>_to_<state-to>
      * @throws Exception in case something went wrong.
      *     An exception will lead to a failed transition and the failed
      *     transition will lead to a notification to the Context and it's adapter
      * @return void
      */
-    public function apply($transition_name) {
-        $this->transition($transition_name, true);
+    public function transition($transition_name) {
+        $this->_transition($transition_name, true);
     }    
+    
+    /**
+     * Try to apply a transition from the current state by handling an event string. 
+     * If the event is applicable for a transition then that transition from the current state will be applied.
+     * 
+     * The event string itself will be available at runtime via the statemachine itself (no need
+     * to temporarily store it) and will be set on the rules and command (if they implement 
+     * the 'setEvent($event)' method)
+     * 
+     * This type of handling is found in mealy machines.
+     * @link https://en.wikipedia.org/wiki/Mealy_machine
+     * 
+     * @link http://martinfowler.com/books/dsl.html for event handling statemachines
+     * 
+     * @param string $event in case the transition will be triggered by an event code (mealy machine)
+     * @return bool true in case a transition was triggered by the event, false otherwise
+     * @throws Exception in case the transition is not possible via the guard logic (Rule)
+     */
+    public function handle($event) 
+    {
+    	$transition = $this->getCurrentState()->getTransitionTriggeredByEvent($event);
+    	if($transition) {
+	    	$this->_transition($transition->getName(), true, $event);
+	    	return true;
+    	} 
+    	return false;
+    }
 
     
     /**
@@ -189,8 +224,8 @@ class StateMachine {
      * performing the state transition with priority n when you really want 
      * to perform transition n+1.
      *
-     * An alternative is to use the 'apply' method: 
-     *     $statemachine->apply('a_to_b');
+     * An alternative is to use the 'transition' method: 
+     *     $statemachine->transition('a_to_b');
      * So you are always sure that you are actually doing the intented transition
      * instead of relying on the configuration and rules (which *might* not 
      * be correctly implemented, leading to transitions that would normally not
@@ -210,7 +245,7 @@ class StateMachine {
                     $can = $this->can($transition->getName());
                 } catch (\Exception $e) {
                     //we handle a transition exception here, since we
-                    //check $this->can() outside the $this->transition() method
+                    //check $this->can() outside the $this->_transition() method
                     //where all the hooks are.
                     //this should be refactored to an implementation
                     //where all the hooks are in a single routine
@@ -221,7 +256,7 @@ class StateMachine {
                 //we can transition
                 if($can) {
                     //don't check if we can transition, since we just did that.
-                    $this->transition($transition->getName(), false);
+                    $this->_transition($transition->getName(), false);
                     //transition done
                     return true;
                 }
@@ -288,15 +323,16 @@ class StateMachine {
      *      if the transition is allowed or not. This is a performance optimalization
      *      so in case we call 'can' directly, we can use 'transition' directly 
      *      after that without doing the checks (including expensive Rules) twice.
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @throws Exception
      * @return void
      * https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    protected function transition($transition_name, $check_allowed = true) 
+    protected function _transition($transition_name, $check_allowed = true, $event = null) 
     {
         try {
             if($check_allowed === true) {
-                if(!$this->can($transition_name)) {
+                if(!$this->can($transition_name, $event)) {
                     //we tried a transition, but it is not allowed
                     throw new Exception(
                             sprintf("Transition '%s' not allowed from state '%s'", 
@@ -307,20 +343,20 @@ class StateMachine {
             $transition = $this->getTransition($transition_name);
 
             //possible hook for subclasses to implement 
-            $this->preProcess($transition);
+            $this->preProcess($transition, $event);
             
 	    	//state exit action: performed when exiting the state
-            $transition->getStateFrom()->exitAction($this->getContext());
+            $transition->getStateFrom()->exitAction($this->getContext(), $event);
             
             //the transition is performed, with the associated logic
-            $transition->process($this->getContext());
+            $transition->process($this->getContext(), $event);
             $this->setCurrentState($transition->getStateTo());
             
             //state entry action: performed when entering the state
-            $transition->getStateTo()->entryAction($this->getContext());
+            $transition->getStateTo()->entryAction($this->getContext(), $event);
             
             //possible hook for subclasses to implement
-            $this->postProcess($transition);
+            $this->postProcess($transition, $event);
             
         } catch (Exception $e) {
             $this->handleTransitionException($e, $transition_name);
@@ -328,7 +364,7 @@ class StateMachine {
             throw $e;
         } catch (\Exception $e) {
             //a non statemachine type exception, wrap it and throw
-            $e = new Exception($e->getMessage(), Exception::SM_APPLY_FAILED, $e);
+            $e = new Exception($e->getMessage(), Exception::SM_TRANSITION_FAILED, $e);
             //possible hook for subclasses to implement
             $this->handleTransitionException($e, $transition_name);
             throw $e;
@@ -510,7 +546,7 @@ class StateMachine {
     
             
     /**
-     * called whenever an exception occurs from inside 'transition()'
+     * called whenever an exception occurs from inside '_transition()'
      * can be used for logging etc.
      * 
      * @param Exception $e
@@ -530,8 +566,9 @@ class StateMachine {
      * A hook to implement in subclasses if necessary, to do stuff such as
      * event handling, locking an entity, logging, cleanup etc.
      * @param Transition $transition
+     * @param string $event in case the transition was triggered by an event code (mealy machine)
      */
-    protected function preProcess(Transition $transition) {
+    protected function preProcess(Transition $transition, $event) {
         //dispatch events, log, lock entity, cleanup,
         //begin transaction via persistance layer etc.
     }
@@ -542,8 +579,9 @@ class StateMachine {
      * a hook to implement in subclasses if necessary, to do stuff such as
      * event handling, unlocking an entity, logging, cleanup etc.
      * @param Transition $transition
+     * @param string $event in case the transition was triggered by an event code (mealy machine)
      */
-    protected function postProcess(Transition $transition) {
+    protected function postProcess(Transition $transition, $event) {
         //dispatch events, log, unlock entity, cleanup, 
         //commit transaction via persistence layer etc.
     }

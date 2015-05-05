@@ -6,12 +6,13 @@ package izzum.statemachine {
       # transitions: Transition[]
       # context: Context
       + can(transition:string):boolean
-      + apply(transition:string)
-      + run()
+      + transition(transition:string)
+      + handle(event:string):boolean
+      + run():boolean
       + runToCompletion()
       + getTransitions():Transition[]
       + getStates(): State[]
-      + addTransition(): Transition[]
+      + addTransition(Transition)
       + changeContext(Context)
       + getContext():Context
       + getCurrentState():State
@@ -34,6 +35,7 @@ package izzum.statemachine {
         + hasTransition(name:string):boolean
         + exitAction(Context)
         + entryAction(Context)
+        + getTransitionTriggeredByEvent(event:string)
     }
     Class Transition {
         # state_from:State
@@ -41,12 +43,14 @@ package izzum.statemachine {
         # rule:string
         # command:string
         # description: string
-        + can(Context)
-        + process(Context)
-        + getRule(Context):Rule
-        + getCommand(Context): Command
+        # event: string
+        + can(Context, event:string)
+        + process(Context, event:string)
+        + getRule(Context, event:string):Rule
+        + getCommand(Context, event:string): Command
         + getRuleName():string
         + getCommandName():string
+        + isTriggeredBy(event:string)
     }
     Class Context {
         # identifier:Identifier

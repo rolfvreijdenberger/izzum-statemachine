@@ -115,7 +115,8 @@ SKINS;
             $command = $t->getCommandName();
             $rule = self::escape($t->getRuleName());
             $name_transition = $t->getName();
-            $description = $t->getDescription() ? $t->getDescription() : ' ';
+            $description = $t->getDescription() ? ("description: '" . $t->getDescription() . "'". $EOL) : '';
+            $event = $t->getEvent() ? ("event: '" . $t->getEvent() . "'". $EOL) : '';
             $f_description = $from->getDescription() ? $from->getDescription() : ' ';
             $t_description = $to->getDescription() ? $to->getDescription() : ' ';
             $f_exit = $from->getExitCommandName() ? $from->getExitCommandName() : 'none';
@@ -153,10 +154,11 @@ SKINS;
             //write transition information
             $uml .= $from_alias .' --> '. $to_alias;
             $uml .= " : <b><size:10>$name_transition</size></b>" . $EOL;
+            $uml .= $event;
             $uml .= "transition order from '$from': <b>" . $order[$from_alias] . "</b>" . $EOL;
             $uml .= "rule/guard: '$rule'" . $EOL;
             $uml .= "command/action: '$command'" . $EOL;
-            $uml .= "description: '" . $description . "'". $EOL;
+            $uml .= $description;
             $uml .= PHP_EOL;
 
             //store possible end states aliases

@@ -23,9 +23,11 @@ $factory = new TrafficLightFactory();
 $machine = $factory->getStateMachine(1);
 
 //generate the uml diagram
-//$uml = new PlantUml();
-//$output = $uml->createStateDiagram($machine);
-//echo $output . PHP_EOL;
+$uml = new PlantUml();
+$output = $uml->createStateDiagram($machine);
+echo PHP_EOL . PHP_EOL. PHP_EOL;
+echo $output;
+echo PHP_EOL . PHP_EOL. PHP_EOL;
 
 //loop the machine
 while(true) {
