@@ -97,7 +97,7 @@ Create a file called composer.json with these lines:
 ```
 {
     "require": {
-        "rolfvreijdenberger/izzum-statemachine": "~2.0"
+        "rolfvreijdenberger/izzum-statemachine": "~2.1"
     }
 }
 ```
