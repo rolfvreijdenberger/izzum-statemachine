@@ -21,7 +21,7 @@ implementation that allows you to add state for any domain object and to define
 the logic of transitions between any and all states for that object while keeping your object
 unaware that it is governed by a statemachine.
 
-The statemachine is in the form of a rooted [bidirected](https://en.wikipedia.org/wiki/Bidirected_graph) finite [graph](https://en.wikipedia.org/wiki/Graph_(mathematics)).
+The [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine) is in the form of a rooted finite [graph](https://en.wikipedia.org/wiki/Graph_(abstract_data_type)) and supports both [mealy](https://en.wikipedia.org/wiki/Mealy_machine) and [moore](https://en.wikipedia.org/wiki/Moore_machine) type of statemachines. It supports state entry logic, state exit logic, transition logic and transition guards.
 
 By using the [open/closed principle](https://en.wikipedia.org/wiki/Open/closed_principle "open/closed principle on wikipedia")
 we give you the means to adjust the logic provided by this library to your needs, including using the backend of choice to store configuration of the statemachine and the transition history of your stateful objects.
@@ -424,7 +424,6 @@ Rules and Commands in action. This can guide you to building your own implementa
 feed a constructed statemachine to the PlantUml class:
 ```php
 use izzum\statemachine\StateMachine;
-use izzum\statemachine\LoaderData;
 use izzum\statemachine\LoaderArray;
 use izzum\statemachine\Context;
 use izzum\statemachine\Identifier;
