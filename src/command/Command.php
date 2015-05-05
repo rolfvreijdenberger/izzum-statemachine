@@ -63,4 +63,9 @@ abstract class Command implements ICommand {
         return get_class($this);
     }
     
+    public function __toString()
+    {
+    	return $this->toString();
+    }
+    
 }

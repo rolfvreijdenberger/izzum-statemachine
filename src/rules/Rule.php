@@ -310,4 +310,9 @@ abstract class Rule implements IRule
     public final function getCacheEnabled() {
         return $this->use_caching;
     }
+    
+    public function __toString()
+    {
+    	return $this->toString();
+    }
 }

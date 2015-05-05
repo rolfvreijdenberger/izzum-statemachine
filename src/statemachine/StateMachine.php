@@ -50,8 +50,12 @@ use izzum\statemachine\Exception;
  * allows the transition, after which the Command is executed that can actually
  * alter data in the underlying domain models, call services etc.
  * 
- * Preferably use a subclass of the AbstractFactory to get a StateMachine, since that
- * will put the creation of all the relevant classes in a reusable model.
+ * - You can use a subclass of the AbstractFactory to get a StateMachine, since that
+ * 		will put the creation of all the relevant Contextual classes in a reusable model.
+ * - Alternatively, subclass a statemachine and build the full Context in the
+ * 		constructor of your subclass (which could be a domain model itself)
+ * - Alternatively, use object composition to instantiate and build a statemachine
+ * 		in a domain model and build the full Context there
  * 
  * All high level interactions that a client conducts with a statemachine
  * should expect exceptions. Exceptions that bubble up from this statemachine are
@@ -184,14 +188,14 @@ class StateMachine {
     }    
     
     /**
-     * Try to apply a transition from the current state by handling an event string. 
+     * Try to apply a transition from the current state by handling an event string as a trigger. 
      * If the event is applicable for a transition then that transition from the current state will be applied.
      * 
      * The event string itself will be available at runtime via the statemachine itself (no need
      * to temporarily store it) and will be set on the rules and command (if they implement 
      * the 'setEvent($event)' method)
      * 
-     * This type of handling is found in mealy machines.
+     * This type of (event/trigger) handling is found in mealy machines.
      * @link https://en.wikipedia.org/wiki/Mealy_machine
      * 
      * @link http://martinfowler.com/books/dsl.html for event handling statemachines
@@ -285,7 +289,6 @@ class StateMachine {
      *     - the transitions should be defined for each state
      *     - the transitions should be allowed by the rules
      *     - the transitions should be able to execute
-     * @param string[] $transitions an array of transition names
      * @throws Exception in case something went wrong.
      * @return int the number of sucessful transitions made. 
      */
@@ -624,5 +627,32 @@ class StateMachine {
     protected function setCurrentState(State $state) {
         $this->getContext()->setState($state->getName());
     }
+    
+    
+    /**
+     * This method is used to trigger an event on the statemachine and
+     * delegates the actuall call to the 'handle' method
+     * 
+     * $statemachine->triggerAnEvent() actually calls $this->handle('triggerAnEvent')
+     * 
+     * This is also very useful if you use object composition to include a statemachine 
+     * in your domain model. The domain model itself can then use it's own __call
+     * implementation to directly delegate to the statemachines' __call method
+     * 
+     * $model->walk() will actuall call $model->statemachine->walk() which will
+     * then call $model->statemachine->handle('walk');
+     * 
+     * 
+     * @param string $name the name of the unknown method called
+     * @param array $arguments an array of arguments (if any)
+     * @return bool true in case a transition was triggered by the event, false otherwise
+     * @throws Exception in case the transition is not possible via the guard logic (Rule)
+     * @link https://en.wikipedia.org/wiki/Object_composition
+     */
+    public function __call($name , $arguments)
+    {
+    	return $this->handle($name);
+    }
+
 
 }

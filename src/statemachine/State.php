@@ -3,6 +3,8 @@ namespace izzum\statemachine;
 use izzum\command\ICommand;
 use izzum\command\Null;
 use izzum\statemachine\Exception;
+use izzum\command\Composite;
+use izzum\statemachine\utils\Utils;
 /**
  * This class holds the finite state data:
  * - the name of the state
@@ -11,7 +13,7 @@ use izzum\statemachine\Exception;
  * - class names for the entry and exit commands (if any)
  * 
  * TRICKY: a State instance can (and should) be shared by multiple Transition
- * objects when it is the same Staet for their origin/from State.
+ * objects when it is the same State for their origin/from State.
  * The LoaderArray class automatically takes care of this for us.
  * 
  * the order of Transitions *might* be important.
@@ -99,13 +101,15 @@ class State {
     /**
      * fully qualified command name for the command to be executed
      * when entering a state as part of a transition.
+     * This can actually be a ',' seperated string of multiple commands that will be executed as a composite.
      * @var string
      */
     protected $command_entry_name;
     
     /**
      * fully qualified command name for the command to be executed
-     * when exiting a state as part of a transition
+     * when exiting a state as part of a transition.
+     * This can actually be a ',' seperated string of multiple commands that will be executed as a composite.
      * @var string
      */
     protected $command_exit_name;
@@ -121,7 +125,11 @@ class State {
      * @param string $name the name of the state
      * @param string $type the type of the state (on of self::TYPE_<*>)
      * @param $command_entry_name optional: a command to be executed when a transition enters this state
+     * 		One or more fully qualified command (sub)class name(s) to execute when entering this state.
+     * 		This can actually be a ',' seperated string of multiple commands that will be executed as a composite.
      * @param $command_exit_name optional: a command to be executed when a transition leaves this state
+     * 		One or more fully qualified command (sub)class name(s) to execute when exiting this state.
+     * 		This can actually be a ',' seperated string of multiple commands that will be executed as a composite.
      */
     public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY)
     {
@@ -295,39 +303,7 @@ class State {
      */
     protected function getCommand($command_name, Context $context, $event = null)
     {
-    	$reference = $context->getEntity();
-    
-    	//it's oke to have no command
-    	if($command_name === self::COMMAND_EMPTY || $command_name === null) {
-    		//return a command without side effects
-    		$command_name = self::COMMAND_NULL;
-    	}
-    
-    	if(class_exists($command_name)) {
-    		try {
-    			$command = new $command_name($reference);
-    			//a mealy machine might want to use the event in it's transition logic.
-    			//therefore, see if the command expects an event to be set that it can use in it's 'execute' method.
-    			if(method_exists($command, 'setEvent'))
-    			{
-    				$command->setEvent($event);
-    			}
-    		} catch (\Exception $e) {
-    			$e = new Exception(
-    					sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",
-    							$command_name, $context->toString(), $e->getMessage()),
-    					Exception::COMMAND_CREATION_FAILURE);
-    			throw $e;
-    		}
-    	} else {
-    		//misconfiguration
-    		$e = new Exception(
-    				sprintf("failed command creation, class does not exist: (%s) for Context (%s)",
-    						$command_name, $context->toString()),
-    				Exception::COMMAND_CREATION_FAILURE);
-    		throw $e;
-    	}
-    	return $command;
+		return Utils::getCommand($command_name, $context, $event);
     }
     
     /**

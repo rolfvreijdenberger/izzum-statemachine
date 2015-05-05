@@ -30,8 +30,8 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains($transition->getName(), $transition->toString());
         $command = $transition->getCommand($object);
         $rule = $transition->getRule($object);
-        $this->assertTrue(is_a($command, Transition::COMMAND_NULL));
-        $this->assertTrue(is_a($rule, Transition::RULE_TRUE));
+        $this->assertTrue(is_a($command, 'izzum\command\Composite') ,get_class($command));
+        $this->assertTrue(is_a($rule, 'izzum\rules\AndRule'));
         
         $this->assertNotNull($transition->toString());
         $this->assertNotNull($transition->__toString());
@@ -139,9 +139,47 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains($transition->getName(), $transition->toString());
         $command = $transition->getCommand($object);
         $rule = $transition->getRule($object);
-        $this->assertTrue(is_a($command, 'izzum\command\SimpleCommand'));
-        $this->assertTrue(is_a($rule, 'izzum\rules\False'));
+        $this->assertTrue(is_a($command, 'izzum\command\Composite'));
+        $this->assertContains('izzum\command\SimpleCommand', $command->toString());
+        $this->assertTrue(is_a($rule, 'izzum\rules\AndRule'));
+        $this->assertFalse($rule->applies());
         
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldWorkWithMultipleCommands()
+    {
+    	$from = new State('a');
+    	$to = new State('b');
+    	$rule = Transition::RULE_EMPTY;
+    	$command = 'izzum\command\SimpleCommand,izzum\command\Null';
+    	$object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+    	$transition = new Transition($from, $to, $rule, $command);
+    	$command = $transition->getCommand($object);
+    	$this->assertTrue(is_a($command, 'izzum\command\Composite'));
+    	$this->assertContains('izzum\command\SimpleCommand', $command->toString());
+    	$this->assertContains('izzum\command\Null', $command->toString());
+    	$this->assertEquals('izzum\command\Composite consisting of: [izzum\command\SimpleCommand, izzum\command\Null]', $command->toString());
+    
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldWorkWhenUsingMultipleRules()
+    {
+    	$from = new State('a');
+    	$to = new State('b');
+    	$rule = 'izzum\rules\True,izzum\rules\False';
+    	$command = 'izzum\command\SimpleCommand';//declared in this file
+    	$object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+    	$transition = new Transition($from, $to, $rule);
+    	$rule = $transition->getRule($object);
+    	$this->assertTrue(is_a($rule, 'izzum\rules\AndRule'));
+    	$this->assertFalse($rule->applies());
+    	$this->assertEquals('((izzum\rules\True and izzum\rules\True) and izzum\rules\False)', $rule->toString());
     }
     
       /**
