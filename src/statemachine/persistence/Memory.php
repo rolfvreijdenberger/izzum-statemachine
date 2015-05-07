@@ -3,13 +3,15 @@ namespace izzum\statemachine\persistence;
 use izzum\statemachine\Identifier;
 use izzum\statemachine\State;
 /**
- * In memory storage adapter that stores statemachine data.
- * This is the default persistence adapter
+ * In memory storage adapter that stores statemachine data, best used in a runtime
+ * environment.
+ * This is the default persistence adapter.
  * 
  * TRICKY: This memory adapter only functions during the execution of 
- * one (1) php process.
+ * one (1) php process. Therefore, it is best used in a runtime environment such
+ * as a php daemon program or an interactive command line php script.
  *
- * @author rolf
+ * @author rolf vreijdenberger
  */
 class Memory extends Adapter {
     

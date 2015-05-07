@@ -45,13 +45,13 @@ class Transition {
     const COMMAND_NULL = 'izzum\command\Null';
     const COMMAND_EMPTY = '';
     
+    
     /**
-     * The fully qualified Rule class name of the
-     * Rule to be applied to check if we can transition.
-     * This can actually be a ',' seperated string of multiple rules.
-     * @var string
+     * the state this transition starts from
+     * @var State 
      */
-    protected $rule;
+    protected $state_from;
+    
     /**
      * the state this transition points to
      * @var State
@@ -59,10 +59,18 @@ class Transition {
     protected $state_to;
     
     /**
-     * the state this transition starts from
-     * @var State 
+     * an event code that can trigger this transitions
+     * @var string
      */
-    protected $state_from;
+    protected $event;
+    
+    /**
+     * The fully qualified Rule class name of the
+     * Rule to be applied to check if we can transition.
+     * This can actually be a ',' seperated string of multiple rules.
+     * @var string
+     */
+    protected $rule;
 
     /**
      * the fully qualified Command class name of the Command to be 
@@ -78,28 +86,23 @@ class Transition {
      */
     protected $description;
     
-    /**
-     * an event code that can trigger this transitions
-     * @var string
-     */
-    protected $event;
 
     /**
      * @param State $state_from
      * @param State $state_to
+     * @param string $event optional: an event name by which this transition can be triggered
      * @param string $rule optional: one or more fully qualified Rule (sub)class name(s) to check to see if we are allowed to transition.
      * 		This can actually be a ',' seperated string of multiple rules that will be applied as a chained 'and' rule.
-     * @param string $command optional: one or more fully qualified command (sub)class name(s) to execute for a transition.
+     * @param string $command optional: one or more fully qualified Command (sub)class name(s) to execute for a transition.
      * 		This can actually be a ',' seperated string of multiple commands that will be executed as a composite.
-     * @param string $event optional: an event name by which this transition can be triggered
      */
-    public function __construct(State $state_from, State $state_to, $rule = self::RULE_EMPTY, $command = self::COMMAND_EMPTY, $event = null)
+    public function __construct(State $state_from, State $state_to, $event = null, $rule = self::RULE_EMPTY, $command = self::COMMAND_EMPTY)
     {
-       $this->state_to 		= $state_to;
        $this->state_from 	= $state_from;
+       $this->state_to 		= $state_to;
+       $this->event 		= $event;
        $this->rule 			= $rule;
        $this->command 		= $command;
-       $this->event 		= $event;
        //setup bidirectional relationship with state this transition originates from
        $state_from->addTransition($this);
     }
@@ -259,7 +262,8 @@ class Transition {
 
 
     /**
-     * get the transition name
+     * get the transition name. the transition name is always unique for a statemachine
+     * since it constists of <state_from>_to_<state_to>
      * @return string
      */
     public function getName()
@@ -281,9 +285,19 @@ class Transition {
         return $this->command;
     }
     
+    public function setCommandName($command)
+    {
+    	$this->command = $command;
+    }
+    
     public function getRuleName()
     {
         return $this->rule;
+    }
+    
+    public function setRuleName($rule)
+    {
+    	$this->rule = $rule;
     }
     
     /**

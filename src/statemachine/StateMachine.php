@@ -133,36 +133,49 @@ class StateMachine {
      * @return boolean
      * @throws Exception in case something went wrong. The exceptions are logged.
      */
-    public function can($transition_name)
+    public function canTransition($transition_name)
     {
-        //use the normal transition logic AND use our custom Rule based transition logic
-        try {
-            
-            if(!$this->getCurrentState()->hasTransition($transition_name)) {
-                return false;
-            }
-            
-            $transition = $this->getTransition($transition_name);
-            if($transition === null) {
-                throw new Exception(sprintf("transition '%s' has not been found", 
-                	$transition_name), Exception::SM_NO_TRANSITION_FOUND);
-            }
-            
-            //possible hook so your application can place an extra guard for the transition.
-            if(!$this->checkGuard($transition)) {
-                return false;
-            }
-            //this will check the Rule defined for the transition.
-            //if the Rule applies, then this is seen as a green light to start the transition.
-            return $transition->can($this->getContext());
-        } catch (Exception $e) {
-            //already a statemachine exception, just rethrow
-            throw $e;
-        } catch (\Exception $e) {
-            //a non statemachine type exception, wrap it and throw
-            $e = new Exception($e->getMessage(), Exception::SM_CAN_FAILED, $e);
-            throw $e;
-        }
+        return $this->_canTransition($transition_name);
+    }
+    
+    
+    /**
+     * Check if a transition is possible by using the transition name.
+     * @param string $transition_name convention: <state-from>_to_<state-to>
+     * @param string $event
+     * @return boolean
+     * @throws Exception in case something went wrong. The exceptions are logged.
+     */
+    private function _canTransition($transition_name, $event = null)
+    {
+    	//use the normal transition logic AND use our custom Rule based transition logic
+    	try {
+    
+    		if(!$this->getCurrentState()->hasTransition($transition_name)) {
+    			return false;
+    		}
+    
+    		$transition = $this->getTransition($transition_name);
+    		if($transition === null) {
+    			throw new Exception(sprintf("transition '%s' has not been found",
+    					$transition_name), Exception::SM_NO_TRANSITION_FOUND);
+    		}
+    
+    		//possible hook so your application can place an extra guard for the transition.
+    		if(!$this->onBeforeCanTransition($transition, $event)) {
+    			return false;
+    		}
+    		//this will check the Rule defined for the transition.
+    		//if the Rule applies, then this is seen as a green light to start the transition.
+    		return $transition->can($this->getContext());
+    	} catch (Exception $e) {
+    		//already a statemachine exception, just rethrow
+    		throw $e;
+    	} catch (\Exception $e) {
+    		//a non statemachine type exception, wrap it and throw
+    		$e = new Exception($e->getMessage(), Exception::SM_CAN_FAILED, $e);
+    		throw $e;
+    	}
     }
 
     /**
@@ -213,6 +226,35 @@ class StateMachine {
     	} 
     	return false;
     }
+    
+    /**
+     * check if the current state has a transition that can be triggered by an event
+     * @param string $event
+     * @return boolean
+     */
+    public function hasEvent($event) 
+    {
+    	$transition = $this->getCurrentState()->getTransitionTriggeredByEvent($event);
+    	if($transition) {
+    		return true;
+    	}
+    	return false;
+    }
+    
+    /**
+     * checks if a transition is possible or allowed for the current state when triggered
+     * by an event
+     * @param string $event
+     * @return boolean
+     */
+    public function canHandle($event)
+    {
+    	$transition = $this->getCurrentState()->getTransitionTriggeredByEvent($event);
+    	if($transition) {
+    		return $this->canTransition($transition->getName());
+    	}
+    	return false;
+    }
 
     
     /**
@@ -246,7 +288,7 @@ class StateMachine {
             $transitions = $this->getCurrentState()->getTransitions();
             foreach($transitions as $transition){
                 try {
-                    $can = $this->can($transition->getName());
+                    $can = $this->canTransition($transition->getName());
                 } catch (\Exception $e) {
                     //we handle a transition exception here, since we
                     //check $this->can() outside the $this->_transition() method
@@ -320,7 +362,6 @@ class StateMachine {
      * Perform a transition by specifiying the transitions' name from a state that the 
      * transition is allowed to run.
      * 
-     * 
      * @param string $transition_name convention: <state-from>_to_<state-to>
      * @param boolean $check_allowed optional: to specify if we want to do the check to see
      *      if the transition is allowed or not. This is a performance optimalization
@@ -335,7 +376,7 @@ class StateMachine {
     {
         try {
             if($check_allowed === true) {
-                if(!$this->can($transition_name, $event)) {
+                if(!$this->_canTransition($transition_name, $event)) {
                     //we tried a transition, but it is not allowed
                     throw new Exception(
                             sprintf("Transition '%s' not allowed from state '%s'", 
@@ -344,23 +385,12 @@ class StateMachine {
                 }
             }
             $transition = $this->getTransition($transition_name);
-
-            //possible hook for subclasses to implement 
-            $this->preProcess($transition, $event);
-            
 	    	//state exit action: performed when exiting the state
-            $transition->getStateFrom()->exitAction($this->getContext(), $event);
-            
+            $this->onExitState($transition, $event);
             //the transition is performed, with the associated logic
-            $transition->process($this->getContext(), $event);
-            $this->setCurrentState($transition->getStateTo());
-            
+            $this->onTransition($transition, $event);
             //state entry action: performed when entering the state
-            $transition->getStateTo()->entryAction($this->getContext(), $event);
-            
-            //possible hook for subclasses to implement
-            $this->postProcess($transition, $event);
-            
+            $this->onEnterState($transition, $event);
         } catch (Exception $e) {
             $this->handleTransitionException($e, $transition_name);
             //already a statemachine exception, just rethrow
@@ -374,6 +404,79 @@ class StateMachine {
         }
     }
     
+    /**
+     * the exit state action method
+     * @param Transition $transition
+     * @param string $event
+     */
+    private function onExitState(Transition $transition, $event = null)
+    {
+    	//possible hook for subclasses to implement
+    	$this->preProcess($transition, $event);
+    	
+    	//possible hook for subclasses to implement
+    	$this->_onExitState($transition, $event);
+    	if($event) {
+    		$this->callEntityMethod('onLeave' . $this->getNormalizedName($event), $transition);
+    	}
+    	$transition->getStateFrom()->exitAction($this->getContext(), $event);
+    }
+    
+    /**
+     * hook method. override in subclass if necessary
+     * @param Transition $transition
+     * @param string $event
+     */
+    protected function _onExitState(Transition $transition, $event = null) {}
+    
+    /**
+     * the enter state action method
+     * @param Transition $transition
+     * @param string $event
+     */
+    private function onEnterState(Transition $transition, $event = null)
+    {
+    	//possible hook for subclasses to implement
+    	$this->_onEnterState($transition, $event);
+    	if($event) {
+    		$this->callEntityMethod('onEnter' . $this->getNormalizedName($event), $transition);
+    	}
+        $transition->getStateTo()->entryAction($this->getContext(), $event);
+        
+        //possible hook for subclasses to implement
+        $this->postProcess($transition, $event);
+    }
+    
+    /**
+     * hook method. override in subclass if necessary
+     * @param Transition $transition
+     * @param string $event
+     */
+    protected function _onEnterState(Transition $transition, $event = null) {}
+    
+    /**
+     * the transition action method
+     * @param Transition $transition
+     * @param string $event
+     */
+    private function onTransition(Transition $transition, $event = null)
+    {
+    	//possible hook for subclasses to implement
+    	$this->_onTransition($transition, $event);
+    	$this->callEntityMethod('onTransition', $transition->getName(), $event);
+    	if($event) {
+    		$this->callEntityMethod('onTransition' . $this->getNormalizedName($event), $transition);
+    	}
+    	$transition->process($this->getContext(), $event);
+    	$this->setCurrentState($transition->getStateTo());
+    }
+    
+    /**
+     * hook method. override in subclass if necessary
+     * @param Transition $transition
+     * @param string $event
+     */
+    protected function _onTransition(Transition $transition, $event = null) {}
         
     /**
      * Add a fully configured transition to the machine.
@@ -490,7 +593,6 @@ class StateMachine {
         return $this->getContext()->getMachine();
     }
     
-    
      /**
       * All known/loaded transitions for this statemachine
      * @return Transition[]
@@ -508,7 +610,6 @@ class StateMachine {
     {
         return $this->states;
     }
-    
     
     /**
      * get a state by name.
@@ -536,18 +637,72 @@ class StateMachine {
     }
     
     /**
-     * Before a transition is checked to be possible, you can add domain
-     * specific logic here by overriding this method in a subclass
-     * @param Transition $transition
-     * @return boolean
+     * helper method to derive a name from an event that results in a valid
+     * method name that can be used to call the different transition callbacks on the $entity
+     * @param string $event
+     * @return string
      */
-    protected function checkGuard(Transition $transition) 
+    protected function getNormalizedName($event) {
+    	//override if necessary
+    	return ucfirst($event);
+    }
+
+    /**
+     * Template method to call a possible hook and to call a possible method 
+     * defined on the domain object/contextual entity
+	 *
+     * @param Transition $transition
+     * @param string $event an event name if the transition was triggered by an event.
+     * @return boolean if false, the transition and its' associated logic will not take place
+     */
+    private function onBeforeCanTransition(Transition $transition, $event = null) 
+    {
+    	$hook_result = $this->_onBeforeCanTransition($transition, $event);
+   		if(!$hook_result) return false;
+   		if($event) {
+   			return $this->callEntityMethod('onCan' . $this->getNormalizedName($event), $transition);
+   		}
+     	return true;
+    }
+    
+    /**
+     * Before a transition is checked to be possible, you can add domain
+     * specific logic here by overriding this method in a subclass.
+     * In an overriden implementation of this method you can stop the transition 
+     * by returning false from this method.
+     * 
+     * @param Transition $transition
+     * @param string $event an event name if the transition was triggered by an event.
+     * @return boolean if false, the transition and it's associated logic will not take place
+     */
+    protected function _onBeforeCanTransition(Transition $transition, $event = null)
     {
         //eg: dispatch an event and see if it is rejected by a listener
         return true;
+    	
     }
     
-            
+    /**
+     * Helper method to generically call methods on the $entity.
+     * Try to call a method on the contextual entity / domain model ONLY IF the method exists.
+     * any arguments passed to this method will be passed on to the method called
+     * on the entity.
+     * 
+     * @param string $method the method to call on the entity
+     * @return boolean
+     */
+    private function callEntityMethod($method)
+    {
+    	//return true by default
+    	$output = true;
+    	$entity = $this->getContext()->getEntity();
+    	if(method_exists($entity, $method)) {
+	    	$args = array_shift(func_get_args());
+    		$output = (bool) call_user_func_array(array($entity,$method), $args);
+    	}
+    	return $output;
+    }
+    
     /**
      * called whenever an exception occurs from inside '_transition()'
      * can be used for logging etc.
@@ -564,7 +719,6 @@ class StateMachine {
     }
 
      /**
-     * This is a statemachine exit action: performed when exiting the current state.
      * Called before each transition will run and execute the associated transition logic.
      * A hook to implement in subclasses if necessary, to do stuff such as
      * event handling, locking an entity, logging, cleanup etc.
@@ -577,7 +731,6 @@ class StateMachine {
     }
     
     /**
-     * This is a statemachine entry action: performed when entering the new state.
      * Called after each transition has run and has executed the associated transition logic..
      * a hook to implement in subclasses if necessary, to do stuff such as
      * event handling, unlocking an entity, logging, cleanup etc.
@@ -589,7 +742,6 @@ class StateMachine {
         //commit transaction via persistence layer etc.
     }
     
-    
      /**
      * Add a state. 
      * @param State $state
@@ -598,8 +750,6 @@ class StateMachine {
     {
         $this->states[$state->getName()] = $state;
     }
-
-
 
     /**
      * set the context on the statemachine and provide bidirectional association

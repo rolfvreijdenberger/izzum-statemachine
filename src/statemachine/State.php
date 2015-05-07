@@ -12,7 +12,7 @@ use izzum\statemachine\utils\Utils;
  * - what outgoing transitions this state has (bidirectional association initiated by a Transition)
  * - class names for the entry and exit commands (if any)
  * 
- * TRICKY: a State instance can (and should) be shared by multiple Transition
+ * A State instance can (and should) be shared by multiple Transition
  * objects when it is the same State for their origin/from State.
  * The LoaderArray class automatically takes care of this for us.
  * 

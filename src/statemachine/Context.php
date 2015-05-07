@@ -67,8 +67,8 @@ class Context {
     /**
      * Constructor
      * @param Identifier $identifier the identifier for the statemachine
-     * @param EntityBuilder $entity_builder A specific builder class to create a reference to the entity we wish to manipulate.
-     * @param Adapter $persistance_adapter A specific reader/writer class can be used to generate different 'read/write' behaviour
+     * @param EntityBuilder $entity_builder optional: A specific builder class to create a reference to the entity we wish to manipulate.
+     * @param Adapter $persistance_adapter optional: A specific reader/writer class can be used to generate different 'read/write' behaviour
      */
     public function __construct(Identifier $identifier, $entity_builder = null, $persistance_adapter = null)
     {
@@ -145,7 +145,7 @@ class Context {
     {
         if($this->entity_builder === null || !is_a($this->entity_builder, 
                 'izzum\statemachine\EntityBuilder')) {
-            //the default is the default builder.
+            // the default builder returns the Identifier as the entity
             $this->entity_builder = new EntityBuilder();
         }
         return $this->entity_builder;

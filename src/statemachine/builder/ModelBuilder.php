@@ -37,6 +37,11 @@ class ModelBuilder extends EntityBuilder {
 	 * @var mixed
 	 */
 	private $model;
+	
+	/**
+	 * 
+	 * @param mixed $model the domain model you want to have returned from this class.
+	 */
 	public function __construct($model) {
 		$this->model = $model;
 	}
