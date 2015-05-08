@@ -347,7 +347,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //run via 'bad' path, priority 2, this will also 'add' it to the backend
         try {
-            $sm->can('new_to_bad');
+            $sm->canTransition('new_to_bad');
             $this->fail('should not come here, not added');
         } catch (Exception $e) {
             $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
@@ -364,8 +364,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         //and entity tables
         $this->assertTrue($adapter->setState($identifier, 'new'));
         $this->assertEquals($other_context->getState(), 'new');
-        $this->assertTrue($sm->can('new_to_bad'));
-        $this->assertTrue($sm->can('new_to_ok'));
+        $this->assertTrue($sm->canTransition('new_to_bad'));
+        $this->assertTrue($sm->canTransition('new_to_ok'));
         
         $count = count($adapter->getEntityIds($machine, 'bad'));
         $sm->transition('new_to_bad');

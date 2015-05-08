@@ -28,7 +28,7 @@ class FactoryTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(1, $context->getPersistenceAdapter()->getEntityIds($machine_name));
         $context->getPersistenceAdapter()->getEntityIds($machine_name);
         $this->assertEquals($machine_name, $context->getMachine(),'name as provided by factory');
-        $this->assertEquals($machine_name, $machine->getMachine(),'name as provided by factory');
+        $this->assertEquals($machine_name, $machine->getContext()->getMachine(),'name as provided by factory');
         $this->assertEquals($machine, $context->getStateMachine(),'bidirectional association check');
         $this->assertCount(5, $machine->getStates());
         $this->assertCount(6, $machine->getTransitions());
@@ -58,14 +58,14 @@ class SimpleTestFactory extends AbstractFactory{
             $b = new State('b');
             $c = new State('c');
             $done = new State('done', \izzum\statemachine\State::TYPE_FINAL);
-            $transitions[] = new Transition($new, $a, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($new, $a, null,'izzum\rules\True', 'izzum\command\Null');
             //can never go, a false rule
-            $transitions[] = new Transition($a, $done, 'izzum\rules\False', 'izzum\command\Null');
-            $transitions[] = new Transition($a, $b, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($a, $done, null, 'izzum\rules\False', 'izzum\command\Null');
+            $transitions[] = new Transition($a, $b, null, 'izzum\rules\True', 'izzum\command\Null');
             //can never go, a false rule
-            $transitions[] = new Transition($b, $c, 'izzum\rules\False', 'izzum\command\Null');
-            $transitions[] = new Transition($c, $done, 'izzum\rules\True', 'izzum\command\Null');
-            $transitions[] = new Transition($b, $done, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($b, $c, null, 'izzum\rules\False', 'izzum\command\Null');
+            $transitions[] = new Transition($c, $done, null, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($b, $done, null, 'izzum\rules\True', 'izzum\command\Null');
             return new loader\LoaderArray($transitions);
             
         

@@ -10,7 +10,7 @@ use izzum\statemachine\Exception;
  * for the statemachine to work with.
  * 
  * Important are:
- * - the stateful entity, which is  an application domain specific  object 
+ * - the entity, which is an application domain specific object 
  * like 'Order' or 'Customer' that goes through some finite states in it's lifecycle.
  * - the machine name, which is the type identifier for the machine and related
  * to the entity (eg: 'order-machine')
@@ -256,11 +256,11 @@ class Context {
      * - was not allowed
      * - where an exception was thrown from a rule or command 
      * - etc. any general transition failure
+     * @param Transition $transition
      * @param Exception $e
-     * @param string $transition_name
      */
-    public function setFailedTransition(Exception $e, $transition_name)
+    public function setFailedTransition(Transition $transition, Exception $e)
     {
-        $this->getPersistenceAdapter()->setFailedTransition($this->getIdentifier(), $e, $transition_name);
+        $this->getPersistenceAdapter()->setFailedTransition($this->getIdentifier(), $transition, $e);
     }
 }

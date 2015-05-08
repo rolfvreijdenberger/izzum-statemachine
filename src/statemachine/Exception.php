@@ -34,6 +34,7 @@ class Exception extends \Exception {
           SM_NO_INITIAL_STATE_FOUND                    = 21,
           PERSISTENCE_FAILED_TO_CONNECT                = 22,
           PERSISTENCE_LAYER_EXCEPTION                  = 23,
-          SM_RUN_FAILED                                = 24;
+          SM_RUN_FAILED                                = 24,
+    	  SM_NO_TRANSITION_FOUND_ON_STATE              = 25;
 
 }

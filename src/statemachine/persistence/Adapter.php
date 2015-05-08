@@ -3,6 +3,7 @@ namespace izzum\statemachine\persistence;
 use izzum\statemachine\Identifier;
 use izzum\statemachine\Exception;
 use izzum\statemachine\State;
+use izzum\statemachine\Transition;
 /**
  * This class serves as a base class for access to different type of persistence 
  * layers we might want to use to store the states for stateful entities.
@@ -157,10 +158,10 @@ abstract class Adapter {
     /**
      * Stores a failed transition in the storage facility for historical/analytical purposes.
      * @param Identifier $identifier
+     * @param Transition $transition
      * @param \Exception $e
-     * @param string $transition_name
      */
-    public function setFailedTransition(Identifier $identifier, \Exception $e, $transition_name)
+    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
     {
         //override in subclasses if necessary
     }

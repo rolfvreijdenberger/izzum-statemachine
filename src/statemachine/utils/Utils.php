@@ -17,7 +17,7 @@ class Utils {
      * for a transition name (which is concatenating state-from to state-to with '_to_'
      * @param string $from the state from which the transition is made
      * @param string $to the state to which the transition will be made
-     * @return string
+     * @return string <state_from>_to_<state_to>
      */
     public static function getTransitionName($from, $to)
     {
@@ -26,7 +26,7 @@ class Utils {
     
     
     /**
-     * returns the associated Command for the entry/exit/transition action.
+     * returns the associated Command for the entry/exit/transition action on a State or a Transition.
      * the Command will be configured with the 'reference' of the stateful object
      *
      * @param string $command_name entry~,exit~ or transition command name.
@@ -66,8 +66,8 @@ class Utils {
     				{
     					$command->setEvent($event);
     				}
-    					//add it to the composite
-    					$output->add($command);
+    				//add it to the composite
+    				$output->add($command);
     			} catch (\Exception $e) {
 	    			$e = new Exception(
 	    			sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",

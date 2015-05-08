@@ -27,7 +27,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
-        $this->assertEquals($machine->getMachine(), Identifier::NULL_STATEMACHINE);
+        $this->assertEquals(Identifier::NULL_STATEMACHINE, $machine->getContext()->getMachine());
         $this->assertEquals($machine->getContext(), $object);
         $this->assertCount(0, $machine->getStates());
         $this->assertCount(0, $machine->getTransitions());
@@ -85,12 +85,12 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $s_d = new State('d', State::TYPE_NORMAL);
         $s_done = new State(State::STATE_DONE, State::TYPE_FINAL);
         
-        $t_new_to_a = new Transition($s_new, $s_a, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_a_to_b = new Transition($s_a, $s_b, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_b_to_c = new Transition($s_b, $s_c, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_b_to_d = new Transition($s_b, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_c_to_d = new Transition($s_c, $s_d, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_d_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_new_to_a = new Transition($s_new, $s_a, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_a_to_b = new Transition($s_a, $s_b, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_b_to_c = new Transition($s_b, $s_c, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_b_to_d = new Transition($s_b, $s_d, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_c_to_d = new Transition($s_c, $s_d, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_d_done = new Transition($s_d, $s_done, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         
         $machine->addTransition($t_new_to_a);
         $this->assertCount(2, $machine->getStates());
@@ -184,6 +184,19 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
     }
     
+    
+    public function testHandlingEvents()
+    {
+    	$object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+    	$machine = new StateMachine($object);
+    	$this->addTransitionsToMachine($machine);
+    	$this->assertTrue($machine->new_to_a(), 'dynamic method calling handle(event) via __call');
+    	$this->assertEquals('a', $machine->getCurrentState()->getName());
+    	$this->assertTrue($machine->handle('a_to_b'), 'default event name is the transition name');
+    	$this->assertEquals('b', $machine->getCurrentState()->getName());
+    	
+    }
+    
     protected function addTransitionsToMachine(StateMachine $machine) {
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
@@ -193,12 +206,12 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $s_d = new State('d', State::TYPE_NORMAL);
         $s_done = new State(State::STATE_DONE, State::TYPE_FINAL);
         
-        $t_new_to_a = new Transition($s_new, $s_a, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_a_to_b = new Transition($s_a, $s_b, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_b_to_c = new Transition($s_b, $s_c, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_b_to_d = new Transition($s_b, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_c_to_d = new Transition($s_c, $s_d, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_d_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_new_to_a = new Transition($s_new, $s_a, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_a_to_b = new Transition($s_a, $s_b, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_b_to_c = new Transition($s_b, $s_c, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_b_to_d = new Transition($s_b, $s_d, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_c_to_d = new Transition($s_c, $s_d, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_d_done = new Transition($s_d, $s_done, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         
         $machine->addTransition($t_new_to_a);
         $machine->addTransition($t_a_to_b);
@@ -225,16 +238,16 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $s_d = new State('d', State::TYPE_NORMAL);
         $s_done = new State(State::STATE_DONE, State::TYPE_FINAL);
         
-        $t_new_to_a = new Transition($s_new, $s_a, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_new_to_done = new Transition($s_new, $s_done, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_new_to_b = new Transition($s_new, $s_b, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_new_to_c = new Transition($s_new, $s_c, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_new_to_d = new Transition($s_new, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_new_to_a = new Transition($s_new, $s_a, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_new_to_done = new Transition($s_new, $s_done, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_new_to_b = new Transition($s_new, $s_b, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_new_to_c = new Transition($s_new, $s_c, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_new_to_d = new Transition($s_new, $s_d, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
         //set an event name. since this transition is not allowed, the event based transition should fail later.
         $t_new_to_d->setEvent('event-foo-bar');
-        $t_d_to_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_c_to_done = new Transition($s_c, $s_done, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_c_to_d = new Transition($s_c, $s_d, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_d_to_done = new Transition($s_d, $s_done, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_c_to_done = new Transition($s_c, $s_done, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_c_to_d = new Transition($s_c, $s_d, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
  
         $machine->addTransition($t_new_to_a);
         $machine->addTransition($t_new_to_done);
@@ -249,16 +262,16 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(8, $machine->getTransitions());
         $this->assertCount(6, $machine->getStates());
         $this->assertEquals($machine->getCurrentState(), State::STATE_NEW);
-        $this->assertTrue($machine->can('new_to_c'));
+        $this->assertTrue($machine->canTransition('new_to_c'));
         //check event returns false
         $this->assertFalse($machine->handle('event-new-to-c'));
         $this->assertFalse($machine->handle('event-c-to-d'));
         $this->assertFalse($machine->handle('bogus'));
         
-        $this->assertFalse($machine->can('new_to_a'));
-        $this->assertFalse($machine->can('new_to_done'));
-        $this->assertFalse($machine->can('new_to_b'));
-        $this->assertFalse($machine->can('new_to_d'));
+        $this->assertFalse($machine->canTransition('new_to_a'));
+        $this->assertFalse($machine->canTransition('new_to_done'));
+        $this->assertFalse($machine->canTransition('new_to_b'));
+        $this->assertFalse($machine->canTransition('new_to_d'));
         try {
         	$machine->handle('event-foo-bar');//new to d dissallowed by rule
         	$this->fail('event exists but dissalowed by rule');
@@ -278,20 +291,27 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($machine->getCurrentState(), 'done');
         
         $this->assertFalse($machine->run(), 'cannot run anymore');
-        $this->assertFalse($machine->can('new_to_c'));
-        $this->assertFalse($machine->can('new_to_a'));
-        $this->assertFalse($machine->can('new_to_done'));
-        $this->assertFalse($machine->can('new_to_b'));
-        $this->assertFalse($machine->can('new_to_d'));
-        $this->assertFalse($machine->can('non_to_existent'));
-        $this->assertFalse($machine->can('done_to_a'));
-        $this->assertFalse($machine->can('new_to_d'));
-        $this->assertFalse($machine->can('c_to_done'));
-        $this->assertFalse($machine->can('d_to_done'));
-        $this->assertFalse($machine->can('c_to_d'));
-        
-        
-       
+        $this->assertFalse($machine->canTransition('new_to_c'));
+        $this->assertFalse($machine->canTransition('new_to_a'));
+        $this->assertFalse($machine->canTransition('new_to_done'));
+        $this->assertFalse($machine->canTransition('new_to_b'));
+        $this->assertFalse($machine->canTransition('new_to_d'));
+        try {
+        	$this->assertFalse($machine->canTransition('non_to_existent'));
+        	$this->fail('should not come here');
+        }catch (Exception $e) {
+        	$this->assertEquals(Exception::SM_NO_TRANSITION_FOUND, $e->getCode());
+        }
+        try {
+	        $this->assertFalse($machine->canTransition('done_to_a'));
+        	$this->fail('should not come here');
+        }catch (Exception $e) {
+        	$this->assertEquals(Exception::SM_NO_TRANSITION_FOUND, $e->getCode());
+        }
+        $this->assertFalse($machine->canTransition('new_to_d'));
+        $this->assertFalse($machine->canTransition('c_to_done'));
+        $this->assertFalse($machine->canTransition('d_to_done'));
+        $this->assertFalse($machine->canTransition('c_to_d'));
         
     }
     
@@ -347,10 +367,6 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         } catch (Exception $ex) {
            $this->assertEquals(Exception::SM_CONTEXT_DIFFERENT_MACHINE, $ex->getCode());
         }
-        
-        
-        
-        
     }
     
     public function testGettersAndCounts()
@@ -393,7 +409,6 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(0, $machine->getState('done')->getTransitions());
         
         $this->assertEquals($context, $machine->getContext());
-        $this->assertEquals($context->getMachine(), $machine->getMachine());
         
         $this->assertNull($machine->getState('nonexistent'));
         $this->assertNull($machine->getTransition('nonexistent'));
@@ -403,7 +418,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shouldBeAbleToUseRunAndCanAndTestStateTypes()
+    public function shouldBeAbleToUseRunAndCanTransitionAndTestStateTypes()
     {
         $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
@@ -411,10 +426,15 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         
         $this->assertTrue($machine->getCurrentState()->isInitial());
-        $this->assertFalse($machine->can('a_to_b'), 'current transitions');
-        $this->assertFalse($machine->can('new_to_done'), 'invalid transition');
-        $this->assertFalse($machine->can('b_to_d'), 'false rule');
-        $this->assertFalse($machine->can('b_to_c'), 'not the current state');
+        $this->assertFalse($machine->canTransition('a_to_b'), 'current transitions');
+        try {
+	        $this->assertFalse($machine->canTransition('new_to_done'), 'invalid transition');
+        	$this->fail('should not come here');
+        }catch (Exception $e) {
+        	$this->assertEquals(Exception::SM_NO_TRANSITION_FOUND, $e->getCode());
+        }
+        $this->assertFalse($machine->canTransition('b_to_d'), 'false rule');
+        $this->assertFalse($machine->canTransition('b_to_c'), 'not the current state');
         
         //new to a
         $machine->run();
@@ -426,8 +446,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals('b', $machine->getCurrentState());
         $this->assertTrue($machine->getCurrentState()->isNormal());
         
-        $this->assertFalse($machine->can('b_to_d'), 'false rule');
-        $this->assertTrue($machine->can('b_to_c'), 'next transition');
+        $this->assertFalse($machine->canTransition('b_to_d'), 'false rule');
+        $this->assertTrue($machine->canTransition('b_to_c'), 'next transition');
         
         $machine->run();
         $this->assertEquals('c', $machine->getCurrentState());
@@ -453,7 +473,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
         $s_a = new State('a', State::TYPE_NORMAL);
 
-        $t_new_to_a = new Transition($s_new, $s_a, 'izzum\rules\ExceptionRule', Transition::COMMAND_NULL);
+        $t_new_to_a = new Transition($s_new, $s_a, null, 'izzum\rules\ExceptionRule', Transition::COMMAND_NULL);
         $machine->addTransition($t_new_to_a);
         
         try {
@@ -498,12 +518,12 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $s_d = new State('services-activation', State::TYPE_NORMAL);
         $s_done = new State(State::STATE_DONE, State::TYPE_FINAL);
         
-        $t_new_to_a = new Transition($s_new, $s_a, Transition::RULE_TRUE, 'izzum\command\ValidateOrder');
-        $t_a_to_b = new Transition($s_a, $s_b, 'izzum\rules\IsReadyForDelivery', 'izzum\command\SendConfirmation');
-        $t_b_to_c = new Transition($s_b, $s_c, Transition::RULE_TRUE, 'izzum\command\TechnicalDelivery');
-        $t_b_to_d = new Transition($s_b, $s_d, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_c_to_d = new Transition($s_c, $s_d, 'izzum\rules\ReadyForContract', 'izzum\command\CreateContract');
-        $t_d_done = new Transition($s_d, $s_done, Transition::RULE_TRUE, 'izzum\command\ActivateServices' );
+        $t_new_to_a = new Transition($s_new, $s_a, null, Transition::RULE_TRUE, 'izzum\command\ValidateOrder');
+        $t_a_to_b = new Transition($s_a, $s_b, null, 'izzum\rules\IsReadyForDelivery', 'izzum\command\SendConfirmation');
+        $t_b_to_c = new Transition($s_b, $s_c, null, Transition::RULE_TRUE, 'izzum\command\TechnicalDelivery');
+        $t_b_to_d = new Transition($s_b, $s_d, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_c_to_d = new Transition($s_c, $s_d, null, 'izzum\rules\ReadyForContract', 'izzum\command\CreateContract');
+        $t_d_done = new Transition($s_d, $s_done, null, Transition::RULE_TRUE, 'izzum\command\ActivateServices' );
         
         $machine->addTransition($t_new_to_a);
         $machine->addTransition($t_a_to_b);
@@ -541,18 +561,18 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $spoon->setDescription("use a spoon to stir");
         $done = new State('done', State::TYPE_FINAL, "izzum\command\AnEntryCommand");
         
-        $ni = new Transition($new, $initialize, Transition::RULE_TRUE, 'izzum\command\Initialize');
+        $ni = new Transition($new, $initialize, null, Transition::RULE_TRUE, 'izzum\command\Initialize');
         $ni->setDescription("initialize the coffee machine");
         $transitions[] = $ni;
-        $transitions[] = new Transition($initialize, $cup, Transition::RULE_TRUE, 'izzum\command\DropCup');
-        $transitions[] = new Transition($cup, $coffee, Transition::RULE_TRUE, 'izzum\command\AddCoffee');
-        $transitions[] = new Transition($coffee, $sugar, 'izzum\rules\WantsSugar', 'izzum\command\AddSugar');
-        $transitions[] = new Transition($sugar, $coffee, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $transitions[] = new Transition($coffee, $milk, 'izzum\rules\WantsMilk', 'izzum\command\AddMilk');
-        $transitions[] = new Transition($milk, $coffee, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $transitions[] = new Transition($coffee, $spoon, 'izzum\rules\MilkOrSugar', 'izzum\command\AddSpoon');
-        $transitions[] = new Transition($coffee, $done, 'izzum\rules\CoffeeTakenOut', 'izzum\command\Cleanup');
-        $transitions[] = new Transition($spoon, $done, 'izzum\rules\CoffeeTakenOut', 'izzum\command\CleanUp');
+        $transitions[] = new Transition($initialize, $cup, null, Transition::RULE_TRUE, 'izzum\command\DropCup');
+        $transitions[] = new Transition($cup, $coffee, null, Transition::RULE_TRUE, 'izzum\command\AddCoffee');
+        $transitions[] = new Transition($coffee, $sugar, null, 'izzum\rules\WantsSugar', 'izzum\command\AddSugar');
+        $transitions[] = new Transition($sugar, $coffee, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $transitions[] = new Transition($coffee, $milk, null, 'izzum\rules\WantsMilk', 'izzum\command\AddMilk');
+        $transitions[] = new Transition($milk, $coffee, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $transitions[] = new Transition($coffee, $spoon, null, 'izzum\rules\MilkOrSugar', 'izzum\command\AddSpoon');
+        $transitions[] = new Transition($coffee, $done, null, 'izzum\rules\CoffeeTakenOut', 'izzum\command\Cleanup');
+        $transitions[] = new Transition($spoon, $done, null, 'izzum\rules\CoffeeTakenOut', 'izzum\command\CleanUp');
 
         $loader = new LoaderArray($transitions);
         $loader->load($machine);

@@ -394,16 +394,16 @@ class PDO extends Adapter implements  Loader {
       /**
      * Stores a failed transition in the storage facility.
      * @param Identifier $identifier
+     * @param Transition $transition
      * @param \Exception $e
-     * @param string $transition_name
      */
-    public function setFailedTransition(Identifier $identifier, \Exception $e, $transition_name)
+    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
     {
         //check if it is persisted, otherwise we cannot get the current state
         if($this->isPersisted($identifier)) {
             $message = new \stdClass();
             $message->code = $e->getCode();
-            $message->transition = $transition_name;
+            $message->transition = $transition->getName();
             $message->message = $e->getMessage();          
             $message->file = $e->getFile();
             $message->line = $e->getLine();
@@ -471,7 +471,7 @@ class PDO extends Adapter implements  Loader {
      * @param StateMachine $statemachine
      */
     public function load(StateMachine $statemachine) {
-        $data = $this->getLoaderData($statemachine->getMachine());
+        $data = $this->getLoaderData($statemachine->getContext()->getMachine());
         //delegate to LoaderArray
         $loader = new LoaderArray($data);
         $loader->load($statemachine);
@@ -570,9 +570,8 @@ class PDO extends Adapter implements  Loader {
        		$states[$to->getName()] = $to;
         	 
        		//build the transition
-        	$transition = new Transition($from, $to, $row['rule'], $row['command']);
+        	$transition = new Transition($from, $to, $row['event'],$row['rule'], $row['command']);
         	$transition->setDescription($row['transition_description']);
-        	$transition->setEvent($row['event']);
         	
         	$output[] = $transition;
         }

@@ -100,11 +100,12 @@ class Transition {
     {
        $this->state_from 	= $state_from;
        $this->state_to 		= $state_to;
-       $this->event 		= $event;
        $this->rule 			= $rule;
        $this->command 		= $command;
        //setup bidirectional relationship with state this transition originates from
        $state_from->addTransition($this);
+       //sanitize event name
+       $this->setEvent($event);
     }
     
     /**
@@ -319,11 +320,15 @@ class Transition {
     }
     
     /**
-     * set the event name by which this transition can be triggered
+     * set the event name by which this transition can be triggered.
+     * In case the event name is null or an empty string, it defaults to the transition name.
      * @param string $event
      */
     public function setEvent($event)
     {
+    	if($event === null || $event === '') {
+    		$event = $this->getName();
+    	}
     	$this->event = $event;
     }
     
