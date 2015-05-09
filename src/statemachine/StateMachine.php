@@ -87,9 +87,37 @@ use izzum\statemachine\Exception;
  * with the string '_to_' which is done automatically by this package.
  * 			new_to_waiting-for-input, new_to_done
  * 
- * A good naming convention for events is a lowercase or camelcase string
- * 			wakeup,	sayHello, sleepNow
+ * A good naming convention for events (transition trigger names) is to use lowercase-hypen-seperated names
  * 
+ *
+ * DESCRIPTION of full transition algorithm:
+ *
+ * 1.  guard: _onCheckCanTransition($transition, $event) //hook method: override
+ * 2.  guard: $entity->onCheckCanTransition($transition, $event) 
+ * 			  callable on entity. return true to allow transition, false to stop transition
+ * 3.  guard: $transition->can($context) // try to call $rule->setEvent() and check if rule applies
+ * 			  if all guards return true, allow the transition
+ * 4.  _preProcess($transition, $event) //hook method: override
+ * 5.  _onExitState($transition, $event) //hook method: override
+ * 6.  $entity->onExit($transition, $event) //callable on entity
+ * 7.  $state_from->exitAction($event) //try to call $command->setEvent() and execute command 
+ * 8.  _onTransition($transition, $event) //hook method: override
+ * 9.  $entity->onTransition($transition, $event) //callable on entity
+ * 10. $transition->process(event) //try to call $command->setEvent() and execute command 
+ * 11. _onEnterState($transition, $event) //hook method: override
+ * 12. $entity->onEnterState($transition, $event) //callable on entity
+ * 13. $state_to->entryAction($event) //try to call $command->setEvent() and execute command 
+ * 14. _postProcess($transition, $event) //hook method: override
+    
+ * each hook can be overriden and implemented in a subclass, providing
+ * functionality that is specific to your application. This allows you to use
+ * the core mechanisms of the izzum package and extend it to your needs.
+ * 
+ * each callable might be implemented on the entity and will be called if available
+ * with some arguments that might be used. 
+ * 
+ * each rule and command will be injected with the entity and if they implement the method 'setEvent' the
+ * event will be set in case the transition was called with the event.
  * 
  * @author Rolf Vreijdenberger
  * @link https://en.wikipedia.org/wiki/Finite-state_machine
@@ -441,10 +469,9 @@ class StateMachine {
     	//hook for subclasses to implement
     	$hook_result = $this->_onCheckCanTransition($transition, $event);
     	if(!$hook_result) return false;
-    	if($event) {
-    		//a callable that is possibly defined on the domain model: onCheckCanTransition<Event>
-    		return $this->callEntityMethod('onCheckCanTransition' . $this->getNormalizedName($event), $transition);
-    	}
+    	//a callable that is possibly defined on the domain model: onCheckCanTransition
+    	return $this->callCallable($this->getContext()->getEntity(), 
+    			'onCheckCanTransition', $transition, $event);
     	return true;
     }
     
@@ -462,9 +489,8 @@ class StateMachine {
     	$this->_onExitState($transition, $event);
     	if($event) {
     		//a callable that is possibly defined on the domain model: onExit<StateFrom>
-    		$this->callEntityMethod('onExit' . $this->getNormalizedName(
-    									$transition->getStateFrom()->getName()), 
-    									$transition, $event);
+    		$this->callCallable($this->getContext()->getEntity(),
+    					'onExitState', $transition, $event);
     	}
     	//executes the command associated with the state object
     	$transition->getStateFrom()->exitAction($this->getContext(), $event);
@@ -479,12 +505,9 @@ class StateMachine {
     {
     	//hook for subclasses to implement
     	$this->_onTransition($transition, $event);
+    	$entity = $this->getContext()->getEntity();
     	//a callable that is possibly defined on the domain model: onTransition
-    	$this->callEntityMethod('onTransition', $transition, $event);
-    	if($event) {
-    		//a callable that is possibly defined on the domain model: onTransition<Event>
-    		$this->callEntityMethod('onTransition' . $this->getNormalizedName($event), $transition);
-    	}
+    	$this->callCallable($entity,'onTransition', $transition, $event);
     	//executes the command associated with the transition object
     	$transition->process($this->getContext(), $event);
     	//this actually sets the state!
@@ -501,10 +524,9 @@ class StateMachine {
     	//hook for subclasses to implement
     	$this->_onEnterState($transition, $event);
     	if($event) {
-    		//a callable that is possibly defined on the domain model: onEnter<StateTo>
-    		$this->callEntityMethod('onEnter' . $this->getNormalizedName(
-    									$transition->getStateTo()->getName()), 
-    									$transition, $event);
+    		//a callable that is possibly defined on the domain model: onEnterState
+    		$this->callCallable($this->getContext()->getEntity(),
+    				'onEnterState', $transition, $event);
     	}
     	//executes the command associated with the state object
         $transition->getStateTo()->entryAction($this->getContext(), $event);
@@ -567,7 +589,7 @@ class StateMachine {
      * @param State $state
      */
     protected function setCurrentState(State $state) {
-    	//TODO: cache
+    	//TODO: cache & should we also do this at initialization?
     	$this->getContext()->setState($state->getName());
     }
     
@@ -747,35 +769,30 @@ class StateMachine {
     }
     
     /**
-     * Helper method to generically call methods on the $entity.
+     * Helper method to generically call methods on the $object.
      * Try to call a method on the contextual entity / domain model ONLY IF the method exists.
      * any arguments passed to this method will be passed on to the method called
      * on the entity.
      *
-     * @param string $method the method to call on the entity
-     * @return boolean
+     *@param mixed $object the object on which we want to call the method
+     * @param string $method the method to call on the object
+     * @return boolean|mixed 
      */
-    private function callEntityMethod($method)
+    private function callCallable($object, $method)
     {
     	//return true by default
     	$output = true;
-    	$entity = $this->getContext()->getEntity();
-    	if(method_exists($entity, $method)) {
-    		$args = array_shift(func_get_args());
-    		$output = (bool) call_user_func_array(array($entity,$method), $args);
+    	//check if method exists and prevent recursion if the $object is $this
+    	if(method_exists($object, $method) && $object !== $this) {
+    		$args = func_get_args();
+    		//remove $object and $method from $args.
+    		array_shift($args);
+    		array_shift($args);
+    		//have the methods be able to return what they like
+    		//but make sure the 'onCheckCanTransition method returns a boolean
+    		$output = call_user_func_array(array($object, $method), $args);
     	}
     	return $output;
-    }
-    
-    /**
-     * helper method to derive a name from an event that results in a valid
-     * method name that can be used to call the different transition callbacks on the $entity
-     * @param string $event
-     * @return string
-     */
-    protected function getNormalizedName($event) {
-    	//override if necessary
-    	return ucfirst($event);
     }
     
     /**
@@ -811,28 +828,6 @@ class StateMachine {
     #######################   HOOK METHODS FOR THE TEMPLATE METHODS   #######################
     # http://c2.com/cgi/wiki?HookMethod
     # https://en.wikipedia.org/wiki/Template_method_pattern
-    #
-    # each hook can be overriden and implemented in a subclass, providing
-    # functionality that is specific to your application. This allows you to use
-    # the core mechanisms of the izzum package and extend it to your needs.
-    #
-    # order of full transition algorithm:
-    #
-    # 1.  _onCheckCanTransition($transition, $event) //hook method: override
-    # 2.  $entity->onCheckCanTransition($transition, $event) //callable
-    # 2.  _preProcess($transition, $event) //hook method
-    # 3.  _onExitState($transition, $event)
-    # 4.  $entity->onExit<State>($transition, $event)
-    # 5.  $state_from->exitAction($event) //execute command
-    # 6.  _onTransition($transition, $event)
-    # 7.  $entity->onTransition($transition, $event)
-    # 8.  $entity->onTransition<Event>($transition)
-    # 9.  $transition->process(event) //execute command
-    # 10. _onEnterState($transition, $event)
-    # 11. $entity->onEnter<StateTo>($transition, $event)
-    # 12. $state_to->entryAction($event) //execute command
-    # 12. _postProcess($transition, $event)
-    #
     
     /**
      * hook method. override in subclass if necessary.

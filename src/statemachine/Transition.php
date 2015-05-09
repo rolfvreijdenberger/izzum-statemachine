@@ -236,9 +236,8 @@ class Transition {
      */
     public function toString()
     {
-        //includes the namespace
         return get_class($this) . 
-                " '" . $this->getName() . "'" . 
+                " '" . $this->getName() . "' [event]: '" . $this->event . "'" . 
                 " [rule]: '" . $this->rule . "' [command]: '" .  $this->command . "'";
     }
     
@@ -348,6 +347,6 @@ class Transition {
      */
     public function __toString()
     {
-        return $this->getName();
+        return $this->toString();
     }
 }

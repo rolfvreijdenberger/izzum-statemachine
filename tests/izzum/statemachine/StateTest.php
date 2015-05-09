@@ -92,6 +92,8 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     	
     	$this->assertEquals($tba, $b->getTransitionTriggeredByEvent('b-a'));
     	$this->assertEquals($tbb, $b->getTransitionTriggeredByEvent('event-self'));
+    	$this->assertEquals($tbc, $b->getTransitionTriggeredByEvent('b_to_c'),'default name is transition name');
+    	$this->assertEquals($tab, $a->getTransitionTriggeredByEvent('a_to_b'),'default name is transition name');
     	$this->assertNull($a->getTransitionTriggeredByEvent('b-a'));
     	$this->assertNull($a->getTransitionTriggeredByEvent('even-self'));
     	$this->assertNull($a->getTransitionTriggeredByEvent('event-self'));

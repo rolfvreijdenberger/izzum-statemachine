@@ -1,6 +1,7 @@
 <?php
 namespace izzum\statemachine\builder;
 use izzum\statemachine\EntityBuilder;
+use izzum\statemachine\Identifier;
 /**
  * Always returns the same model; the one provided in the constructor.
  * This will thus not build the model when the statemachine asks for it, but rather

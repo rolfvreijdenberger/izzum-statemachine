@@ -11,6 +11,7 @@ use izzum\statemachine\Context;
  */
 class Utils {
 
+	const STATE_CONCATENATOR = '_to_';
 
     /**
      * gets the transition name by two state names, using the default convention
@@ -21,7 +22,7 @@ class Utils {
      */
     public static function getTransitionName($from, $to)
     {
-        return $from . "_to_" . $to;
+        return $from . self::STATE_CONCATENATOR . $to;
     }
     
     
@@ -70,7 +71,7 @@ class Utils {
     				$output->add($command);
     			} catch (\Exception $e) {
 	    			$e = new Exception(
-	    			sprintf("Command objects to construction with reference: (%s) for Context (%s). message: %s",
+	    			sprintf("command (%s) objects to construction for Context (%s). message: '%s'",
 	    			$single_command, $context->toString(), $e->getMessage()),
 		                           Exception::COMMAND_CREATION_FAILURE);
 	    	                           throw $e;

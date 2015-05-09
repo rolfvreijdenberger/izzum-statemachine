@@ -6,6 +6,7 @@ use izzum\statemachine\Context;
 use izzum\statemachine\persistence\Memory;
 use izzum\statemachine\utils\PlantUml;
 use izzum\statemachine\loader\LoaderArray;
+use izzum\statemachine\builder\ModelBuilder;
 
 /**
  * @group statemachine
@@ -46,7 +47,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shouldBeAbleToUseApply()
+    public function shouldBeAbleToTransition()
     {
         $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
@@ -184,18 +185,41 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
     }
     
-    
-    public function testHandlingEvents()
+    /**
+     * @test
+     * tests: handle, canHandle, hasEvent, __call
+     */
+    public function shouldBeAbleToUseEventHandlingMethods()
     {
     	$object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
     	$machine = new StateMachine($object);
     	$this->addTransitionsToMachine($machine);
-    	$this->assertTrue($machine->new_to_a(), 'dynamic method calling handle(event) via __call');
+    	$this->assertTrue($machine->hasEvent('newAAH'),'event name for new to a');
+    	$this->assertTrue($machine->canHandle('newAAH'));
+    	$this->assertEquals('new', $machine->getCurrentState()->getName());
+    	$this->assertTrue($machine->newAAH(), 'dynamic method calling event name via handle(event) via __call');
     	$this->assertEquals('a', $machine->getCurrentState()->getName());
-    	$this->assertTrue($machine->handle('a_to_b'), 'default event name is the transition name');
+    	$this->assertTrue($machine->canHandle('a_to_b'));
+    	$this->assertTrue($machine->a_to_b(), 'dynamic method calling default event name via handle(event) via __call');
     	$this->assertEquals('b', $machine->getCurrentState()->getName());
-    	
+    	$this->assertTrue($machine->hasEvent('goBC'));
+    	$this->assertTrue($machine->hasEvent('goBD'));
+    	$this->assertFalse($machine->hasEvent('goBogus'), 'nonexistent event');
+    	$this->assertTrue($machine->canHandle('goBC'));
+    	$this->assertFalse($machine->canHandle('goBD'), 'false rule');
+    	$this->assertFalse($machine->canHandle('goBDasdf'));
+    	$this->assertTrue($machine->handle('goBC'), 'goBC is the event name for b_to_c');
+    	$this->assertEquals('c', $machine->getCurrentState()->getName());
+    	$this->assertFalse($machine->handle('goBC'), 'goBC is not valid for state c');
+    	$this->assertFalse($machine->hasEvent('goBC'));
+    	$this->assertFalse($machine->canHandle('goBC'), 'cannot handle an invalid event in this state');
+    	$this->assertTrue($machine->hasEvent('goCD'));
+    	$this->assertTrue($machine->canHandle('goCD'));
+    	$this->assertTrue($machine->goCD(), 'goCD is available on the statemachine interface when called via __call');
+    	$this->assertEquals('d', $machine->getCurrentState()->getName());
+    	$this->assertNotEquals('c', $machine->getCurrentState()->getName());
     }
+
     
     protected function addTransitionsToMachine(StateMachine $machine) {
         
@@ -206,11 +230,11 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $s_d = new State('d', State::TYPE_NORMAL);
         $s_done = new State(State::STATE_DONE, State::TYPE_FINAL);
         
-        $t_new_to_a = new Transition($s_new, $s_a, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_new_to_a = new Transition($s_new, $s_a, 'newAAH', Transition::RULE_TRUE, Transition::COMMAND_NULL);
         $t_a_to_b = new Transition($s_a, $s_b, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_b_to_c = new Transition($s_b, $s_c, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
-        $t_b_to_d = new Transition($s_b, $s_d, null, Transition::RULE_FALSE, Transition::COMMAND_NULL);
-        $t_c_to_d = new Transition($s_c, $s_d, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_b_to_c = new Transition($s_b, $s_c, 'goBC', Transition::RULE_TRUE, Transition::COMMAND_NULL);
+        $t_b_to_d = new Transition($s_b, $s_d, 'goBD', Transition::RULE_FALSE, Transition::COMMAND_NULL);
+        $t_c_to_d = new Transition($s_c, $s_d, 'goCD', Transition::RULE_TRUE, Transition::COMMAND_NULL);
         $t_d_done = new Transition($s_d, $s_done, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         
         $machine->addTransition($t_new_to_a);
@@ -219,8 +243,6 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $machine->addTransition($t_b_to_d);
         $machine->addTransition($t_c_to_d);
         $machine->addTransition($t_d_done);
-        
-
     }
     
     
@@ -605,4 +627,81 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains("command", $result);
         $this->assertContains("_to_", $result);
     }
+    
+    
+    /**
+     * @test
+     */
+    public function shouldBeAbleToUseCallablesOnEntity()
+    {
+    
+    	$model = new CallableHandler();
+    	$this->assertTrue(method_exists($model, 'onCheckCanTransition'));
+    	$this->assertTrue(method_exists($model, 'onExitState'));
+    	$this->assertTrue(method_exists($model, 'onTransition'));
+    	$this->assertTrue(method_exists($model, 'onEnterState'));
+
+    	//pass the model to the builder that uses that model as entity
+    	$builder = new ModelBuilder($model);
+    	
+    	$object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE), $builder);
+    	$machine = new StateMachine($object);
+    	$this->addTransitionsToMachine($machine);
+    	
+    	$this->assertNull($model->oncheckcantransition);
+    	$this->assertNull($model->onexitstate);
+    	$this->assertNull($model->ontransition);
+    	$this->assertNull($model->onexitstate);
+    	$this->assertTrue($model->allow);
+    	$this->assertEquals('new', $machine->getCurrentState());
+    	$this->assertTrue($machine->canTransition('new_to_a'));
+    	$model->allow = false;
+    	$this->assertFalse($machine->canTransition('new_to_a'));
+    	$model->allow = true;
+    	$this->assertTrue($machine->canTransition('new_to_a'));
+    	$machine->newAAH();//new to a event trigger
+    	$this->assertEquals('a', $machine->getCurrentState());
+    	
+    	//we expect the transition and the event name to be passed as arguments
+    	$expected = array($machine->getTransition('new_to_a'), 'newAAH');
+    	$this->assertEquals($expected, $model->oncheckcantransition);
+    	$this->assertEquals($expected, $model->onexitstate);
+    	$this->assertEquals($expected, $model->ontransition);
+    	$this->assertEquals($expected, $model->onenterstate);
+    }
+}
+
+//implements all the callables that can be called as part of a transition
+//and lets us test if the right parameters are passed
+class CallableHandler {
+	public $allow;
+	public $oncheckcantransition;
+	public $onexitstate;
+	public $ontransition;
+	public $onenterstate;
+	public function __construct($allow = true)
+	{
+		$this->allow = $allow;
+	}
+	public function onExitState($transition, $event) {
+		//echo PHP_EOL . __METHOD__ . " - " . $transition . ", " . $event . PHP_EOL;
+		$this->onexitstate = array($transition, $event);
+	}
+	
+	public function onCheckCanTransition($transition, $event) {
+		//echo PHP_EOL . __METHOD__ . " - " . $transition . ", " . $event . PHP_EOL;
+		$this->oncheckcantransition = array($transition, $event);
+		return $this->allow;
+	}
+	
+	public function onTransition($transition, $event) {
+		//echo PHP_EOL . __METHOD__ . " - " . $transition . ", " . $event . PHP_EOL;
+		$this->ontransition = array($transition, $event);
+	}
+	
+	public function onEnterState($transition, $event) {
+		//echo PHP_EOL . __METHOD__ . " - " . $transition . ", " . $event . PHP_EOL;
+		$this->onenterstate = array($transition, $event);
+	}
+	
 }

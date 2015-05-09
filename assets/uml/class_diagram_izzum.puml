@@ -5,11 +5,11 @@ package izzum.statemachine {
       # states: State[]
       # transitions: Transition[]
       # context: Context
-      + can(transition:string):boolean
+      + canTransition(transition:string):boolean
       + transition(transition:string)
       + handle(event:string):boolean
       + run():boolean
-      + runToCompletion()
+      + runToCompletion():int
       + getTransitions():Transition[]
       + getStates(): State[]
       + addTransition(Transition)
@@ -17,11 +17,16 @@ package izzum.statemachine {
       + getContext():Context
       + getCurrentState():State
       + getInitialState(): State
+      - checkCanTransition(Transition):boolean
+      - callCallable($object, method, args)
       # setCurrentState(State)
-      # checkGuard(Transition)
-      # preProcess(Transition)
-      # postProcess(Transition)
-      # handleTransitionException(Exception, transition:string)   
+      # _checkCanTransition(Transition, event)
+      # _preProcess(Transition, event)
+      # _onExitState(Transition, event)
+      # _onTransition(Transition, event)
+      # _onEnterState(Transtion, event)
+      # _postProcess(Transition, event)
+      # handleTransitionException(Transition, Exception)   
     }
     
     Class State {
@@ -66,7 +71,7 @@ package izzum.statemachine {
         + getBuilder():EntityBuilder
         + getPersistenceAdapter():Adapter
         + setStateMachine(StateMachine)
-        + setFailedTransition(Exception, transition:string)
+        + setFailedTransition(Transition, Exception)
     }
     
     Class Identifier {
