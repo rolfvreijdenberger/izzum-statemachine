@@ -412,8 +412,6 @@ class PDO extends Adapter implements  Loader {
             //convert to json for storage (text field with json can be searched via sql)
             $json = json_encode($message);
             $this->addHistory($identifier, $state, $json, true);
-        } else {
-        	//not persisted...
         }
     }
 

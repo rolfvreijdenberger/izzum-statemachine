@@ -4,6 +4,7 @@ use izzum\command\Null;
 use izzum\command\Composite;
 use izzum\statemachine\Exception;
 use izzum\statemachine\Context;
+use izzum\command\ICommand;
 /**
  * utils class that has some helper methods for diverse purposes
  * @author Rolf Vreijdenberger
@@ -53,38 +54,46 @@ class Utils {
     	//a command string can be made up of multiple commands seperated by a comma
     	$all_commands = explode(',', $command_name);
     
-    	//get the correct object reference to inject in the command(s)
-    	$reference = $context->getEntity();
+    	//get the correct object to inject in the command(s)
+    	$entity = $context->getEntity();
     
     	foreach ($all_commands as $single_command) {
-    			
-    		if(class_exists($single_command)) {
-    			try {
-    				$command = new $single_command($reference);
-    				//a mealy machine might want to use the event/trigger in it's transition logic.
-    				//therefore, see if the command expects an event/trigger to be set that it can use in it's 'execute' method.
-    				if(method_exists($command, 'setEvent'))
-    				{
-    					$command->setEvent($event);
-    				}
-    				//add it to the composite
-    				$output->add($command);
-    			} catch (\Exception $e) {
-	    			$e = new Exception(
-	    			sprintf("command (%s) objects to construction for Context (%s). message: '%s'",
-	    			$single_command, $context->toString(), $e->getMessage()),
-		                           Exception::COMMAND_CREATION_FAILURE);
-	    	                           throw $e;
-	    		}
-    		} else {
-	    		//misconfiguration
+    		if(!class_exists($single_command)) {
 	   			$e = new Exception(
 	   					sprintf("failed command creation, class does not exist: (%s) for Context (%s)",
-	   			$single_command, $context->toString()),
-	   				Exception::COMMAND_CREATION_FAILURE);
-    				throw $e;
-    	    }
+	   						$single_command, $context->toString()),
+	   					Exception::COMMAND_CREATION_FAILURE);
+    			throw $e;
+    		} 
+    		
+    		try {
+    			$command = new $single_command($entity);
+    			self::tryToSetEventOnCommand($command, $event);
+    			//add it to the composite
+    			$output->add($command);
+    		} catch (\Exception $e) {
+    			$e = new Exception(
+    					sprintf("command (%s) objects to construction for Context (%s). message: '%s'",
+	    					$single_command, $context->toString(), $e->getMessage()),
+    			    	Exception::COMMAND_CREATION_FAILURE);
+    			throw $e;
+    		}
     	}
     	return $output;
+    }
+    
+    /**
+     * tries to set an event on a command if the method 'setEvent' exists
+     * @param ICommand $command
+     * @param string $event
+     */
+    private static function tryToSetEventOnCommand(ICommand $command, $event)
+    {
+    	//a mealy machine might want to use the event/trigger in it's transition logic.
+    	//therefore, see if the command expects an event/trigger to be set that it can use in it's 'execute' method.
+    	if(method_exists($command, 'setEvent'))
+    	{
+    		$command->setEvent($event);
+    	}
     }
 }

@@ -8,6 +8,7 @@ use izzum\statemachine\Context;
 use izzum\rules\Rule;
 use izzum\rules\AndRule;
 use izzum\rules\izzum\rules;
+use izzum\rules\IRule;
 /**
  * Transition class
  * An abstraction for everything that is needed to make an allowed and succesful
@@ -160,57 +161,63 @@ class Transition {
      *
      * @param Context $context the associated Context for a our statemachine
      * @param string $event optional in case the transition was triggered by an event code (mealy machine)
-     * @return \izzum\rules\IRule a Rule or chained AndRule if the rule input was a ',' seperated string of rules.
+     * @return IRule a Rule or chained AndRule if the rule input was a ',' seperated string of rules.
      * @throws Exception
      */
     public function getRule(Context $context, $event = null)
     {
-
         //if no rule is defined, just allow the transition by default
-        if($this->rule === '') {
+        if($this->rule === '' || $this->rule === null) {
             return new True();
         }
         
-        //this reference is cached, so we can be sure it is always the same instance
-        $reference = $context->getEntity();
-        
+        $entity = $context->getEntity();
         
         //a rule string can be made up of multiple rules seperated by a comma
         $all_rules = explode(',', $this->rule);
         $rule = new True();
         foreach($all_rules as $single_rule) {
         	
-	        //rule is defined, check if it is valid
-	        if(class_exists($single_rule)) {
-	            try {
-	                $and_rule = new $single_rule($reference);
-	            	//a mealy machine might still want to check the event to see if it is the expected event.
-	            	//therefore, see if the rule expects an event to be set that it can use in it's 'applies' method.
-	                if(method_exists($and_rule, 'setEvent'))
-	                {
-	                	$and_rule->setEvent($event);
-	                }
-	                //create a chain of rules that need to be true
-	                $rule = new AndRule($rule, $and_rule);
-	            } catch (\Exception $e) {
-	                $e = new Exception(
-	                        sprintf("failed rule creation, class objects to construction with reference: (%s) for Context (%s). message: %s", 
-	                        		$this->rule, $context->toString(), $e->getMessage()),
-	                        		Exception::RULE_CREATION_FAILURE);
-	                throw $e;
-	            }
-	        }else {
-	            //misconfiguration
+	        //guard clause to check if rule exists
+	        if(!class_exists($single_rule)) {
 	            $e = new Exception(
 	                       sprintf("failed rule creation, class does not exist: (%s) for Context (%s).", 
 	                       		$this->rule, $context->toString()),
 	                       		Exception::RULE_CREATION_FAILURE);
 	            throw $e;
 	        }
+	        
+	        
+	        try {
+	        	$and_rule = new $single_rule($entity);
+	        	$this->tryToSetEventOnRule($and_rule, $event);
+	        	//create a chain of rules that need to be true
+	        	$rule = new AndRule($rule, $and_rule);
+	        } catch (\Exception $e) {
+	        	$e = new Exception(
+	        			sprintf("failed rule creation, class objects to construction with entity: (%s) for Context (%s). message: %s",
+	        					$this->rule, $context->toString(), $e->getMessage()),
+	        			Exception::RULE_CREATION_FAILURE);
+	        	throw $e;
+	        }
         
         }
-        
         return $rule;
+    }
+    
+    /**
+     * Try to set an event string on a rule instance, if the method 'setEvent' exists.
+     * @param IRule $rule
+     * @param string $event
+     */
+    private function tryToSetEventOnRule(IRule $rule, $event)
+    {
+    	//a mealy machine might still want to check the event to see if it is the expected event.
+    	//therefore, see if the rule expects an event to be set that it can use in it's 'applies' method.
+    	if(method_exists($rule, 'setEvent'))
+    	{
+    		$and_rule->setEvent($event);
+    	}
     }
 
     

@@ -99,7 +99,7 @@ use izzum\statemachine\Exception;
  * 			  if all guards return true, allow the transition
  * 4.  _preProcess($transition, $event) //hook method: override
  * 5.  _onExitState($transition, $event) //hook method: override
- * 6.  $entity->onExit($transition, $event) //callable on entity
+ * 6.  $entity->onExitState($transition, $event) //callable on entity
  * 7.  $state_from->exitAction($event) //try to call $command->setEvent() and execute command 
  * 8.  _onTransition($transition, $event) //hook method: override
  * 9.  $entity->onTransition($transition, $event) //callable on entity
@@ -108,7 +108,7 @@ use izzum\statemachine\Exception;
  * 12. $entity->onEnterState($transition, $event) //callable on entity
  * 13. $state_to->entryAction($event) //try to call $command->setEvent() and execute command 
  * 14. _postProcess($transition, $event) //hook method: override
-    
+ *   
  * each hook can be overriden and implemented in a subclass, providing
  * functionality that is specific to your application. This allows you to use
  * the core mechanisms of the izzum package and extend it to your needs.
@@ -488,7 +488,7 @@ class StateMachine {
     	//hook for subclasses to implement
     	$this->_onExitState($transition, $event);
     	if($event) {
-    		//a callable that is possibly defined on the domain model: onExit<StateFrom>
+    		//a callable that is possibly defined on the domain model: onExitState
     		$this->callCallable($this->getContext()->getEntity(),
     					'onExitState', $transition, $event);
     	}

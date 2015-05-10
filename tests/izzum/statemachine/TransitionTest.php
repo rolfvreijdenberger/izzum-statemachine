@@ -18,6 +18,7 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldWorkWhenCallingPublicMethods()
     {
+    	
         $from = new State('a');
         $to = new State('b');
         $rule = 'izzum\rules\True';
