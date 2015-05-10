@@ -274,15 +274,30 @@ class StateMachine {
     			}
     		}
     	} catch (Exception $e) {
-    		//already a statemachine exception, just rethrow
-    		throw $e;
-    	} catch (\Exception $e) {
-    		//a non statemachine type exception, wrap it and throw
-    		$e = new Exception($e->getMessage(), Exception::SM_RUN_FAILED, $e);
-    		throw $e;
+    		$this->handlePossibleNonStatemachineException($e, Exception::SM_RUN_FAILED);
     	}
     	//no transition done
     	return false;
+    }
+    
+    /**
+     * Always throws an izzum exception (converts a non-izzum exception)
+     * @param \Exception $e
+     * @param int $code
+     * @param Transtion $transition optional. if set, we handle it as a transition exception too
+     * @throws Exception
+     */
+    protected function handlePossibleNonStatemachineException(\Exception $e, $code, $transition = null)
+    {
+    	if(!is_a($e, 'izzum\statemachine\Exception')){
+    		//wrap the exception
+    		$e = new Exception($e->getMessage(), $code, $e);
+    	}
+    	
+    	if($transition !== null) {
+    		$this->handleTransitionException($transition, $e);
+    	}
+    	throw $e;
     }
     
     /**
@@ -313,12 +328,7 @@ class StateMachine {
     			}
     		}
     	} catch (Exception $e) {
-    		//already a statemachine exception, just rethrow
-    		throw $e;
-    	} catch (\Exception $e) {
-    		//a non statemachine type exception, wrap it and throw
-    		$e = new Exception($e->getMessage(), $e->getCode(), $e);
-    		throw $e;
+    		$this->handlePossibleNonStatemachineException($e, $e->getCode());
     	}
     	return $transitions;
     }
@@ -408,16 +418,7 @@ class StateMachine {
             $this->onEnterState($transition, $event);
             
         } catch (Exception $e) {
-            //hook for subclasses to implement
-            $this->handleTransitionException($transition, $e);
-            //already a statemachine exception, just rethrow
-            throw $e;
-        } catch (\Exception $e) {
-            //a non statemachine type exception, wrap it and throw
-            $e = new Exception($e->getMessage(), Exception::SM_TRANSITION_FAILED, $e);
-            //hook for subclasses to implement
-            $this->handleTransitionException($transition, $e);
-            throw $e;
+        	$this->handlePossibleNonStatemachineException($e, Exception::SM_TRANSITION_FAILED, $transition);
         }
     }
     
@@ -434,9 +435,6 @@ class StateMachine {
     
     		if(!$this->getCurrentState()->hasTransition($transition->getName())) {
     			return false;
-    			throw new Exception(sprintf("transition '%s' for event '%s' and current state '%s' has not been found",
-    					$transition->getName(), $event, $this->getCurrentState()),
-    					Exception::SM_NO_TRANSITION_FOUND_ON_STATE);
     		}
     		
     		//possible hook so your application can place an extra guard for the transition.
@@ -447,12 +445,7 @@ class StateMachine {
     		//if the Rule applies, then this is seen as a green light to start the transition.
     		return $transition->can($this->getContext());
     	} catch (Exception $e) {
-    		//already a statemachine exception, just rethrow
-    		throw $e;
-    	} catch (\Exception $e) {
-    		//a non statemachine type exception, wrap it and throw
-    		$e = new Exception($e->getMessage(), Exception::SM_CAN_FAILED, $e);
-    		throw $e;
+    		$this->handlePossibleNonStatemachineException($e, Exception::SM_CAN_FAILED);
     	}
     }
     

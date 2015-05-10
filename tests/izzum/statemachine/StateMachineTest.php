@@ -38,6 +38,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         } catch (Exception $e) {
             $this->assertEquals(Exception::SM_NO_CURRENT_STATE_FOUND, $e->getCode());
         }
+        $this->assertNotNull($machine);
         
         
        
