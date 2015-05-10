@@ -1,7 +1,7 @@
 {
     "name": "rolfvreijdenberger/izzum-statemachine",
     "description": "A superior statemachine library php >= 5.3. Integrates with your domain models perfectly.",
-    "keywords":    ["statemachine", "php", "rules", "command", "transition", "state", "machine", "domain", "model", "finite", "izzum", "automaton", "pattern", "fsm", "graph"],
+    "keywords":    ["statemachine", "php", "rules", "command", "transition", "state", "event", "callback", "machine", "domain", "model", "finite", "izzum", "automaton", "pattern", "fsm", "graph"],
     "type":        "library",
     "license": "MIT",
     "authors": [
