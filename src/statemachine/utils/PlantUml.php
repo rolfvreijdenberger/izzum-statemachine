@@ -117,20 +117,20 @@ SKINS;
             $name_transition = $t->getName();
             $description = $t->getDescription() ? ("description: '" . $t->getDescription() . "'". $EOL) : '';
             $event = $t->getEvent() ? ("event: '" . $t->getEvent() . "'". $EOL) : '';
-            $f_description = $from->getDescription() ? $from->getDescription() : ' ';
-            $t_description = $to->getDescription() ? $to->getDescription() : ' ';
-            $f_exit = $from->getExitCommandName() ? $from->getExitCommandName() : 'none';
-            $f_entry = $from->getEntryCommandName() ? $from->getEntryCommandName() : 'none';
-            $t_exit = $to->getExitCommandName() ? $to->getExitCommandName() : 'none';
-            $t_entry = $to->getEntryCommandName() ? $to->getEntryCommandName() : 'none';
+            $f_description = $from->getDescription();
+            $t_description = $to->getDescription();
+            $f_exit = $from->getExitCommandName();
+            $f_entry = $from->getEntryCommandName();
+            $t_exit = $to->getExitCommandName();
+            $t_entry = $to->getEntryCommandName();
 
 
             //only write aliases if not done before
             if(!isset($aliases[$from_alias])) {
                 $uml .= 'state "' . $from . '" as '. $from_alias . PHP_EOL;
                 $uml .= "$from_alias: description: '" . $f_description. "'". PHP_EOL;
-                $uml .= "$from_alias: entry action: '" . $f_entry . "'". PHP_EOL;
-                $uml .= "$from_alias: exit action: '" . $f_exit . "'". PHP_EOL;
+                $uml .= "$from_alias: entry / '" . $f_entry . "'". PHP_EOL;
+                $uml .= "$from_alias: exit / '" . $f_exit . "'". PHP_EOL;
                 $aliases[$from_alias] = $from_alias;
                 
             }
@@ -147,8 +147,8 @@ SKINS;
                 $uml .= 'state "' . $to . '" as '. $to_alias . PHP_EOL;
                 $aliases[$to_alias] = $to_alias;
                 $uml .= "$to_alias: description: '" . $t_description. "'". PHP_EOL;
-                $uml .= "$to_alias: entry action: '" . $t_entry . "'". PHP_EOL;
-                $uml .= "$to_alias: exit action: '" . $t_exit . "'". PHP_EOL;
+                $uml .= "$to_alias: entry / '" . $t_entry . "'". PHP_EOL;
+                $uml .= "$to_alias: exit / '" . $t_exit . "'". PHP_EOL;
             }
 
             //write transition information

@@ -309,15 +309,14 @@ class State {
     /**
      * get the transition for this state that can be triggered by an event code.
      * @param string $event the event code that can trigger a transition (mealy machine)
-     * @return Transition or null if no transition is found
+     * @return Transition[]
      */
-    public function getTransitionTriggeredByEvent($event)
+    public function getTransitionsTriggeredByEvent($event)
     {
-    	$output = null;
+    	$output = array();
     	foreach ($this->getTransitions() as $transition) {
     		if($transition->isTriggeredBy($event)) {
-    			$output =  $transition;
-    			break;
+    			$output[] =  $transition;
     		}
     	}
     	return $output;

@@ -26,10 +26,10 @@ use izzum\statemachine\Exception;
  * Each transition will then execute specific logic (Command, hooks & callables).
  * 
  * The statemachine can be used in distinctive environments:
- * - non-runtime, for instance:
+ * - a one time process for instance:
  * 			- on webpages where there are page refreshes in between.
  * 			- an api where succesive calls are made
- * - runtime, for instance:
+ * - a longer running process for instance:
  * 			- a php daemon that runs as a background process 
  * 			- an interactive shell environment
  * 
@@ -86,16 +86,19 @@ use izzum\statemachine\Exception;
  * A good naming convention for transitions is to bind the input and exit state
  * with the string '_to_' which is done automatically by this package.
  * 			new_to_waiting-for-input, new_to_done
+ * so you're able to call $statemachine->transition('new_to_done');
  * 
- * A good naming convention for events (transition trigger names) is to use lowercase-hypen-seperated names
+ * A good naming convention for events (transition trigger names) is to use lowercase-underscore-seperated names
+ * so your able to call $statemachine->event_name() or $statemachine->handle('event_name');
  * 
  *
  * DESCRIPTION of full transition algorithm:
  *
- * 1.  guard: _onCheckCanTransition($transition, $event) //hook method: override
+ * 1.  guard: _onCheckCanTransition($transition, $event) //hook method: override.
+ * 			  return true to allow transition, false to stop transition.
  * 2.  guard: $entity->onCheckCanTransition($transition, $event) 
  * 			  callable on entity. return true to allow transition, false to stop transition
- * 3.  guard: $transition->can($context) // try to call $rule->setEvent() and check if rule applies
+ * 3.  guard: $transition->can($context) // try to call $rule->setEvent() and check if rule applies.
  * 			  if all guards return true, allow the transition
  * 4.  _preProcess($transition, $event) //hook method: override
  * 5.  _onExitState($transition, $event) //hook method: override
@@ -121,9 +124,7 @@ use izzum\statemachine\Exception;
  * 
  * @author Rolf Vreijdenberger
  * @link https://en.wikipedia.org/wiki/Finite-state_machine
- * @link https://en.wikipedia.org/wiki/Moore_machine
- * @link https://en.wikipedia.org/wiki/Mealy_machine
- * @link https://en.wikipedia.org/wiki/Open/closed_principle
+ * @link https://en.wikipedia.org/wiki/UML_state_machine
  */
 class StateMachine {
 
@@ -172,54 +173,47 @@ class StateMachine {
     
     /**
      * Apply a transition by name.
-     * If the transition is not possible it will throw an exception.
-     * Check if a transition is allowed first via 'canTransition' if you want to make
-     * certain no exception will be thrown.
-     * 
-     * If the transition is allowed:
-     * - perform state exit logic for the current state
-     * - perform transition logic
-     * - perform state entry logic for the new state
      * 
      * this type of handling is found in moore machines.
-     * @link https://en.wikipedia.org/wiki/Moore_machine
      * 
      * @param string $transition_name convention: <state-from>_to_<state-to>
-     * @throws Exception in case something went wrong.
-     *     An exception will lead to a failed transition and the failed
-     *     transition will lead to a notification to the Context and it's adapter
-     * @return void
+     * @return boolean true if the transition was made
+     * @throws Exception in case something went horribly wrong.
+     *     An exception will lead to a (partially or fully) failed transition.
+     * @link https://en.wikipedia.org/wiki/Moore_machine
      */
     public function transition($transition_name) {
     	$transition = $this->getTransitionWithNullCheck($transition_name);
-        $this->doTransition($transition, true);
+        return $this->doTransition($transition, null, true);
     }  
 
     /**
      * Try to apply a transition from the current state by handling an event string as a trigger.
      * If the event is applicable for a transition then that transition from the current state will be applied.
+     * If there are multiple transitions possible for the event, the transitions will be tried until one of
+     * them is possible.
      *
-     * The event string itself will be available at runtime via the statemachine itself (no need
-     * to temporarily store it) and will be set on the hooks, callables, rules and command (if they implement
+     * The event string itself will be set on the hooks, callables, rules and command (if they implement
      * the 'setEvent($event)' method)
      *
      * This type of (event/trigger) handling is found in mealy machines.
-     * @link https://en.wikipedia.org/wiki/Mealy_machine
-     *
-     * @link http://martinfowler.com/books/dsl.html for event handling statemachines
      *
      * @param string $event in case the transition will be triggered by an event code (mealy machine)
+     * 		this will also match on the transition name (<state_to>_to_<state_from>)
      * @return bool true in case a transition was triggered by the event, false otherwise
-     * @throws Exception in case the transition was not possible or disallowed by the guard logic
+     * @throws Exception in case something went horribly wrong
+     * @link https://en.wikipedia.org/wiki/Mealy_machine
+     * @link http://martinfowler.com/books/dsl.html for event handling statemachines
      */
     public function handle($event)
     {
-    	$transition = $this->getCurrentState()->getTransitionTriggeredByEvent($event);
-    	if($transition) {
-    		$this->doTransition($transition, true, $event);
-    		return true;
+    	$transitioned = false;
+    	$transitions = $this->getCurrentState()->getTransitionsTriggeredByEvent($event);
+    	foreach ($transitions as $transition) {
+    		$transitioned = $this->doTransition($transition, $event, true);
+    		if($transitioned) break;
     	}
-    	return false;
+    	return $transitioned;
     }
     
     /**
@@ -227,15 +221,12 @@ class StateMachine {
      * The first possible transition is based on the configuration of
      * the guard logic and the current state of the statemachine.
      *
-     * The current state of the statemachine is determined by
-     * querying the Context (via it's associated persistence layer).
-     *
      * TRICKY: Be careful when using this function,
      * since all guard logic must be mutually exclusive! If not, you might end up
      * performing the state transition with priority n when you really want
      * to perform transition n+1.
      *
-     * An alternative is to use the 'transition' method:
+     * An alternative is to use the 'transition' method to target 1 transition specifically:
      *     $statemachine->transition('a_to_b');
      * So you are always sure that you are actually doing the intented transition
      * instead of relying on the configuration and guard logic (which *might* not
@@ -243,37 +234,21 @@ class StateMachine {
      * be executed).
      *
      * @return boolean true if a transition was applied.
-     * @throws Exception in case something went wrong. The exceptions are logged.
+     * @throws Exception in case something went horribly wrong.
      *
      */
     public function run()
     {
     	try {
-    		//get currently available transitions
     		$transitions = $this->getCurrentState()->getTransitions();
     		foreach($transitions as $transition){
-    			try {
-    				$can = $this->checkCanTransition($transition);
-    			} catch (\Exception $e) {
-    				//we handle a transition exception here, since we
-    				//check $this->checkCanTransition() outside the $this->doTransition() method
-    				//where all the hooks are.
-    				//this should be refactored to an implementation
-    				//where all the hooks are in a single routine
-    				$this->handleTransitionException($transition, $e);
-    				throw $e;
-    			}
-    
-    			//we can transition
-    			if($can) {
-    				//don't check if we can transition, since we just did that.
-    				//set the 2nd argument to false
-    				$this->doTransition($transition, false);
-    				//transition done
+    			$transitioned = $this->doTransition($transition, null, true);
+    			if($transitioned) {
     				return true;
     			}
     		}
     	} catch (Exception $e) {
+    		//will be rethrown
     		$this->handlePossibleNonStatemachineException($e, Exception::SM_RUN_FAILED);
     	}
     	//no transition done
@@ -281,16 +256,17 @@ class StateMachine {
     }
     
     /**
-     * Always throws an izzum exception (converts a non-izzum exception)
+     * Always throws an izzum exception (converts a non-izzum exception to an izzum exception)
      * @param \Exception $e
-     * @param int $code
+     * @param int $code if the exception is not of type Exception, wrap it and use this code.
      * @param Transtion $transition optional. if set, we handle it as a transition exception too
-     * @throws Exception
+     * 		so it can be logged or handled
+     * @throws Exception an izzum exception
      */
     protected function handlePossibleNonStatemachineException(\Exception $e, $code, $transition = null)
     {
     	if(!is_a($e, 'izzum\statemachine\Exception')){
-    		//wrap the exception
+    		//wrap the exception and use the code provided.
     		$e = new Exception($e->getMessage(), $code, $e);
     	}
     	
@@ -323,7 +299,6 @@ class StateMachine {
     			//run the first transition possible
     			$run = $this->run();
     			if($run) {
-    				//increment after succesful transition
     				$transitions++;
     			}
     		}
@@ -334,10 +309,10 @@ class StateMachine {
     }
     
     /**
-     * Check if a transition is possible by using the transition name.
+     * Check if a transition on the curent state is allowed by the guard logic.
      * @param string $transition_name convention: <state-from>_to_<state-to>
      * @return boolean
-     * @throws Exception in case something went wrong.
+     * @throws Exception in case something went horribly wrong.
      */
     public function canTransition($transition_name)
     {
@@ -346,29 +321,31 @@ class StateMachine {
     }
     
     /**
-     * checks if a transition is possible or allowed for the current state when triggered
+     * checks if one or more transitions are possible and/or allowed for the current state when triggered
      * by an event
      * @param string $event
      * @return boolean
      */
     public function canHandle($event)
     {
-    	$transition = $this->getCurrentState()->getTransitionTriggeredByEvent($event);
-    	if($transition) {
-    		return $this->checkCanTransition($transition, $event);
+    	$transitions = $this->getCurrentState()->getTransitionsTriggeredByEvent($event);
+    	foreach ($transitions as $transition) {
+    		if($this->checkCanTransition($transition, $event)) {
+    			return true;
+    		}
     	}
     	return false;
     }
     
     /**
-     * check if the current state has a transition that can be triggered by an event
+     * check if the current state has one or more transitions that can be triggered by an event
      * @param string $event
      * @return boolean
      */
     public function hasEvent($event) 
     {
-    	$transition = $this->getCurrentState()->getTransitionTriggeredByEvent($event);
-    	if($transition) {
+    	$transitions = $this->getCurrentState()->getTransitionsTriggeredByEvent($event);
+    	if(count($transitions) > 0) {
     		return true;
     	}
     	return false;
@@ -386,27 +363,23 @@ class StateMachine {
      * transition is allowed to run.
      * 
      * @param Transition $transition
-     * @param boolean $check_allowed optional: to specify if we want to do the check to see
+     * @param boolean $check_guards optional: to specify if we want to do the check to see
      *      if the transition is allowed or not. This is a performance optimalization
      *      so in case we call 'can' directly, we can use 'transition' directly 
      *      after that without doing the checks (including expensive Rules) twice.
      * @param string $event optional in case the transition was triggered by an event code (mealy machine)
-     * @throws Exception
-     * @return void
-     * https://en.wikipedia.org/wiki/Template_method_pattern
+     * @return boolean true if the transition was succesful
+     * @throws Exception in case something went horribly wrong
+     * @link https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    private function doTransition(Transition $transition, $check_allowed = true, $event = null) 
+    private function doTransition(Transition $transition, $event = null, $check_guards = true) 
     {
         try {
         	
-            if($check_allowed === true) {
+            if($check_guards === true) {
                 if(!$this->checkCanTransition($transition, $event)) {
-                    //we tried a transition, but it is not allowed.
-                    //one of the guard returned false or transition not found on current state.
-                    throw new Exception(
-                            sprintf("Transition '%s' for event '%s' not allowed from state '%s'", 
-                                    $transition->toString(), $event, $this->getContext()->getState()),
-                            Exception::SM_TRANSITION_NOT_ALLOWED);
+                    //one of the guards returned false or transition not found on current state.
+                    return false;
                 }
             }
             
@@ -420,6 +393,7 @@ class StateMachine {
         } catch (Exception $e) {
         	$this->handlePossibleNonStatemachineException($e, Exception::SM_TRANSITION_FAILED, $transition);
         }
+        return true;
     }
     
     /**
@@ -432,21 +406,25 @@ class StateMachine {
     private function checkCanTransition(Transition $transition, $event = null)
     {
     	try {
-    
+    		//check if we have this transition on the current state.
     		if(!$this->getCurrentState()->hasTransition($transition->getName())) {
     			return false;
     		}
     		
-    		//possible hook so your application can place an extra guard for the transition.
+    		//possible hook so your application can place an extra guard on the transition.
+    		//possible entry~ or exit state type of checks can also take place in this hook.
     		if(!$this->onCheckCanTransition($transition, $event)) {
     			return false;
     		}
     		//this will check the Rule defined for the transition.
-    		//if the Rule applies, then this is seen as a green light to start the transition.
-    		return $transition->can($this->getContext());
+    		//if this final guard Rule applies, then this is seen as a green light to start the transition.
+    		if(!$transition->can($this->getContext())){
+    			return false;
+    		}
     	} catch (Exception $e) {
     		$this->handlePossibleNonStatemachineException($e, Exception::SM_CAN_FAILED);
     	}
+    	return true;
     }
     
     /**
@@ -748,6 +726,7 @@ class StateMachine {
      * since transition event names default to the transition name, it is possible to 
      * execute this kind of code (if the state names contain allowed characters):
      * $statemachine-><state_from>_to_<state_to>();
+     * $statemachine->eventName();
      * 
      * 
      * @param string $name the name of the unknown method called
@@ -778,7 +757,7 @@ class StateMachine {
     	//check if method exists and prevent recursion if the $object is $this
     	if(method_exists($object, $method) && $object !== $this) {
     		$args = func_get_args();
-    		//remove $object and $method from $args.
+    		//remove $object and $method from $args so we only have the other arguments
     		array_shift($args);
     		array_shift($args);
     		//have the methods be able to return what they like

@@ -55,15 +55,12 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->addTransitionsToMachine($machine);
         
         
+        $this->assertTrue($machine->canTransition('new_to_a'));
         $machine->transition('new_to_a');
         $this->assertEquals('a', $machine->getCurrentState(), 'this actually works because of __toString');
     
-        try {
-            $machine->transition('new_to_a');
-            $this->fail('should not come here');
-        } catch (Exception $e) {
-            $this->assertEquals(Exception::SM_TRANSITION_NOT_ALLOWED, $e->getCode());
-        }
+        $this->assertFalse($machine->canTransition('new_to_a'));
+        $this->assertFalse($machine->transition('new_to_a'));
         
         $machine->transition('a_to_b');
         $this->assertEquals('b', $machine->getCurrentState(), 'this actually works because of __toString');
@@ -220,6 +217,43 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     	$this->assertEquals('d', $machine->getCurrentState()->getName());
     	$this->assertNotEquals('c', $machine->getCurrentState()->getName());
     }
+    
+    /**
+     * @test
+     */
+    public function shouldBeAbleToUseEventForMoreTransitionsInCurrentState()
+    {
+    	$object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+    	$machine = new StateMachine($object);
+    	$a = new State('new', State::TYPE_INITIAL);
+    	$b = new State('b');
+    	$c = new State('c', State::TYPE_FINAL);
+    	$d = new State('d', State::TYPE_FINAL);
+    	
+    	$event = 'fictional-event-name';
+    	//the order in which transitions are created make it that the 
+    	//bidirectional association with the states are set up.
+    	//the first possible transition to match is therefore transition c.
+    	$taa = new Transition($a, $a, 'another-event', Transition::RULE_TRUE);
+    	$tab = new Transition($a, $b, $event, Transition::RULE_FALSE);
+    	$tac = new Transition($a, $c,$event, Transition::RULE_TRUE);
+    	$tad = new Transition($a, $d, $event, Transition::RULE_TRUE);
+    	
+    	//first add 'd', 'c' comes later but should match first
+    	$machine->addTransition($tad);//match, true
+    	$machine->addTransition($taa);//no match, true
+    	$machine->addTransition($tab);//match, false
+    	$machine->addTransition($tac);//match, true
+    	$this->assertEquals('new', $machine->getCurrentState());
+    	$this->assertTrue($machine->hasEvent($event));
+    	$this->assertTrue($machine->canHandle($event));
+    	$this->assertFalse($machine->handle(''));
+    	$this->assertTrue($machine->handle($event));
+    	$this->assertEquals('c', $machine->getCurrentState());
+    	
+    	
+    	
+    }
 
     
     protected function addTransitionsToMachine(StateMachine $machine) {
@@ -295,15 +329,10 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($machine->canTransition('new_to_done'));
         $this->assertFalse($machine->canTransition('new_to_b'));
         $this->assertFalse($machine->canTransition('new_to_d'));
-        try {
-        	$machine->handle('event-foo-bar');//new to d dissallowed by rule
-        	$this->fail('event exists but dissalowed by rule');
-        }catch (\Exception $e)
-        {
-        	$this->assertEquals(Exception::SM_TRANSITION_NOT_ALLOWED, $e->getCode());
-        }
+       	$this->assertFalse($machine->handle('event-foo-bar'));//new to d dissallowed by rule
+       	$this->assertFalse($machine->canHandle('event-foo-bar'));//new to d dissallowed by rule
         
-        
+        $this->assertEquals($machine->getCurrentState(), 'new');
         $this->assertTrue($machine->run());
         $this->assertEquals($machine->getCurrentState(), 'c');
         $t_c_to_d->setEvent('event-c-to-d');

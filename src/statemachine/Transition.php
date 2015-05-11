@@ -111,12 +111,13 @@ class Transition {
     
     /**
      * Can this transition be triggered by a certain event?
+     * This also matches on the transition name.
      * @param string $event
      * @return boolean
      */
     public function isTriggeredBy($event) 
     {
-    	return $this->event === $event && $event !== null && $event !== '';
+    	return ($this->event === $event || $this->getName() === $event) && $event !== null && $event !== '';
     }
 
     /**

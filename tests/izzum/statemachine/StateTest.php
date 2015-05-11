@@ -81,27 +81,29 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     	$a = new State('a');
     	$b = new State('b');
     	$c = new State('c');
+    	$d = new State('d');
     	$tab = new Transition($a, $b);
     	$tac = new Transition($a, $c);
     	$tbc = new Transition($b, $c);
-    	$tba = new Transition($b, $a);
-    	$tbb = new Transition($b, $b);//self transition
-    	$tba->setEvent('b-a');//b is the source state
-    	$tbb->setEvent('event-self');
+    	$tba = new Transition($b, $a, 'b-a');
+    	$tbb = new Transition($b, $b, 'event-self');//self transition
+    	$tda = new Transition($d, $a, 'possible-to-handle-more-than-one-from-d');
+    	$tdc = new Transition($d, $c, 'possible-to-handle-more-than-one-from-d');
     	
     	
-    	$this->assertEquals($tba, $b->getTransitionTriggeredByEvent('b-a'));
-    	$this->assertEquals($tbb, $b->getTransitionTriggeredByEvent('event-self'));
-    	$this->assertEquals($tbc, $b->getTransitionTriggeredByEvent('b_to_c'),'default name is transition name');
-    	$this->assertEquals($tab, $a->getTransitionTriggeredByEvent('a_to_b'),'default name is transition name');
-    	$this->assertNull($a->getTransitionTriggeredByEvent('b-a'));
-    	$this->assertNull($a->getTransitionTriggeredByEvent('even-self'));
-    	$this->assertNull($a->getTransitionTriggeredByEvent('event-self'));
-    	$this->assertNull($b->getTransitionTriggeredByEvent('bogus'));
-    	$this->assertNull($a->getTransitionTriggeredByEvent('bogus'));
-    	$this->assertNull($c->getTransitionTriggeredByEvent('bogus'));
-    	$this->assertNull($c->getTransitionTriggeredByEvent('event-self'));
-    	$this->assertNull($c->getTransitionTriggeredByEvent('b-a'));
+    	$this->assertEquals(array($tba), $b->getTransitionsTriggeredByEvent('b-a'));
+    	$this->assertEquals(array($tbb), $b->getTransitionsTriggeredByEvent('event-self'));
+    	$this->assertEquals(array($tbc), $b->getTransitionsTriggeredByEvent('b_to_c'),'default name is transition name');
+    	$this->assertEquals(array($tab), $a->getTransitionsTriggeredByEvent('a_to_b'),'default name is transition name');
+    	$this->assertEquals(array($tda, $tdc), $d->getTransitionsTriggeredByEvent('possible-to-handle-more-than-one-from-d'));
+    	$this->assertEquals(array(), $a->getTransitionsTriggeredByEvent('b-a'));
+    	$this->assertEquals(array(), $a->getTransitionsTriggeredByEvent('even-self'));
+    	$this->assertEquals(array(), $a->getTransitionsTriggeredByEvent('event-self'));
+    	$this->assertEquals(array(), $b->getTransitionsTriggeredByEvent('bogus'));
+    	$this->assertEquals(array(), $a->getTransitionsTriggeredByEvent('bogus'));
+    	$this->assertEquals(array(), $c->getTransitionsTriggeredByEvent('bogus'));
+    	$this->assertEquals(array(), $c->getTransitionsTriggeredByEvent('event-self'));
+    	$this->assertEquals(array(), $c->getTransitionsTriggeredByEvent('b-a'));
     	
     	
     }
