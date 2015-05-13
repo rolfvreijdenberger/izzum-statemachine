@@ -41,7 +41,7 @@ class Identifier {
 	public function __construct($entity_id, $machine_name)
 	{
 		//convert $entity_id to string (it will likely be an int but a string gives more flexibility)
-		$this->entity_id            = "$entity_id";
+		$this->entity_id            = trim("$entity_id");
 		$this->machine_name         = $machine_name;
 	}
 	
