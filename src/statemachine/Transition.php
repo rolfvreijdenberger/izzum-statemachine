@@ -24,16 +24,6 @@ use izzum\rules\IRule;
  * If transitions share the same states (both to and from) then they should point
  * to the same object reference (same states should share the exact same state configuration)/].
  * 
- * A subclassof Transition might provide alternative behaviour eg: 
- * - an application performance optimized prioritized transition, 
- *      so that when a state has 2 outgoing transitions, 1 is always tried first
- * - accept an array of rules that will be 'and-ed' together during the process phase
- * - accept an array of commands that will be made in a composite during the process phase
- * 
- * This alternative behaviour can be generated in conjunction with a subclass
- * of State (which should return a prioritized array for the 'run' method in the
- * StateMachine) and a Loader (which should build the right objects). All these 
- * can be nicely encapsulated in a subclass of AbstractFactory.
  *
  * @author Rolf Vreijdenberger
  *
