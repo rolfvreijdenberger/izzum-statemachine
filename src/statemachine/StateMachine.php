@@ -374,6 +374,9 @@ class StateMachine {
      */
     private function doTransition(Transition $transition, $event = null, $check_guards = true) 
     {
+    	//every method in this core routine has hook methods and
+    	//callbacks it can call during the execution phase of the
+    	//transition steps if they are available on the domain model.
         try {
         	
             if($check_guards === true) {
@@ -383,7 +386,7 @@ class StateMachine {
                 }
             }
             
-	    	//state exit action: performed when exiting the state
+	    //state exit action: performed when exiting the state
             $this->onExitState($transition, $event);
             //the transition is performed, with the associated logic
             $this->onTransition($transition, $event);
@@ -441,8 +444,7 @@ class StateMachine {
     	$hook_result = $this->_onCheckCanTransition($transition, $event);
     	if(!$hook_result) return false;
     	//a callable that is possibly defined on the domain model: onCheckCanTransition
-    	return $this->callCallable($this->getContext()->getEntity(), 
-    			'onCheckCanTransition', $transition, $event);
+    	return $this->callCallable($this->getContext()->getEntity(), 'onCheckCanTransition', $transition, $event);
     	return true;
     }
     
@@ -458,11 +460,9 @@ class StateMachine {
     	
     	//hook for subclasses to implement
     	$this->_onExitState($transition, $event);
-    	if($event) {
-    		//a callable that is possibly defined on the domain model: onExitState
-    		$this->callCallable($this->getContext()->getEntity(),
-    					'onExitState', $transition, $event);
-    	}
+    	//a callable that is possibly defined on the domain model: onExitState
+    	$this->callCallable($this->getContext()->getEntity(), 'onExitState', $transition, $event);
+    	
     	//executes the command associated with the state object
     	$transition->getStateFrom()->exitAction($this->getContext(), $event);
     }
@@ -494,11 +494,9 @@ class StateMachine {
     {
     	//hook for subclasses to implement
     	$this->_onEnterState($transition, $event);
-    	if($event) {
-    		//a callable that is possibly defined on the domain model: onEnterState
-    		$this->callCallable($this->getContext()->getEntity(),
-    				'onEnterState', $transition, $event);
-    	}
+    	//a callable that is possibly defined on the domain model: onEnterState
+    	$this->callCallable($this->getContext()->getEntity(), 'onEnterState', $transition, $event);
+    	
     	//executes the command associated with the state object
         $transition->getStateTo()->entryAction($this->getContext(), $event);
         
