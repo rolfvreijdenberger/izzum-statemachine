@@ -47,6 +47,7 @@ class LoaderArray implements Loader {
      */
     public function __construct($transitions = array())
     {
+    	$this->transitions = array();
         foreach($transitions as $transition) {
         	if(!is_a($transition, 'izzum\statemachine\Transition')){
                 throw new Exception('Expected Transition (or a subclass), found something else: ' . 

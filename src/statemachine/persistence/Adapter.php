@@ -4,11 +4,12 @@ use izzum\statemachine\Identifier;
 use izzum\statemachine\Exception;
 use izzum\statemachine\State;
 use izzum\statemachine\Transition;
+use izzum\statemachine\utils\Utils;
 /**
  * This class serves as a base class for access to different type of persistence 
  * layers we might want to use to store the states for stateful entities.
  * for example: relational (postgres/mysql) databases, nosql databases, php sessions, 
- * files, memcache etc..
+ * files, memcache, redis etc..
  * 
  * It also acts as a central place to store logic related to this persistance layer,
  * which might be useful when you want to get statistics from the persistence  layer.
@@ -33,22 +34,6 @@ use izzum\statemachine\Transition;
  */
 abstract class Adapter {
     
-     /**
-      * get the state of type 'initial' for a specific machine
-      *
-      * Get the only state for this machine that has a type of 'initial'.
-      * 
-      * In case it is not found return State::STATE_UNKNOWN (which would be a 
-      * misconfiguration from the storage facility which dynamically retrieves 
-      * data)
-      *
-      * @param Identifier $identifier
-      * @return string
-     */
-    public function getInitialState(Identifier $identifier) {
-        return State::STATE_NEW;
-    }
-    
     
      /**
      * Get all the entity id's for a specific
@@ -64,25 +49,9 @@ abstract class Adapter {
      */
     abstract public function getEntityIds($machine, $state = null);
     
-     /**
-     * This method adds a stateful object to the statemachine implementation so
-     * it can be manipulated by the statemachine package or adds a record to the
-      * underlying implementation about when the stateful object was first
-      * generated/manipulated.
-      * 
-     * This method creates a record in the underlying statemachine tables where
-     * it's initial state is set.
-     * It can then be manipulated via other methods via this Adapter or via
-     * the statemachine itself eg: via 'getEntityIds' etc.
-      * 
-     * @param Identifier $identifier
-     * @boolean true if it was added, false if it was already there.
-     * @throws Exception
-     */
-    abstract public function add(Identifier $identifier);
     
      /**
-      * A hook to be able to precess the setting of the current state.
+      * A hook to be able to process the setting of the current state.
       * saves an object to a storage facility (either insert or update).
       * Implement this method for specifying how you want to set a state in the
       * storage facility.
@@ -106,6 +75,29 @@ abstract class Adapter {
      */
     abstract protected function processGetState(Identifier $identifier);
     
+    /**
+     * This method adds state information to the persistence layer so
+     * it can be manipulated by the statemachine package. It adds a record to the
+     * underlying implementation about when the stateful object was first
+     * generated/manipulated. 
+     * 
+     * This method can safely be called multiple times. It will only add data
+     * when there is no state information already present.
+     *
+     * This method creates a record in the underlying statemachine tables where
+     * it's initial state is set.
+     * It can then be manipulated via other methods via this Adapter or via
+     * the statemachine itself eg: via 'getEntityIds' etc.
+     *
+     * @param Identifier $identifier
+     * @param string $state the initial state to set, which should be known to 
+     * 		the client of the statemachine the first time a machine is created.
+     * 		this can also be retrieved via a loaded statemachine: $machine->getInitialState()->getName()
+     * @boolean true if it was added, false if it was already there.
+     * @throws Exception
+     */
+    abstract public function add(Identifier $identifier, $state);
+    
      /**
      * Get the current state for an Identifier
      * @param Identifier $identifier
@@ -115,19 +107,15 @@ abstract class Adapter {
     {
         try {
             //execute a hook that should be implemented in a subclass.
-            //the subclass could check for STATE_UNKNOWN to see if it is already
+            //the subclass could return STATE_UNKNOWN  it is not already
             //added to the storage backend, or map a state to
             //something else that is used internally in legacy 
             //systems (eg: order.order_status)
             
             $state = $this->processGetState($identifier);
             return $state;
-        } catch (Exception $e) {
-            //already a statemachine exception, just rethrow
-            throw $e;
         } catch (\Exception $e) {
-            //a non statemachine type exception, wrap it so it is logged and throw
-            $e = new Exception($e->getMessage(), Exception::IO_FAILURE_GET, $e);
+            $e = Utils::wrapToStateMachineException($e,Exception::IO_FAILURE_GET);
             throw $e;
         }
     }
@@ -144,13 +132,9 @@ abstract class Adapter {
     public final function setState(Identifier $identifier, $state){
         try {
             return $this->processSetState($identifier, $state);
-        } catch (Exception $e) {
-            //might be a database failure or network failure from a subclass
-            //already a statemachine exception, just rethrow, it is logged
-            throw $e;
         } catch (\Exception $e) {
-            //a non statemachine type exception, wrap it so it is logged and throw
-            $e = new Exception($e->getMessage(), Exception::IO_FAILURE_SET, $e);
+            //a possible low level non statemachine type exception, wrap it and throw
+            $e = Utils::wrapToStateMachineException($e, Exception::IO_FAILURE_SET);
             throw $e;
         }
     }
@@ -169,6 +153,10 @@ abstract class Adapter {
     public function toString()
     {
         return get_class($this);
+    }
+    
+    public function __toString(){
+    	return $this->toString();
     }
 
 }

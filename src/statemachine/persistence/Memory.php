@@ -30,23 +30,22 @@ class Memory extends Adapter {
         return $this->setStateInRegistry($identifier, $state);
     }
 
-    public function add(Identifier $identifier) {
+    public function add(Identifier $identifier, $state) {
     	//var_dump (debug_backtrace()[2]);
-        $added = true;
-        $storage = $this->getStorageFromRegistry($identifier);
-        if($storage != null) {
-            $added = false;
-        } else {
-           $data = new StorageData(
-                    $identifier->getMachine(), 
-                    $identifier->getEntityId(), 
-                    State::STATE_NEW, 
-                    null);
-           $this->writeRegistry($identifier->getId(), $data);
-        }
-        return $added;
+    	$added = true;
+    	$storage = $this->getStorageFromRegistry($identifier);
+    	if($storage != null) {
+    		$added = false;
+    	} else {
+    		$data = new StorageData(
+    				$identifier->getMachine(),
+    				$identifier->getEntityId(),
+    				$state,
+    				null);
+    		$this->writeRegistry($identifier->getId(), $data);
+    	}
+    	return $added;
     }
-    
     
     public function getEntityIds($machine, $state = null) {
         $ids = array();
@@ -69,7 +68,7 @@ class Memory extends Adapter {
     protected final function getStateFromRegistry(Identifier $identifier) {
         $storage = $this->getStorageFromRegistry($identifier);
         if(!$storage) {
-            $state = $this->getInitialState($identifier);
+            $state = State::STATE_UNKNOWN;
         } else {
             $state = $storage->state;
         }

@@ -176,7 +176,8 @@ class PDO extends Adapter implements  Loader {
         } 
         $row = $statement->fetch();
         if($row === false) {
-             throw new Exception(sprintf('no state found for [%s]. '
+        	return State::STATE_UNKNOWN;
+            throw new Exception(sprintf('no state found for [%s]. '
                      . 'Did you add it to the persistence layer?', 
                     $identifier->toString()), 
                     Exception::PERSISTENCE_LAYER_EXCEPTION);   
@@ -200,22 +201,23 @@ class PDO extends Adapter implements  Loader {
         }
     }
 
+    
     /**
-     * adds Identifier info to the persistance layer.
+     * adds state info to the persistance layer.
      * Thereby marking the time when the object was created.
      * @param Identifier $identifier
      * @return boolean
      */
-    public function add(Identifier $identifier) {
-        if($this->isPersisted($identifier)) {
-            return false;
-        } 
-        $this->insertState($identifier, $this->getInitialState($identifier));
-        return true;
+    public function add(Identifier $identifier, $state) {
+    	if($this->isPersisted($identifier)) {
+    		return false;
+    	}
+    	$this->insertState($identifier, $state);
+    	return true;
     }
     
     /**
-     * is the context already persisted?
+     * is the state information already persisted?
      * @param Identifier $identifier
      * @return boolean
      * @throws Exception

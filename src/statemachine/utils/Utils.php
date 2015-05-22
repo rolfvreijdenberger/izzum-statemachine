@@ -96,4 +96,24 @@ class Utils {
     		$command->setEvent($event);
     	}
     }
+    
+    /**
+     * Always returns an izzum exception (converts a non-izzum exception to an izzum exception).
+     * optionally throws it.
+     * @param \Exception $e
+     * @param int $code
+     * @return Exception
+     * @throws Exception
+     */
+    public static function wrapToStateMachineException(\Exception $e, $code, $throw = false)
+    {
+    	if(!is_a($e, 'izzum\statemachine\Exception')){
+    		//wrap the exception and use the code provided.
+    		$e = new Exception($e->getMessage(), $code, $e);
+    	}
+    	if($throw) {
+    		throw $e;
+    	}
+    	return $e;
+    }
 }

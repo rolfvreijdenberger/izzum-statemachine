@@ -52,7 +52,7 @@ class Session extends Adapter {
         if(isset($_SESSION[$this->namespace][$key])){
             $state =  $_SESSION[$this->namespace][$key]->state;       
         } else {
-            $state = $this->getInitialState($identifier); 
+            $state = State::STATE_UNKNOWN;
         }
         return $state;
     }
@@ -71,19 +71,18 @@ class Session extends Adapter {
         return !$already_stored;
     }
 
-
-    public function add(Identifier $identifier) {
-        $key = $identifier->getId();
-        if(isset($_SESSION[$this->namespace][$key])){
-            return false;
-        }
-        $data = new StorageData(
-                    $identifier->getMachine(), 
-                    $identifier->getEntityId(), 
-                    State::STATE_NEW, 
-                    null);
-        $_SESSION[$this->namespace][$key] = $data;
-        return true;
+    public function add(Identifier $identifier, $state) {
+    	$key = $identifier->getId();
+    	if(isset($_SESSION[$this->namespace][$key])){
+    		return false;
+    	}
+    	$data = new StorageData(
+    			$identifier->getMachine(),
+    			$identifier->getEntityId(),
+    			$state,
+    			null);
+    	$_SESSION[$this->namespace][$key] = $data;
+    	return true;
     }
 
 

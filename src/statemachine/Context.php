@@ -121,20 +121,49 @@ class Context {
     public function getState()
     {
         //get the state by delegating to a specific reader
-        return $this->getPersistenceAdapter()->getState($this->getIdentifier());
+        $state =  $this->getPersistenceAdapter()->getState($this->getIdentifier());
+        //if found
+        if($state !== State::STATE_UNKNOWN) {
+	        return $state;
+        }
+        //not found, try to get it from the states loaded on the statemachine
+        if(!$this->getStateMachine()) {
+        	//reference to statemachine does not exist (standalone context object)
+        	return $state;	
+        }
+        //reference to machine exists
+		$state = $this->getStateMachine()->getInitialState();
+        if($state === null) {
+        	return State::STATE_UNKNOWN;
+        }
+        //we have a State instance, get the name
+        $state = $state->getName();
+        return $state;
     }
     
     /**
      * Sets the state
      *
      * @param string $state
-     * @return boolan true is state was never added before (just added for the
+     * @return boolan true if there was never any state persisted for this machine before (just added for the
      *      first time), false otherwise
     */
     public function setState($state)
     {
         //set the state by delegating to a specific writer
         return $this->getPersistenceAdapter()->setState($this->getIdentifier(), $state);
+    }
+    
+    
+    /**
+     * adds the state data to the persistence layer if it is not there.
+     * Used to mark the initial construction of a statemachine at a certain point in time
+     * @param string $state
+     * @return boolean true if it was added, false if it was already there
+     */
+    public function add($state)
+    {
+    	return $this->getPersistenceAdapter()->add($this->getIdentifier(), $state);
     }
 
     /**
@@ -239,15 +268,6 @@ class Context {
     public function __toString()
     {
         return $this->toString();
-    }
-    
-    /**
-     * adds the contextual data to the persistence layer.
-     * @return boolean true if it was added, false if it was already there
-     */
-    public function add()
-    {
-       return $this->getPersistenceAdapter()->add($this->getIdentifier());
     }
     
     /**

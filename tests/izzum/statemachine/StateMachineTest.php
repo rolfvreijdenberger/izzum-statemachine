@@ -37,6 +37,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
             $this->fail('should not come here');
         } catch (Exception $e) {
             $this->assertEquals(Exception::SM_NO_CURRENT_STATE_FOUND, $e->getCode());
+            //echo $e->getMessage();
         }
         $this->assertNotNull($machine);
         
@@ -133,12 +134,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
-        try {
         $machine->getInitialState();
-        $this->fail('should not come here');
-        } catch(Exception $e) {
-            $this->assertEquals(Exception::SM_NO_INITIAL_STATE_FOUND, $e->getCode());
-        }
+        $this->assertNull($machine->getInitialState());
         
         $this->addTransitionsToMachine($machine);
         $this->assertEquals(State::STATE_NEW, $machine->getInitialState()->getName());
@@ -286,7 +283,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
-        $context->add();
+//        $context->add();
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
         $s_a = new State('a', State::TYPE_NORMAL);
@@ -376,7 +373,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         $context_1 = new Context(new Identifier(1, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context_1);
-        $context_1->add();
+        //$context_1->add();
         $this->assertEquals($context_1, $machine->getContext());
         
         try {
@@ -397,9 +394,10 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($machine->getCurrentState()->isFinal());
         
         //new context object, reuse statemachine
-        $context_2 = new Context(new Identifier(123, Identifier::NULL_STATEMACHINE));
-        $context_2->add();
-        $machine->changeContext($context_2);
+        $identifier = new Identifier(123, Identifier::NULL_STATEMACHINE);
+        $context_2 = new Context($identifier);
+        $context_2->setState(State::STATE_NEW);
+        $machine->setContext($context_2);
         $this->assertEquals($machine->getCurrentState()->getName(), State::STATE_NEW);
         $this->assertTrue($machine->getCurrentState()->isInitial());
         $this->assertEquals($context_2, $machine->getContext());
@@ -413,12 +411,32 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         //switch to different machine for context
         try {
             $context_3 = new Context(new Identifier(123, 'different machine'));
-            $context_3->add();
-            $machine->changeContext($context_3);
+            $context_3->setState(State::STATE_DONE);
+            $machine->setContext($context_3);
             $this->fail("cannot switch context with different machine");
         } catch (Exception $ex) {
            $this->assertEquals(Exception::SM_CONTEXT_DIFFERENT_MACHINE, $ex->getCode());
         }
+    }
+    
+    /**
+     * @test
+     * @group 3.1
+     */
+    public function shouldBeAbleTosetCurrentState()
+    {
+    
+    	$machine = new StateMachine(New Context(new Identifier('123', 'test-machine')));
+    	$a = new State('a');
+    	$b = new State('b', State::TYPE_INITIAL);
+    	$t = new Transition($b, $a, 'go');
+    	$machine->addTransition($t);
+    	//var_dump(Memory::get());
+    	$this->assertEquals($b, $machine->getCurrentState());
+    	$machine->go();
+    	//var_dump(Memory::get());
+		    
+
     }
     
     public function testGettersAndCounts()
@@ -520,7 +538,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     public function shouldThrowExceptionFromRuleOrCommand(){
         $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
-        $context->add();
+        //$context->add();
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
         $s_a = new State('a', State::TYPE_NORMAL);

@@ -48,7 +48,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('izzum\statemachine\Context', $o->toString());
         
         
-        $this->assertEquals(State::STATE_NEW, $o->getState());
+        $this->assertEquals(State::STATE_UNKNOWN, $o->getState());
         
     }
     
@@ -91,16 +91,30 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('izzum\statemachine\Context', $o->toString());
         
         //even though we have a valid reader, the state machine does not exist.
-        $this->assertEquals(State::STATE_NEW, $o->getState());
-        $this->assertTrue($o->setState(State::STATE_UNKNOWN));
         $this->assertEquals(State::STATE_UNKNOWN, $o->getState());
+        $this->assertTrue($o->setState('lala'));
+        $this->assertEquals('lala', $o->getState());
         
         //for coverage.
-        $o->getId();
-        $o->getId(true);
-        $o->getId(false);
-        $o->getId(true, true);
-        $o->getId(false, true);
+        $this->assertNotNull($o->getId());
+        $this->assertNotNull($o->getId(true));
+        $this->assertNotNull($o->getId(false));
+        $this->assertNotNull($o->getId(true, true));
+        $this->assertNotNull($o->getId(false, true));
+        
+        
+        //adding
+        $machine = 'add-experiment-machine';
+        $context = new Context(new Identifier('add-experiment-id', $machine), $builder, $io);
+        $sm = new StateMachine($context);
+        $sm->addTransition(new Transition(new State('c', State::TYPE_FINAL), new State('d'), State::TYPE_NORMAL));
+        $sm->addTransition(new Transition(new State('a', State::TYPE_INITIAL), new State('b')));
+        $this->assertCount(0,$context->getPersistenceAdapter()->getEntityIds($machine));
+        $state = $sm->getInitialState()->getName();
+        $this->assertEquals('a', $state);
+        $this->assertTrue($context->add($state));
+        //var_dump( Memory::get());
+        $this->assertCount(1, $context->getPersistenceAdapter()->getEntityIds($machine));
     
     }
     
@@ -132,9 +146,9 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('izzum\statemachine\Context', $o->toString());
     
         //even though we have a valid reader, the state machine does not exist.
-        $this->assertEquals(State::STATE_NEW, $o->getState());
-        $this->assertTrue($o->setState(State::STATE_UNKNOWN),'added');
-        $this->assertFalse($o->setState(State::STATE_UNKNOWN),'already there');
+        $this->assertEquals(State::STATE_UNKNOWN, $o->getState());
+        $this->assertTrue($o->setState(State::STATE_NEW),'added');
+        $this->assertFalse($o->setState(State::STATE_NEW),'already there');
         
         //for coverage.
         $statemachine = new StateMachine($o);

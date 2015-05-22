@@ -103,7 +103,7 @@ while(true) {
     		echo "\033[01;36m--- transition by event name '$event' succesful";
     		break;
     	default:
-	    	echo "\033[01;31m--- transition not succesful";
+	    	echo "\033[01;31m--- transition for '$event' not succesful";
 	    	break;
     }
     echo "\033[0m" . PHP_EOL . PHP_EOL;

@@ -33,7 +33,7 @@ abstract class AbstractFactory {
      abstract protected function createAdapter();
      
      /**
-      * Get a reference builder to build your domain objects
+      * Get a builder to build your domain objects
       * @return EntityBuilder
       */
      abstract protected function createBuilder();
@@ -68,7 +68,6 @@ abstract class AbstractFactory {
      * they can safely be reused and shared.
      *
      * @param string $id the entity id for the Context entity
-     * @param bool $cache_entity for every statemachine transition. this is relevant if you want to 
      * @return StateMachine a statemachine ready to go
      * @throws Exception
      * @link https://en.wikipedia.org/wiki/Abstract_factory_pattern
@@ -116,11 +115,14 @@ abstract class AbstractFactory {
     }
     
     /**
-     * add data to the persistence layer.
-     * This is a convenience method since it delegates to the Context
+     * add state information to the persistence layer if it is not there.
+     * Used to mark the initial construction of a statemachine at a certain point in time.
+     * This is a convenience method since it delegates to the Context.
      * @param Identifier $identifier
+     * @param string $state
      */
-    public final function add(Identifier $identifier) {
-        $context = $this->createContext($identifier)->add();
+    public final function add(Identifier $identifier, $state) {
+    	$context = $this->createContext($identifier)->add($state);
     }
+    
 }

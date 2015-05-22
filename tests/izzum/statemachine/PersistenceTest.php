@@ -62,9 +62,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         $io = new Memory();
         $state = $io->getState($object);
-        $this->assertEquals(State::STATE_NEW, $state,'default reader should return new if not present');
+        $this->assertEquals(State::STATE_UNKNOWN, $state,'default reader should return unknown if not present');
         $this->assertEquals('izzum\statemachine\persistence\Memory', $io->toString());
-        $this->assertEquals(State::STATE_NEW, $io->getInitialState($object));
         
 
         
@@ -102,16 +101,18 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $machine = 'a-machine';
         $id1 = '555';
         $id2 = '666';
+        $id3 = '999';
         $object1 = new Identifier($id1, $machine);
         $object2 = new Identifier($id2, $machine);
+        $object3 = new Identifier($id3, $machine);
     
         
         $state = $io->getState($object1);
-        $this->assertEquals($state, State::STATE_NEW);
+        $this->assertEquals($state, State::STATE_UNKNOWN);
         $this->assertCount(0, $io->getEntityIds($machine));
         $this->assertTrue(is_array($io->getEntityIds($machine)));
-        $this->assertTrue($io->add($object1),'first time added');
-        $this->assertFalse($io->add($object1),'already present');
+        $this->assertTrue($io->setState($object1, State::STATE_NEW),'first time added');
+        $this->assertFalse($io->setState($object1, State::STATE_NEW),'already present');
         
         $this->assertCount(1, $io->getEntityIds($machine));
         $this->assertTrue(in_array($id1, $io->getEntityIds($machine)));
@@ -120,8 +121,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(0, $io->getEntityIds('bogus'));
         $this->assertTrue(is_array($io->getEntityIds('bogus')));
         
-        $this->assertTrue($io->add($object2),'first time added');
-        $this->assertFalse($io->add($object2),'already present');
+        $this->assertTrue($io->setState($object2, State::STATE_NEW),'first time added');
+        $this->assertFalse($io->setState($object2, State::STATE_NEW),'already present');
         $this->assertCount(2, $io->getEntityIds($machine));
         $this->assertTrue(is_array($io->getEntityIds($machine)));
         $this->assertCount(0, $io->getEntityIds('bogus'));
@@ -136,6 +137,12 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(1, $io->getEntityIds($machine, State::STATE_NEW));
         $this->assertCount(1, $io->getEntityIds($machine, State::STATE_DONE));
         $this->assertCount(2, $io->getEntityIds($machine));
+        
+        //adding
+        $state = $io->getState($object3);
+        $this->assertEquals($state, State::STATE_UNKNOWN);
+        $this->assertTrue($io->add($object3, State::STATE_NEW),'first time added');
+        $this->assertFalse($io->add($object3, State::STATE_NEW),'already present');
         
     }
     
@@ -182,7 +189,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $object = new Context(new Identifier($id, $machine), $builder, $io);
         $this->assertTrue($io->setState($object->getIdentifier(), 'bogus'));
         $this->assertFalse($io->setState($object->getIdentifier(), 'bogus2'));
-        $this->assertFalse($io->add($object->getIdentifier()), 'already there');
         //we should have started output buffering in the bootstrap file
         ob_flush();
     }
@@ -279,23 +285,19 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(0, $ids);
         
         
-        //diverse tests for the persistance of anon existing fully random id
+        //diverse tests for the persistance of a non existing fully random id
         $random_id = rand(1,999999999) . "-" . microtime();
         $identifier = new Identifier($random_id, $machine);
         $context = new Context($identifier, null, $adapter);
-        try {
-            $this->assertEquals(State::STATE_NEW, $context->getState());
-            $this->fail('should not come here');
-        } catch (Exception $e) {
-            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
-            $this->assertContains('no state found for', $e->getMessage());
-            $this->assertContains('Did you add', $e->getMessage());
-        }
+        $this->assertEquals(State::STATE_UNKNOWN, $context->getState());
         $this->assertFalse($adapter->isPersisted($identifier), 'not persisted yet');
         $count = count($adapter->getEntityIds($machine, 'new'));
-        $this->assertTrue($adapter->add($identifier), 'first time');
+        
+        $this->assertTrue($context->setState(State::STATE_NEW), 'first time');
+        
         $this->assertCount($count + 1, $adapter->getEntityIds($machine, 'new'), '1 extra in state new');
-        $this->assertFalse($adapter->add($identifier), 'already added');
+        $this->assertFalse($context->setState(State::STATE_UNKNOWN), 'already persisted');
+        $this->assertFalse($context->setState(State::STATE_NEW), 'set to new again, still false, since already persisted');
         $this->assertEquals(State::STATE_NEW, $context->getState(), 'state is now new');
         
         
@@ -335,7 +337,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $random_id = rand(1, 999999999) . "-" . microtime();
         $identifier = new Identifier($random_id, $machine);
         $other_context = new Context($identifier, null, $adapter);
-        $sm->changeContext($other_context);
+        $sm->setContext($other_context);
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
         //load again, not necessary, but should not be a problem either
@@ -346,24 +348,31 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         
         //run via 'bad' path, priority 2, this will also 'add' it to the backend
-        try {
-            $sm->canTransition('new_to_bad');
-            $this->fail('should not come here, not added');
-        } catch (Exception $e) {
-            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
-        }
+        $sm->canTransition('new_to_bad');
+        $sm->transition('new_to_bad');
         
         
         try {
-            $sm->transition('new_to_bad');
-            $this->fail('should not come here, not added');
+            $sm->transition('bad_to_done');
+            $this->fail('should not come here, always throws exception as part of the rule');
         } catch (Exception $e) {
-            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
+            $this->assertEquals(Exception::RULE_APPLY_FAILURE, $e->getCode());
         }
         //do this directly on adapter to see if will actually insert into the history
         //and entity tables
-        $this->assertTrue($adapter->setState($identifier, 'new'));
+        $this->assertFalse($adapter->setState($identifier, 'new'), 'it is already persisted');
         $this->assertEquals($other_context->getState(), 'new');
+        $this->assertFalse($adapter->setState($identifier, 'excellent'), 'it is already persisted');
+        $this->assertEquals($other_context->getState(), 'excellent');
+        
+        
+        
+        //create a new context to take the unhappy flow
+        $random_id = rand(1, 999999999) . "-" . microtime();
+        $identifier = new Identifier($random_id, $machine);
+        $other_context = new Context($identifier, null, $adapter);
+        $sm->setContext($other_context);
+        
         $this->assertTrue($sm->canTransition('new_to_bad'));
         $this->assertTrue($sm->canTransition('new_to_ok'));
         
@@ -416,7 +425,15 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $machine = 'izzum';
         $dsn = "sqlite:sqlite.db";
         $adapter = new PDO($dsn);   
-        $this->assertPersistenceAdapterPDO($adapter, $machine, true);
+        $this->assertPersistenceAdapterPDO($adapter, $machine, false);
+        
+        $machine = new StateMachine(new Context(new Identifier('test-addition' . microtime() . rand(1,99999), 'izzum'), null, $adapter));
+        $adapter->load($machine);
+        $this->assertTrue($machine->getContext()->add($machine->getInitialState()));
+        $this->assertFalse($machine->getContext()->add($machine->getInitialState()));
+        $machine->runToCompletion();
+        $this->assertTrue($machine->getCurrentState()->isFinal());
+        
     }
        
     /**

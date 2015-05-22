@@ -24,7 +24,7 @@ class FactoryTest extends \PHPUnit_Framework_TestCase {
         //test the machine
         $context = $machine->getContext();
         $this->assertCount(0,$context->getPersistenceAdapter()->getEntityIds($machine_name));
-        $factory->add($context->getIdentifier());
+        $factory->add($context->getIdentifier(), $machine->getCurrentState()->getName());
         $this->assertCount(1, $context->getPersistenceAdapter()->getEntityIds($machine_name));
         $context->getPersistenceAdapter()->getEntityIds($machine_name);
         $this->assertEquals($machine_name, $context->getMachine(),'name as provided by factory');

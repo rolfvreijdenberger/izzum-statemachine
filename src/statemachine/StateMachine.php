@@ -4,6 +4,7 @@ use izzum\statemachine\Context;
 use izzum\statemachine\State;
 use izzum\statemachine\Transition;
 use izzum\statemachine\Exception;
+use izzum\statemachine\utils\Utils;
 /**
  * StateMachine class.
  * 
@@ -98,19 +99,22 @@ use izzum\statemachine\Exception;
  * 			  return true to allow transition, false to stop transition.
  * 2.  guard: $entity->onCheckCanTransition($transition, $event) 
  * 			  callable on entity. return true to allow transition, false to stop transition
- * 3.  guard: $transition->can($context) // try to call $rule->setEvent() and check if rule applies.
- * 			  if all guards return true, allow the transition
+ * 3.  guard: $transition->can($context) //check if Rule applies, return true to allow transition
+ * 			  
+ *     if all guards return true, then the transition is allowed
+ *     
  * 4.  _preProcess($transition, $event) //hook method: override
  * 5.  _onExitState($transition, $event) //hook method: override
  * 6.  $entity->onExitState($transition, $event) //callable on entity
- * 7.  $state_from->exitAction($event) //try to call $command->setEvent() and execute command 
+ * 7.  $state_from->exitAction($event) //execute Command 
  * 8.  _onTransition($transition, $event) //hook method: override
  * 9.  $entity->onTransition($transition, $event) //callable on entity
- * 10. $transition->process(event) //try to call $command->setEvent() and execute command 
- * 11. _onEnterState($transition, $event) //hook method: override
- * 12. $entity->onEnterState($transition, $event) //callable on entity
- * 13. $state_to->entryAction($event) //try to call $command->setEvent() and execute command 
- * 14. _postProcess($transition, $event) //hook method: override
+ * 10. $entity->on<$event>($transition, $event) //callable on entity
+ * 11. $transition->process(event) //execute Command 
+ * 12. _onEnterState($transition, $event) //hook method: override
+ * 13. $entity->onEnterState($transition, $event) //callable on entity
+ * 14. $state_to->entryAction($event) //execute Command 
+ * 15. _postProcess($transition, $event) //hook method: override
  *   
  * each hook can be overriden and implemented in a subclass, providing
  * functionality that is specific to your application. This allows you to use
@@ -154,6 +158,12 @@ class StateMachine {
      */
     private $transitions = array();
     
+    /**
+     * the current state
+     * @var State
+     */
+    private $state;
+    
 
     
     #########################    TRANSITION METHODS    #############################   
@@ -163,7 +173,8 @@ class StateMachine {
       * @see AbstractFactory for how to create a fully configured statemachine
       * 
       * @param Context $context a fully configured context providing all the relevant parameters/dependencies
-      * 	to be able to run this statemachine for an entity.
+      * 	to be able to run this statemachine for an entity.	
+      * 	The initial state will normally be retrieved from the backend if it is there.
      */
     public function __construct(Context $context)
     {
@@ -265,11 +276,7 @@ class StateMachine {
      */
     protected function handlePossibleNonStatemachineException(\Exception $e, $code, $transition = null)
     {
-    	if(!is_a($e, 'izzum\statemachine\Exception')){
-    		//wrap the exception and use the code provided.
-    		$e = new Exception($e->getMessage(), $code, $e);
-    	}
-    	
+    	$e = Utils::wrapToStateMachineException($e, $code);
     	if($transition !== null) {
     		$this->handleTransitionException($transition, $e);
     	}
@@ -479,6 +486,10 @@ class StateMachine {
     	$entity = $this->getContext()->getEntity();
     	//a callable that is possibly defined on the domain model: onTransition
     	$this->callCallable($entity,'onTransition', $transition, $event);
+		if($event) {
+	    	//a callable that is possibly defined on the domain model: on<$event>
+	    	$this->callCallable($entity,$this->_toValidMethodName('on' . $event), $transition, $event);
+		}
     	//executes the command associated with the transition object
     	$transition->process($this->getContext(), $event);
     	//this actually sets the state!
@@ -554,48 +565,67 @@ class StateMachine {
     }
     
     /**
-     * sets the state
+     * sets the state on the backend and as the current state.
+     * This should only be done:
+     * 	- initially, right after a machine has been created, to set it in a certain state if 
+	 *		the state has not been persisted before.
+     *  - when changing context (since this resets the current state) via 
+     *  	$machine->setCurrentState($machine->getCurrentState())
      * @param State $state
      */
-    protected function setCurrentState(State $state) {
-    	//TODO: cache & should we also do this at initialization?
+    public function setCurrentState(State $state) {
     	$this->getContext()->setState($state->getName());
+    	$this->state = $state;
     }
     
     /**
-     * gets the current state
+     * gets the current state (or retrieve it from the backend if not set). 
+     * 
+     * the state will be:
+     * 	- the state that was explicitely set via setCurrentState
+     *  - the state we have moved to after the last transition
+     *  - the initial state. if we haven't had a transition yet and no current state has been set
+     *  	the initial state will be retrieved (the state with State::TYPE_INITIAL)
      * @return State
-     * @throws Exception in case there is no current state found
+     * @throws Exception in case there is no valid current state found
      */
     public function getCurrentState()
     {
-    	//TODO: cache the current state
-    	$state = $this->getState($this->getContext()->getState());
-    	if(!$state) {
-    		//possible wrong configuration
-    		throw new Exception(
-    				sprintf($this->toString() . " current state not found for state with name '%s'. are the transitions/states loaded?",
-    						$this->getContext()->getState()),
-    				Exception::SM_NO_CURRENT_STATE_FOUND);
+    	//do we have a current state?
+    	if($this->state) {
+    		return $this->state;
     	}
-    	return $state;
+    	//retrieve state from the context if we do not find any state set.
+    	$state = $this->getState($this->getContext()->getState());
+	    if(!$state) {
+	    	//possible wrong configuration
+	    	throw new Exception(
+	    			sprintf("%s current state not found for state with name '%s'. %s",
+	    					$this->toString(), $this->getContext()->getState(), 
+	    					'are the transitions/states loaded and configured correctly?'),
+	    			Exception::SM_NO_CURRENT_STATE_FOUND);
+	    }
+	    $this->state = $state;
+	    return $this->state;
     }
     
     /**
      * Get the initial state, the only state with type State::TYPE_INITIAL
-     * @return State
+     * 
+     * This method can be used to 'add' the state information to the backend via
+     * the context/persistence adapter.
+     * 
+     * @return State (or null if not found, only when statemachine is improperly loaded)
      * @throws Exception
      */
     public function getInitialState() {
-    	$transitions = $this->getTransitions();
-    	foreach($transitions as $transition) {
-    		if($transition->getStateFrom()->isInitial())
-    		{
-    			return $transition->getStateFrom();
+    	$states = $this->getStates();
+    	foreach($states as $state) {
+    		if($state->isInitial()) {
+    			return $state;
     		}
     	}
-    	throw new Exception('no initial state found, bad configuration',
-    			Exception::SM_NO_INITIAL_STATE_FOUND);
+    	return null;
     }
 
     /**
@@ -662,6 +692,21 @@ class StateMachine {
     	if(!$this->getState($to->getName())) {
     		$this->addState($to);
     	}
+    
+    	if($this->state != null){
+    		//we have a current state, so check if we need to 
+    		//set the 'current state' to a fully configured state (with transitions)
+    		//that we retrieve from the loaded Transition (in case the client did not set
+    		//a fully configured state at construction time)
+    		if($to->getName() == $this->state->getName())
+    		{
+    			$this->state = $to;
+    		}
+    		if($from->getName() == $this->state->getName())
+    		{
+    			$this->state = $from;
+    		}
+    	}
     }
     
     /**
@@ -674,35 +719,39 @@ class StateMachine {
     }
     
     /**
-     * set the context on the statemachine and provide bidirectional association
+     * set the context on the statemachine and provide bidirectional association.
+     * 
+     * change the context for a statemachine that already has a context.
+     * When the context is changed, but it is for the same statemachine (with
+     * the same transitions), the statemachine can be used directly with the
+     * new context.
+     * TRICKY: the current state is reset whenever a context change is made.
+     * 
+     * we can change context to:
+     * - switch builders/persistence adapters at runtime
+     * - reuse the statemachine for a different entity so we do not
+     * 	 have to load the statemachine with the same transition definitions
+     * 
      * @param Context $context
+     * @throws Exception
      */
-    protected final function setContext(Context $context)
+    public function setContext(Context $context)
     {
         if($this->getContext()){
+        	//context already exists.
             if($this->getContext()->getMachine() !== $context->getMachine()) {
                 throw new Exception(
                     sprintf("Trying to set context for a different machine. currently '%s' and new '%s'",
                         $this->getContext()->getMachine(), $context->getMachine()), 
                     Exception::SM_CONTEXT_DIFFERENT_MACHINE);
             }
+
+            //reset state
+	        $this->state = null;
         }
-        $this->context = $context;
         $context->setStateMachine($this);
+        $this->context = $context;
     }
-    
-    /**
-     * change the context for a statemachine that already has a context.
-     * When the context is changed, but it is for the same statemachine (with
-     * the same transitions), the statemachine can be used directly with the
-     * new context.
-     * @param Context $context
-     */
-    public final function changeContext(Context $context)
-    {
-    	$this->setContext($context);
-    }
-    
     
     
     
@@ -818,6 +867,18 @@ class StateMachine {
     }
     
     /**
+     * process a string to a name that is a valid method name.
+     * This allows you to transform 'event' strings to strings that conform
+     * to a format you wish to use
+     * @param string $name
+     * @return string
+     */
+    protected function _toValidMethodName($name) {
+    	//override to manipulate the return value
+    	return $name;
+    }
+    
+    /**
      * hook method. override in subclass if necessary.
      * Called before each transition will run and execute the associated transition logic.
      * A hook to implement in subclasses if necessary, to do stuff such as
@@ -860,5 +921,4 @@ class StateMachine {
      * @param string $event in case the transition was triggered by an event code (mealy machine)
      */
     protected function _postProcess(Transition $transition, $event) {}
-
 }
