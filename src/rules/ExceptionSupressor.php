@@ -2,19 +2,21 @@
 namespace izzum\rules;
 
 /**
- * Supresses an exception and returns either true or false in case a concrete rule
- * throws an exception. In case the original rule applies succesfully (a true or
+ * Supresses an exception and returns either true or false in case a concrete
+ * rule
+ * throws an exception.
+ * In case the original rule applies succesfully (a true or
  * false result) the result is passed back to the client.
- * 
+ *
  * This rule is an implementation of the Decorator pattern and allows a client
  * to use rules with a consistent behaviour for exceptions.
+ * 
  * @author Rolf Vreijdenberger
  * @link https://en.wikipedia.org/wiki/Decorator_pattern
- *
+ *      
  */
-class ExceptionSupressor extends Rule
-{
-
+class ExceptionSupressor extends Rule {
+    
     /**
      *
      * @var izzum\rules\Rule
@@ -28,10 +30,11 @@ class ExceptionSupressor extends Rule
     private $supressed_result;
 
     /**
-     * 
-     * @param \izzum\rules\Rule $decoree
-     * @param boolean $supressed_result what to return in case the decorated rule 
-     *  throws an error
+     *
+     * @param \izzum\rules\Rule $decoree            
+     * @param boolean $supressed_result
+     *            what to return in case the decorated rule
+     *            throws an error
      */
     public function __construct(Rule $decoree, $supressed_result = false)
     {
@@ -41,14 +44,11 @@ class ExceptionSupressor extends Rule
 
     public function _applies()
     {
-        try
-        {
+        try {
             $output = (boolean) $this->decoree->applies();
-        } catch (Exception $e)
-        {
+        } catch(Exception $e) {
             $output = $this->supressed_result;
         }
         return $output;
     }
-
 }

@@ -2,15 +2,15 @@
 namespace izzum\rules;
 
 /**
- * When a rule is chained using the 'NOT' operator the rule given in the 
- * constructor should not apply. The rule is effectively negated.
+ * When a rule is chained using the 'NOT' operator the rule given in the
+ * constructor should not apply.
+ * The rule is effectively negated.
  *
  * @author Rolf Vreijdenberger
  * @author Richard Ruiter
  */
-class NotRule extends Rule
-{
-
+class NotRule extends Rule {
+    
     /**
      *
      * @var izzum\rules\Rule
@@ -18,8 +18,8 @@ class NotRule extends Rule
     private $original;
 
     /**
-     * 
-     * @param \izzum\rules\Rule $original
+     *
+     * @param \izzum\rules\Rule $original            
      */
     public function __construct(Rule $original)
     {
@@ -30,13 +30,13 @@ class NotRule extends Rule
     {
         return (boolean) !$this->original->applies();
     }
-    
+
     /**
      * Return original results
-     * 
+     *
      * @return array
      */
-    public function getResults() 
+    public function getResults()
     {
         return $this->original->getResults();
     }

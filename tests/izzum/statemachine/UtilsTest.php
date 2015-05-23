@@ -156,6 +156,105 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($from . Utils::STATE_CONCATENATOR . $to, Utils::getTransitionName($from, $to));
     }
     
+    /**
+     * @test
+     * @group regex
+     */
+    public function shouldReturnRegexState(){
+    	$name = 'regex:.*';
+        $regex = new State($name);
+        $this->assertTrue(Utils::isRegex($regex));
+    }
+    
+    /**
+     * @test
+     * @group regex
+     */
+    public function shouldNotReturnRegexState(){
+        $name = 'rege:.*';
+        $regex = new State($name);
+        $this->assertFalse(Utils::isRegex($regex));
+    }
+    
+    /**
+     * @test
+     * @group regex
+     */
+    public function shouldMatchValidRegex(){
+        $name = 'regex:/.*/';//only allow regexes between regex begin and end markers
+        $regex = new State($name);
+        $target = new State('aa');
+        $this->assertTrue(Utils::matchesRegex($regex, $target), 'only allow regexes between regex begin and end markers');
+        
+        
+        $name = 'regex:/a|b/';//allow regexes without regex begin and end markers
+        $regex = new State($name);
+        $target = new State('b');
+        $this->assertTrue(Utils::matchesRegex($regex, $target));
+        
+        
+        $name = 'regex:/c|a|aa/';
+        $regex = new State($name);
+        $target = new State('aa');
+        $this->assertTrue(Utils::matchesRegex($regex, $target));
+        
+        
+        $name = 'regex:/action-.*/';
+        $regex = new State($name);
+        $target = new State('action-hero');
+        $bad = new State('action_hero');
+        $this->assertTrue(Utils::matchesRegex($regex, $target));
+        $this->assertFalse(Utils::matchesRegex($regex, $bad));
+        
+        
+        $name = 'regex:/go[o,l]d/';
+        $regex = new State($name);
+        $target = new State('gold');
+        $bad = new State('golld');
+        $this->assertTrue(Utils::matchesRegex($regex, $target));
+        $this->assertFalse(Utils::matchesRegex($regex, $bad));
+    }
+    
+    /**
+     * @test
+     * @group regex
+     */
+    public function shouldReturnArrayOfMatchedStates(){
+        
+        $a = new State('a');
+        $b = new State('ab');
+        $c = new State('ba');
+        $d = new State('abracadabra');
+        $e = new State('action-hero');
+        $f = new State('action-bad-guy');
+        $g = new State('ac');
+        $targets = array($a, $b, $c, $d, $e, $f, $g);
+        
+        $regex = new State('regex:/.*/');
+        $this->assertEquals($targets, Utils::getAllRegexMatchingStates($regex, $targets));
+
+        
+        $regex = new State('regex:/^a.*/');
+        $this->assertEquals(array($a, $b, $d, $e, $f, $g), Utils::getAllRegexMatchingStates($regex, $targets));
+        
+        $regex = new State('regex:/^a.+/');
+        $this->assertEquals(array($b, $d, $e, $f, $g), Utils::getAllRegexMatchingStates($regex, $targets));
+        
+        $regex = new State('regex:/^a.*a.+$/');
+        $this->assertEquals(array($d, $f), Utils::getAllRegexMatchingStates($regex, $targets));
+        
+        $regex = new State('regex:/^ac.*-.+$/');
+        $this->assertEquals(array($e, $f), Utils::getAllRegexMatchingStates($regex, $targets));
+        
+        $regex = new State('ac');
+        $this->assertFalse(Utils::isRegex($regex));
+        $this->assertEquals(array($g), Utils::getAllRegexMatchingStates($regex, $targets), 'non regex state');
+
+    }
+    
+    
+    
+    
    
 }
 

@@ -1,13 +1,12 @@
 
 [![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachine.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum-statemachine/) 
 [![Total Downloads](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/downloads.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine) 
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master) 
 [![Latest Stable Version](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/v/stable.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine) 
 [![Code Coverage](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master)
 [![License](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/license.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine)
 #izzum statemachine
 
-- **`new: release of version 2`**: transition guards and actions, new: state entry and exit actions, a fully functional PDO relational database implementation with the sql provided for 
+- **`new: release of version 3`**: transition guards and actions, new: state entry and exit actions, a fully functional PDO relational database implementation with the sql provided for 
 [mysql](https://www.mysql.com), [postgresql](http://www.postgresql.org) and 
 [sqlite](https://sqlite.org/) backends, uml diagrams generated from code. new: 'event' support added as transition input (mealy and moore machines)
 - Want to know what to do to get it working? Skip to the [Usage section](#usage-a-working-example) or [examples](#examples)

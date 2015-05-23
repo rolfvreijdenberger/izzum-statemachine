@@ -19,7 +19,7 @@ package izzum.statemachine {
       + getInitialState(): State
       - checkCanTransition(Transition):boolean
       - callCallable($object, method, args)
-      # setCurrentState(State)
+      # setState(State)
       # _checkCanTransition(Transition, event)
       # _preProcess(Transition, event)
       # _onExitState(Transition, event)

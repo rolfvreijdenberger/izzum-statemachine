@@ -210,7 +210,7 @@ and message in this field.
 Entities should be explicitely added to the statemachine by application logic. 
 This will be done in a subclass of izzum\statemachine\persistence\Adapter. 
 The logic will be implemented in the method "add($context)" for the first entry,
-and in the method "processSetCurrentState($context, $state)" for all subsequent entries.';
+and in the method "processsetState($context, $state)" for all subsequent entries.';
 CREATE INDEX i_statemachine_history_entity_id ON statemachine_history (entity_id);
 ALTER TABLE statemachine_history ADD PRIMARY KEY (id);
 ALTER TABLE statemachine_history ADD FOREIGN KEY (machine, state) REFERENCES statemachine_states (machine, state) ON DELETE NO ACTION ON UPDATE CASCADE;

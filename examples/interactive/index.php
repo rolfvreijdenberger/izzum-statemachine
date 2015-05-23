@@ -5,21 +5,13 @@ use izzum\statemachine\Identifier;
 use izzum\statemachine\State;
 use izzum\statemachine\Transition;
 use izzum\statemachine\StateMachine;
+require_once('../autoload.php');
 /**
  * run this script from the (bash) command line:
  * php -f index.php
  * and stop it with ctrl+c
  */
  
-/**
- * add the composer autoloader, we assume this is the normal composer setup:
- * <root>/vendor/rolfvreijdenberger/izzum/
- * with the autoloader in:
- * <root>/vendor/autoload.php
- */
-$loader = require_once __DIR__ . '/../../../../../vendor/autoload.php';
-$loader->addPsr4('izzum\examples\\', __DIR__ . '/../');
-$loader->register();
 
 //create machine. context defaults to in-memory state handling
 $context = new Context(new Identifier("interactive-example", "interactive-machine"));
