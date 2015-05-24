@@ -38,6 +38,7 @@ class Transition {
     const RULE_EMPTY = '';
     const COMMAND_NULL = 'izzum\command\Null';
     const COMMAND_EMPTY = '';
+    const CLOSURE_NULL = null;
     
     /**
      * the state this transition starts from
@@ -79,6 +80,12 @@ class Transition {
     protected $command;
     
     /**
+     * the closure to call as part of the transition logic
+     * @var \Closure
+     */
+    protected $closure;
+    
+    /**
      * a description for the state
      *
      * @var string
@@ -102,13 +109,16 @@ class Transition {
      *            name(s) to execute for a transition.
      *            This can actually be a ',' seperated string of multiple
      *            commands that will be executed as a composite.
+     * @param \Closure $closure
+     *            optional: a php \Closure to call. eg: "function(){echo 'closure called';};"
      */
-    public function __construct(State $state_from, State $state_to, $event = null, $rule = self::RULE_EMPTY, $command = self::COMMAND_EMPTY)
+    public function __construct(State $state_from, State $state_to, $event = null, $rule = self::RULE_EMPTY, $command = self::COMMAND_EMPTY, $closure = self::CLOSURE_NULL)
     {
         $this->state_from = $state_from;
         $this->state_to = $state_to;
         $this->setRuleName($rule);
         $this->setCommandName($command);
+        $this->setClosure($closure);
         // setup bidirectional relationship with state this transition
         // originates from. only if it's not a regex transition
         if (!Utils::isRegex($state_from)) {
@@ -116,6 +126,23 @@ class Transition {
         }
         // set and sanitize event name
         $this->setEvent($event);
+    }
+    
+    /**
+     * the closure to execute as part of the transition
+     * @param \Closure $closure
+     */
+    public function setClosure($closure) {
+        $this->closure = $closure;
+    }
+    
+    /**
+     * returns the closure.
+     * @return Closure or null
+     */
+    public function getClosure()
+    {
+        return $this->closure;
     }
 
     /**
@@ -166,10 +193,23 @@ class Transition {
         // by the statemachine itself
         try {
             $this->getCommand($context, $event)->execute();
+            $this->doClosure($this->getClosure(), $context, $event);
         } catch(\Exception $e) {
             // command failure
             $e = new Exception($e->getMessage(), Exception::COMMAND_EXECUTION_FAILURE, $e);
             throw $e;
+        }
+    }
+    
+    /**
+     * calls the closure as part of the transition
+     * @param \Closure $closure
+     * @param Context $context
+     * @param string $event
+     */
+    protected function doClosure($closure, Context $context, $event = null) {
+        if($closure != self::CLOSURE_NULL && is_callable($closure)){
+            $closure($context->getEntity(), $event);
         }
     }
 
@@ -389,7 +429,7 @@ class Transition {
      */
     public function getCopy(State $from, State $to)
     {
-        $copy = new static($from, $to, $this->getEvent(), $this->getRuleName(), $this->getCommandName());
+        $copy = new static($from, $to, $this->getEvent(), $this->getRuleName(), $this->getCommandName(), $this->getClosure());
         $copy->setDescription($this->getDescription());
         return $copy;
     }

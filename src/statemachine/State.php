@@ -59,6 +59,7 @@ class State {
      * @var string
      */
     const COMMAND_EMPTY = '';
+    const CLOSURE_NULL = null;
     
     /**
      * the state types:
@@ -123,6 +124,18 @@ class State {
     protected $command_exit_name;
     
     /**
+     *  the entry closure method
+     * @var \Closure
+     */
+    protected $closure_entry;
+    
+    /**
+     *  the exit closure method
+     * @var \Closure
+     */
+    protected $closure_exit;
+    
+    /**
      * a description for the state
      * 
      * @var string
@@ -148,13 +161,51 @@ class State {
      *            This can actually be a ',' seperated string of multiple
      *            commands that will be executed as a composite.
      */
-    public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY)
+    public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY, $closure_entry = self::CLOSURE_NULL, $closure_exit = self::CLOSURE_NULL)
     {
         $this->setName($name);
         $this->setType($type);
         $this->setEntryCommandName($command_entry_name);
         $this->setExitCommandName($command_exit_name);
+        $this->setEntryClosure($closure_entry);
+        $this->setExitClosure($closure_exit);
         $this->transitions = array();
+    }
+
+    /**
+     * get the entry closure, the closure to be called when entering this state
+     * @return \Closure $closure
+     */
+    public function getEntryClosure()
+    {
+        return $this->closure_entry;
+    }
+
+    /**
+     * set the entry closure, the closure to be called when entering this state
+     * @param \Closure $closure
+     */
+    public function setEntryClosure($closure)
+    {
+        $this->closure_entry = $closure;
+    }
+
+    /**
+     * set the exit closure, the closure to be called when exiting this state
+     * @param \Closure $closure
+     */
+    public function getExitClosure()
+    {
+        return $this->closure_exit;
+    }
+
+    /**
+     * set the exit closure, the closure to be called when exiting this state
+     * @param \Closure $closure
+     */
+    public function setExitClosure($closure)
+    {
+        $this->closure_exit = $closure;
     }
 
     /**
@@ -196,7 +247,7 @@ class State {
     {
         return $this->type;
     }
-    
+
     /**
      * set the state type
      *
@@ -247,7 +298,7 @@ class State {
     {
         return $this->name;
     }
-    
+
     /**
      * sets the name of this state
      * @param string $name
@@ -298,6 +349,20 @@ class State {
     {
         $command = $this->getCommand($this->getEntryCommandName(), $context, $event);
         $this->execute($command);
+        $this->doClosure($this->getEntryClosure(), $context, $event);
+    }
+
+    /**
+     * calls a closure if it exists
+     * @param \Closure $closure
+     * @param Context $context
+     * @param string $event
+     */
+    protected function doClosure($closure, Context $context, $event = null)
+    {
+        if($closure != self::CLOSURE_NULL && is_callable($closure)) {
+            $closure($context->getEntity(), $event);
+        }
     }
 
     /**
@@ -315,6 +380,7 @@ class State {
     {
         $command = $this->getCommand($this->getExitCommandName(), $context, $event);
         $this->execute($command);
+        $this->doClosure($this->getExitClosure(), $context, $event);
     }
 
     /**

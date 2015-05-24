@@ -1,0 +1,63 @@
+<?php
+namespace izzum\statemachine\persistence;
+use izzum\statemachine\persistence\Adapter;
+use izzum\statemachine\loader\Loader;
+use izzum\statemachine\Identifier;
+use izzum\statemachine\Exception;
+use izzum\statemachine\State;
+use izzum\statemachine\Transition;
+use izzum\statemachine\utils\Utils;
+
+/**
+ * mix and match a loader and a persistance adapter by decorating both of them.
+ * 
+ * This allows us to load the statemachine from a specific source and use
+ * a different sink to write the currrent state and history information.
+ *
+ * TODO: implement this thing
+ * @author Rolf Vreijdenberger
+ *        
+ */
+class Decorator extends Adapter implements Loader {
+    private $loader;
+    private $adapter;
+
+    public function __construct(Adapter $adapter, Loader $loader)
+    {
+        $this->adapter = $adapter;
+        $this->loader = $loader;
+    }
+
+    public function load(StateMachine $stateMachine)
+    {
+        $this->loader->load($stateMachine);
+    }
+
+    public function getEntityIds($machine, $state = null)
+    {
+        $this->adapter->getEntityIds($machine, $state);
+    }
+
+    protected function processSetState(Identifier $identifier, $state)
+    {
+        // TODO: refactor. how do we call the protected method on the adapter
+        // (hint: package/friendly visibility)
+    }
+
+    protected function processGetState(Identifier $identifier)
+    {
+        // TODO: refactor. how do we call the protected method on the adapter
+        // (hint: package/friendly visibility)
+    }
+
+    public function add(Identifier $identifier, $state)
+    {
+        $this->adapter->add($identifier, $state);
+    }
+
+    public function toString()
+    {
+        parent::toString(); // TODO. get the info from the loader and the
+                                // adapter
+    }
+}

@@ -7,6 +7,12 @@ use izzum\statemachine\Transition;
 use izzum\statemachine\StateMachine;
 require_once('../autoload.php');
 /**
+ * Example script that uses the 'standalone mode' as one of the four usage models for the statemachine.
+ * The other three usage models being inheritance, composition and delegation.
+ * 
+ * This script allows you to interact with the statemachine from the command line.
+ * 
+ * 
  * run this script from the (bash) command line:
  * php -f index.php
  * and stop it with ctrl+c
