@@ -290,6 +290,37 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $sbbt1 = $sbbt [1];
         $this->assertNotEquals($sbbt1, $transition_2, 'no association, transition not on state');
     }
+    
+    /**
+     * @test
+     */
+    public function shouldExecuteSimpleBenchmark()
+    {
+        $a = new State('a', State::TYPE_INITIAL);
+        $b = new State('b');
+        $tab = new Transition($a, $b, 'ab');
+        $tba = new Transition($b, $a, 'ba');
+        $machine = new StateMachine(New Context(new Identifier('benchmark',  'benchmark-machine')));
+        $machine->addTransition($tba);
+        $machine->addTransition($tab);
+        $this->assertEquals($a, $machine->getCurrentState());
+        $machine->ab();
+        $this->assertEquals($b, $machine->getCurrentState());
+        $machine->ba();
+        $this->assertEquals($a, $machine->getCurrentState());
+        $start = microtime(true);
+        //echo "starting benchmark: " . $start . PHP_EOL;
+        $total = 100;
+        for ($i = 0; $i<$total ;$i++) {
+            $machine->run();
+        }
+        $stop = microtime(true);
+        //echo "stopping benchmark: $total took " . ($stop - $start);
+        
+        //on my fairly old machine, 10.000 transitions with the bare algorithm (no guards/logic) 
+        //took about 0.5 seconds
+        
+    }
 
     /**
      * @test

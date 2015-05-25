@@ -16,13 +16,30 @@ use izzum\statemachine\StateMachine;
  
 require_once('../autoload.php');
 
-//add transitions to the machine, with event names
-$hero = new SuperHero();
-$hero->start();
-echo $hero->getCurrentState();
-$hero->canHandle("normal_to_jo");
-$hero->canTransition("normal_to_jo");
+//there once were two heroes.
+$wolfie = new SuperHero("logan", "wolverine");
+$spidey = new SuperHero("peter parker" , "spiderman");
+$wolfie->wakeup();
+$spidey->wakeup();
+foreach ($spidey->getTransitions() as $t) {
+   // echo $t->getName() . PHP_EOL;
+}
 
-$hero->setState($hero->getState('flying'));
+$wolfie->beSuper();
+$wolfie->pose();
+$wolfie->resque();
+$wolfie->fight();
+$wolfie->standDown();
 
+
+$spidey->beSuper();
+$spidey->fight();
+$spidey->resque();
+$spidey->pose();
+$spidey->resque();
+$spidey->fight();
+$spidey->pose();
+$spidey->resque();
+$spidey->pose();
+$spidey->standDown();
 

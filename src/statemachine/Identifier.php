@@ -7,10 +7,12 @@ namespace izzum\statemachine;
  * A statemachine is always uniquely identified by the combination of an entity
  * id and a machine name (that provides the relation to the statemachine the
  * entity is governed by).
+ * 
+ * The entity id is something that uniquely identifies a domain model. Probably 
+ * something that is stored in your application, like a primary key in a table, a GUID or a hash.
  *
  * This object thus stores the minimum data needed from other processes in your
  * application domain to succesfully work with the statemachine.
- *
  *
  * @author Rolf Vreijdenberger
  *        
@@ -50,7 +52,7 @@ class Identifier {
     {
         // convert $entity_id to string (it will likely be an int but a string
         // gives more flexibility)
-        $this->entity_id = trim("$entity_id");
+        $this->setEntityId($entity_id);
         $this->machine_name = $machine_name;
     }
 
@@ -62,6 +64,15 @@ class Identifier {
     public function getMachine()
     {
         return $this->machine_name;
+    }
+
+    /**
+     * set the id of the domain specific entity (it will internally be converted to a string)
+     * @param mixed $entity_id
+     */
+    public function setEntityId($entity_id)
+    {
+        $this->entity_id = trim("$entity_id");
     }
 
     /**

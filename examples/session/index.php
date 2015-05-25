@@ -9,6 +9,12 @@ use izzum\statemachine\persistence\Session;
 use izzum\statemachine\utils\Utils;
 
 /**
+ * Example script that uses the 'standalone mode' as one of the four usage models for the statemachine.
+ * The other three usage models being inheritance, composition and delegation.
+ * 
+ * This demonstrates the use of a sesssion adapter to store the state in a php session
+ * to display in a browser over page refreshes.
+ * 
  * run this script from the (bash) command line:
  * php -S localhost:2468 -t <docroot: the path to this index.php file which you
  * can get via the shell command 'pwd'>

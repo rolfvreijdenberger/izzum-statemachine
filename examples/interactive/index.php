@@ -10,7 +10,10 @@ require_once('../autoload.php');
  * Example script that uses the 'standalone mode' as one of the four usage models for the statemachine.
  * The other three usage models being inheritance, composition and delegation.
  * 
- * This script allows you to interact with the statemachine from the command line.
+ * This script allows you to interact with the statemachine from the command line
+ * and does not use anything fancy for guard or transition logic.
+ * To see an example of guard and transition logic for the standalone mode you
+ * can see 'examples/standalone'
  * 
  * 
  * run this script from the (bash) command line:

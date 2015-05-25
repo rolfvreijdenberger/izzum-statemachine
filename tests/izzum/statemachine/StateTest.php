@@ -229,6 +229,69 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $command->reset();
         $this->assertEquals(0, count($command->getEvents()));
     }
+    
+    /**
+     * @test
+     */
+    public function shouldExitWithCallable()
+    {
+        $state = new State('a');
+        $context = new Context(new Identifier('123','foo-machine'));
+        $event = 'foo';
+        $callable = function($entity, $event) {$entity->setEntityId('234');};
+        $state->setExitCallable($callable);
+        $this->assertEquals('123', $context->getEntityId());
+        $state->entryAction($context, $event);
+        $this->assertEquals('123', $context->getEntityId());
+        $state->exitAction($context, $event);
+        $this->assertEquals('234', $context->getEntityId());
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldBeAbleToSetCallable()
+    {
+        $context = new Context(new Identifier('123','foo-machine'));
+        $event = 'foo';
+        //increase the id every time the callable is called
+        $callable = function($entity, $event) {$entity->setEntityId(($entity->getEntityId()+1));};
+        
+        //scenario 1: use constructor
+        $state = new State('a', State::TYPE_NORMAL, null, null, $callable, $callable);
+        $this->assertEquals('123', $context->getEntityId());
+        $state->entryAction($context, $event);
+        $this->assertEquals('124', $context->getEntityId());
+        $state->exitAction($context, $event);
+        $this->assertEquals('125', $context->getEntityId());
+        
+        //scenario 2: use setters
+        $state = new State('b', State::TYPE_NORMAL);
+        $state->setEntryCallable($callable);
+        $state->setExitCallable($callable);
+        $this->assertEquals('125', $context->getEntityId());
+        $state->entryAction($context, $event);
+        $this->assertEquals('126', $context->getEntityId());
+        $state->exitAction($context, $event);
+        $this->assertEquals('127', $context->getEntityId());
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldEnterWithCallable()
+    {
+        $state = new State('a');
+        $context = new Context(new Identifier('123','foo-machine'));
+        $event = 'foo';
+        $callable = function($entity, $event) {$entity->setEntityId('234');};
+        $state->setEntryCallable($callable);
+        $this->assertEquals('123', $context->getEntityId());
+        $state->exitAction($context, $event);
+        $this->assertEquals('123', $context->getEntityId());
+        $state->entryAction($context, $event);
+        $this->assertEquals('234', $context->getEntityId());
+    }
 
     /**
      * @test

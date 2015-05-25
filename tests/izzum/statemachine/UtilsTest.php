@@ -180,7 +180,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
      * @test
      * @group regex
      */
-    public function shouldMatchValidRegex(){
+    public function shouldMatchValidRegexAndNegatedRegex(){
         $name = 'regex:/.*/';//only allow regexes between regex begin and end markers
         $regex = new State($name);
         $target = new State('aa');
@@ -211,6 +211,14 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
         $regex = new State($name);
         $target = new State('gold');
         $bad = new State('golld');
+        $this->assertTrue(Utils::matchesRegex($regex, $target));
+        $this->assertFalse(Utils::matchesRegex($regex, $bad));
+        
+        //NOT matching a regex
+        $name = 'not-regex:/go[o,l]d/';
+        $regex = new State($name);
+        $target = new State('goad');
+        $bad = new State('gold');
         $this->assertTrue(Utils::matchesRegex($regex, $target));
         $this->assertFalse(Utils::matchesRegex($regex, $bad));
     }

@@ -13,22 +13,24 @@ use izzum\rules\IRule;
 /**
  * Transition class
  * An abstraction for everything that is needed to make an allowed and succesful
- * transition.
+ * transition between states.
  *
  * It has functionality to accept a Rule (guard logic) and a Command (transition
- * logic).
+ * logic) as well as callables for the guard logic and transition logic . 
+ * callables are: closures, anonymous functions, user defined functions, 
+ * instance methods, static methods etc. see the php manual.
  *
- * The Rule is used to check whether a transition can take place (a guard)
- * The Command is used to execute the transition logic.
+ * The guards are used to check whether a transition can take place (Rule and callable)
+ * The logic parts are used to execute the transition logic (Command and callable)
  *
  * Rules and commands should be able to be found/autoloaded by the application
  *
  * If transitions share the same states (both to and from) then they should
- * point
- * to the same object reference (same states should share the exact same state
- * configuration)/].
+ * point to the same object reference (same states should share the exact same state
+ * configuration).
  *
- *
+ * @link https://php.net/manual/en/language.types.callable.php
+ * @link https://en.wikipedia.org/wiki/Command_pattern
  * @author Rolf Vreijdenberger
  *        
  */
@@ -38,7 +40,7 @@ class Transition {
     const RULE_EMPTY = '';
     const COMMAND_NULL = 'izzum\command\Null';
     const COMMAND_EMPTY = '';
-    const CLOSURE_NULL = null;
+    const CALLABLE_NULL = null;
     
     /**
      * the state this transition starts from
@@ -80,10 +82,16 @@ class Transition {
     protected $command;
     
     /**
-     * the closure to call as part of the transition logic
-     * @var \Closure
+     * the callable to call as part of the transition logic
+     * @var callable
      */
-    protected $closure;
+    protected $callable_transition;
+    
+    /**
+     * the callable to call as part of the transition guard (should return a boolean)
+     * @var callable
+     */
+    protected $callable_guard;
     
     /**
      * a description for the state
@@ -109,16 +117,19 @@ class Transition {
      *            name(s) to execute for a transition.
      *            This can actually be a ',' seperated string of multiple
      *            commands that will be executed as a composite.
-     * @param \Closure $closure
-     *            optional: a php \Closure to call. eg: "function(){echo 'closure called';};"
+     * @param callable $callable_guard
+     *            optional: a php callable to call. eg: "function(){echo 'closure called';};"
+     * @param callable $callable_transition
+     *            optional: a php callable to call. eg: "izzum\MyClass::myStaticMethod"
      */
-    public function __construct(State $state_from, State $state_to, $event = null, $rule = self::RULE_EMPTY, $command = self::COMMAND_EMPTY, $closure = self::CLOSURE_NULL)
+    public function __construct(State $state_from, State $state_to, $event = null, $rule = self::RULE_EMPTY, $command = self::COMMAND_EMPTY, $callable_guard = self::CALLABLE_NULL, $callable_transition = self::CALLABLE_NULL)
     {
         $this->state_from = $state_from;
         $this->state_to = $state_to;
         $this->setRuleName($rule);
         $this->setCommandName($command);
-        $this->setClosure($closure);
+        $this->setGuardCallable($callable_guard);
+        $this->setTransitionCallable($callable_transition);
         // setup bidirectional relationship with state this transition
         // originates from. only if it's not a regex transition
         if (!Utils::isRegex($state_from)) {
@@ -129,20 +140,37 @@ class Transition {
     }
     
     /**
-     * the closure to execute as part of the transition
-     * @param \Closure $closure
+     * the callable to call as part of the transition logic
+     * @param callable $callable
      */
-    public function setClosure($closure) {
-        $this->closure = $closure;
+    public function setTransitionCallable($callable) {
+        $this->callable_transition = $callable;
     }
     
     /**
-     * returns the closure.
-     * @return Closure or null
+     * returns the callable for the transition logic.
+     * @return callable or null
      */
-    public function getClosure()
+    public function getTransitionCallable()
     {
-        return $this->closure;
+        return $this->callable_transition;
+    }
+    
+    /**
+     * the callable to call as part of the transition guard
+     * @param callable $callable
+     */
+    public function setGuardCallable($callable) {
+        $this->callable_guard = $callable;
+    }
+    
+    /**
+     * returns the callable for the guard logic.
+     * @return callable or null
+     */
+    public function getGuardCallable()
+    {
+        return $this->callable_guard;
     }
 
     /**
@@ -161,16 +189,19 @@ class Transition {
      * is a transition possible? Check the guard Rule with the domain object
      * injected.
      *
-     * @param Context $object            
+     * @param Context $context            
      * @param string $event
      *            optional in case the transition was triggered by an event code
      *            (mealy machine)
      * @return boolean
      */
-    public function can(Context $object, $event = null)
+    public function can(Context $context, $event = null)
     {
         try {
-            return $this->getRule($object, $event)->applies();
+            if(!$this->getRule($context, $event)->applies()) {
+                return false;
+            }
+            return $this->callCallable($this->getGuardCallable(), $context, $event);
         } catch(\Exception $e) {
             $e = new Exception($e->getMessage(), Exception::RULE_APPLY_FAILURE, $e);
             throw $e;
@@ -193,7 +224,7 @@ class Transition {
         // by the statemachine itself
         try {
             $this->getCommand($context, $event)->execute();
-            $this->doClosure($this->getClosure(), $context, $event);
+            $this->callCallable($this->getTransitionCallable(), $context, $event);
         } catch(\Exception $e) {
             // command failure
             $e = new Exception($e->getMessage(), Exception::COMMAND_EXECUTION_FAILURE, $e);
@@ -202,15 +233,17 @@ class Transition {
     }
     
     /**
-     * calls the closure as part of the transition
-     * @param \Closure $closure
+     * calls the $callable as part of the transition
+     * @param callable $callable
      * @param Context $context
      * @param string $event
      */
-    protected function doClosure($closure, Context $context, $event = null) {
-        if($closure != self::CLOSURE_NULL && is_callable($closure)){
-            $closure($context->getEntity(), $event);
+    protected function callCallable($callable, Context $context, $event = null) {
+        //in case it is a guard callable we need to return true/false
+        if($callable != self::CALLABLE_NULL && is_callable($callable)){
+            return (boolean) call_user_func($callable, $context->getEntity(), $event);
         }
+        return true;
     }
 
     /**
@@ -429,7 +462,7 @@ class Transition {
      */
     public function getCopy(State $from, State $to)
     {
-        $copy = new static($from, $to, $this->getEvent(), $this->getRuleName(), $this->getCommandName(), $this->getClosure());
+        $copy = new static($from, $to, $this->getEvent(), $this->getRuleName(), $this->getCommandName(), $this->getGuardCallable(), $this->getTransitionCallable());
         $copy->setDescription($this->getDescription());
         return $copy;
     }

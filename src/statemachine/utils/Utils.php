@@ -17,6 +17,7 @@ use izzum\statemachine\StateMachine;
 class Utils {
     const STATE_CONCATENATOR = '_to_';
     const REGEX_PREFIX = 'regex:';
+    const REGEX_PREFIX_NEGATED = 'not-regex:';
 
     /**
      * gets the transition name by two state names, using the default convention
@@ -151,7 +152,7 @@ class Utils {
         if (self::isRegex($regex)) {
             // lookup all from states that conform to this rgex
             foreach ($targets as $target) {
-                if (self::matchesRegex($regex, $target)) {
+                if (!self::isRegex($target) && self::matchesRegex($regex, $target)) {
                     $all [] = $target;
                 }
             }
@@ -163,7 +164,10 @@ class Utils {
 
     /**
      * is this state a regex type of state?
-     * format: "regex:<regular-expression-here>"
+     * formats: 
+     * "regex:<regular-expression-here>"
+     * "regex-not:<regular-expression-here>"
+     *          
      *
      * @param State $state            
      * @return boolean
@@ -172,7 +176,15 @@ class Utils {
      */
     public static function isRegex(State $state)
     {
-        return strpos($state->getName(), self::REGEX_PREFIX) === 0;
+        return  self::isNormalRegex($state->getName()) || self::isNegatedRegex($state->getName());
+    }
+    
+    private static function isNormalRegex($regex) {
+        return strpos($regex, self::REGEX_PREFIX) === 0;
+    }
+    
+    private static function isNegatedRegex($regex) {
+        return strpos($regex, self::REGEX_PREFIX_NEGATED) === 0;
     }
 
     /**
@@ -189,9 +201,13 @@ class Utils {
     public static function matchesRegex(State $regex, State $target)
     {
         $matches = false;
-        if (self::isRegex($regex)) {
+        if (self::isNormalRegex($regex->getName())) {
             $expression = str_replace(self::REGEX_PREFIX, '', $regex->getName());
             $matches = preg_match($expression, $target->getName()) === 1;
+        }
+        if(self::isNegatedRegex($regex->getName())) {
+            $expression = str_replace(self::REGEX_PREFIX_NEGATED, '', $regex->getName());
+            $matches = preg_match($expression, $target->getName()) !== 1;
         }
         return $matches;
     }

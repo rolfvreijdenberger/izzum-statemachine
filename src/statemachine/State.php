@@ -13,17 +13,14 @@ use izzum\statemachine\utils\Utils;
  * - what outgoing transitions this state has (bidirectional association
  * initiated by a Transition)
  * - class names for the entry and exit commands (if any)
+ * - callables for entry and exit logic (if any)
  *
  * A State instance can (and should) be shared by multiple Transition
  * objects when it is the same State for their origin/from State.
- * The LoaderArray class automatically takes care of this for us.
- *
- * the order of Transitions *might* be important.
- * whenever a State is asked for it's transitions, the first transition might
- * be tried first. this might have performance and configuration benefits.
  *
  * @author Rolf Vreijdenberger
- *        
+ * @link https://php.net/manual/en/language.types.callable.php
+ * @link https://en.wikipedia.org/wiki/Command_pattern        
  */
 class State {
     
@@ -59,7 +56,7 @@ class State {
      * @var string
      */
     const COMMAND_EMPTY = '';
-    const CLOSURE_NULL = null;
+    const CALLABLE_NULL = null;
     
     /**
      * the state types:
@@ -160,52 +157,56 @@ class State {
      *            execute when exiting this state.
      *            This can actually be a ',' seperated string of multiple
      *            commands that will be executed as a composite.
+     * @param callable $callable_entry
+     *            optional: a php callable to call. eg: "function(){echo 'closure called';};"
+     * @param callable $callable_exit
+     *            optional: a php callable to call. eg: "izzum\MyClass::myStaticMethod"
      */
-    public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY, $closure_entry = self::CLOSURE_NULL, $closure_exit = self::CLOSURE_NULL)
+    public function __construct($name, $type = self::TYPE_NORMAL, $command_entry_name = self::COMMAND_EMPTY, $command_exit_name = self::COMMAND_EMPTY, $callable_entry = self::CALLABLE_NULL, $callable_exit = self::CALLABLE_NULL)
     {
         $this->setName($name);
         $this->setType($type);
         $this->setEntryCommandName($command_entry_name);
         $this->setExitCommandName($command_exit_name);
-        $this->setEntryClosure($closure_entry);
-        $this->setExitClosure($closure_exit);
+        $this->setEntryCallable($callable_entry);
+        $this->setExitCallable($callable_exit);
         $this->transitions = array();
     }
 
     /**
-     * get the entry closure, the closure to be called when entering this state
-     * @return \Closure $closure
+     * get the entry callable, the callable to be called when entering this state
+     * @return callable 
      */
-    public function getEntryClosure()
+    public function getEntryCallable()
     {
-        return $this->closure_entry;
+        return $this->callable_entry;
     }
 
     /**
-     * set the entry closure, the closure to be called when entering this state
-     * @param \Closure $closure
+     * set the entry callable, the callable to be called when entering this state
+     * @param callable $callable
      */
-    public function setEntryClosure($closure)
+    public function setEntryCallable($callable)
     {
-        $this->closure_entry = $closure;
+        $this->callable_entry = $callable;
     }
 
     /**
-     * set the exit closure, the closure to be called when exiting this state
-     * @param \Closure $closure
+     * get the exit callable, the callable to be called when exiting this state
+     * @return callable
      */
-    public function getExitClosure()
+    public function getExitCallable()
     {
-        return $this->closure_exit;
+        return $this->callable_exit;
     }
 
     /**
-     * set the exit closure, the closure to be called when exiting this state
-     * @param \Closure $closure
+     * set the exit callable, the callable to be called when exiting this state
+     * @param callable $callable
      */
-    public function setExitClosure($closure)
+    public function setExitCallable($callable)
     {
-        $this->closure_exit = $closure;
+        $this->callable_exit = $callable;
     }
 
     /**
@@ -340,28 +341,26 @@ class State {
      * An entry action will not be executed for an 'initial' state.
      *
      * @param Context $context            
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
+     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @throws Exception
      */
     public function entryAction(Context $context, $event = null)
     {
         $command = $this->getCommand($this->getEntryCommandName(), $context, $event);
         $this->execute($command);
-        $this->doClosure($this->getEntryClosure(), $context, $event);
+        $this->callCallable($this->getEntryCallable(), $context, $event);
     }
 
     /**
-     * calls a closure if it exists
-     * @param \Closure $closure
+     * calls a $callable if it exists, with the arguments $context->getEntity() and $event
+     * @param $callable $callable
      * @param Context $context
      * @param string $event
      */
-    protected function doClosure($closure, Context $context, $event = null)
+    protected function callCallable($callable, Context $context, $event = null)
     {
-        if($closure != self::CLOSURE_NULL && is_callable($closure)) {
-            $closure($context->getEntity(), $event);
+        if($callable != self::CALLABLE_NULL && is_callable($callable)) {
+            call_user_func($callable, $context->getEntity(), $event);
         }
     }
 
@@ -380,7 +379,7 @@ class State {
     {
         $command = $this->getCommand($this->getExitCommandName(), $context, $event);
         $this->execute($command);
-        $this->doClosure($this->getExitClosure(), $context, $event);
+        $this->callCallable($this->getExitCallable(), $context, $event);
     }
 
     /**
@@ -402,8 +401,7 @@ class State {
 
     /**
      * returns the associated Command for the entry/exit action.
-     * the Command will be configured with the 'reference' of the stateful
-     * object
+     * the Command will be configured with the domain model via dependency injection
      *
      * @param string $command_name
      *            entry or exit command name
@@ -448,7 +446,7 @@ class State {
     }
 
     /**
-     * get the fully qualified command name for entry of the state
+     * get the fully qualified command name for exit of the state
      * 
      * @return string
      */
