@@ -5,13 +5,13 @@ could be provided via a yaml file or in the php program itself, but we still wou
 recreating the statemachine and have a history of transitions in the backend. We could probably reuse the existing PDO adapter
 and use it via composition. idea: use a mix and match Loader/Adapter that accepts a loader and a persistance adapter.
 
-- redis backend adapter and loader
-- ini file loader
-- xml loader (which can use a file or string as it's source)
-- yaml file loader
-- json loader (which can use a file or json string as it's source)
+- redis backend adapter and loader: needs a data structure
+- ini file loader: needs a data structure
+- xml loader (which can use a file or string as it's source):  needs a data structure
+- yaml file loader: needs a data structure
+- json loader (which can use a file or json string as it's source): needs a datastructure
 
-- a way to set closures or callback names on the statemachine for guard check, exit, entry and transition mechanisms. 
+- DONE: a way to set closures or callback names on the statemachine for guard check, exit, entry and transition mechanisms. 
 this can be done by implementing a dispatch map on the statemachine's current hook methods. we need a nice interface
 for doing this. where should we set the callbacks?
 

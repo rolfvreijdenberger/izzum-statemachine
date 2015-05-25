@@ -6,14 +6,15 @@ use izzum\statemachine\Exception;
 
 /**
  * Context is an object that holds all the contextual information for the
- * statemachine
- * to do it's work with the help of the relevant dependencies.
+ * statemachine to do it's work with the help of the relevant dependencies.
  * A Context is created by your application to provide the right dependencies
- * ('context')
- * for the statemachine to work with.
+ * ('context') for the statemachine to work with.
+ * 
+ * It seperates the concerns for the statemachine of how you are reading/writing 
+ * state data and of how you access your domain models.
  *
  * Important are:
- * - the entity, which is an application domain specific object
+ * - the entity id, which references an application domain specific object
  * like 'Order' or 'Customer' that goes through some finite states in it's
  * lifecycle.
  * - the machine name, which is the type identifier for the machine and related
@@ -33,6 +34,7 @@ use izzum\statemachine\Exception;
  * of the Adapter classes. this is useful for
  * testing and creating specific behaviour for statemachines that need extra
  * functionality to get and set the correct states.
+ * 
  *
  * @author Rolf Vreijdenberger
  *        

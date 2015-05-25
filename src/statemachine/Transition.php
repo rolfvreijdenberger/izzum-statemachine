@@ -132,7 +132,7 @@ class Transition {
         $this->setTransitionCallable($callable_transition);
         // setup bidirectional relationship with state this transition
         // originates from. only if it's not a regex transition
-        if (!Utils::isRegex($state_from)) {
+        if (!$state_from->isRegex()) {
             $state_from->addTransition($this);
         }
         // set and sanitize event name

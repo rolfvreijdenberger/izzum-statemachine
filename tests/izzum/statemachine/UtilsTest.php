@@ -156,25 +156,6 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($from . Utils::STATE_CONCATENATOR . $to, Utils::getTransitionName($from, $to));
     }
     
-    /**
-     * @test
-     * @group regex
-     */
-    public function shouldReturnRegexState(){
-    	$name = 'regex:.*';
-        $regex = new State($name);
-        $this->assertTrue(Utils::isRegex($regex));
-    }
-    
-    /**
-     * @test
-     * @group regex
-     */
-    public function shouldNotReturnRegexState(){
-        $name = 'rege:.*';
-        $regex = new State($name);
-        $this->assertFalse(Utils::isRegex($regex));
-    }
     
     /**
      * @test
@@ -255,7 +236,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(array($e, $f), Utils::getAllRegexMatchingStates($regex, $targets));
         
         $regex = new State('ac');
-        $this->assertFalse(Utils::isRegex($regex));
+        $this->assertFalse($regex->isRegex());
         $this->assertEquals(array($g), Utils::getAllRegexMatchingStates($regex, $targets), 'non regex state');
 
     }

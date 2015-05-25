@@ -292,7 +292,38 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $state->entryAction($context, $event);
         $this->assertEquals('234', $context->getEntityId());
     }
-
+    
+    /**
+     * @test
+     * @group regex
+     */
+    public function shouldReturnRegexState(){
+        $name = 'regex:.*';
+        $regex = new State($name);
+        $this->assertTrue($regex->isRegex());
+        $this->assertTrue($regex->isNormalRegex());
+        $this->assertFalse($regex->isNegatedRegex());
+    
+        $name = 'not-regex:/go[o,l]d/';
+        $regex = new State($name);
+        $this->assertTrue($regex->isRegex());
+        $this->assertTrue($regex->isNegatedRegex());
+        $this->assertFalse($regex->isNormalRegex());
+    }
+    
+    /**
+     * @test
+     * @group regex
+     */
+    public function shouldNotReturnRegexState(){
+        $name = 'rege:.*';
+        $regex = new State($name);
+        $this->assertFalse($regex->isRegex());
+        $this->assertFalse($regex->isNormalRegex());
+        $this->assertFalse($regex->isNegatedRegex());
+    }
+    
+    
     /**
      * @test
      */

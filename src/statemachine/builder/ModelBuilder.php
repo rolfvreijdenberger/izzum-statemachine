@@ -6,18 +6,15 @@ use izzum\statemachine\Identifier;
 /**
  * Always returns the same model; the one provided in the constructor.
  * This will thus not build the model when the statemachine asks for it, but
- * rather
- * the model is built when your application code creates it.
+ * rather the model is built when your application code creates it.
  *
  * This class is useful if your domain model actually subclasses the
- * StateMachine class or
- * uses object composition to use the statemachines' logic internally.
+ * StateMachine class or uses object composition to use the statemachines' logic internally.
  *
  * In that case, you can construct the StateMachine in your models' constructor,
- * including
- * the Context with this class in it and with the domain model itself ($this) as
- * an argument to
- * the builder.
+ * including the Context with this class in it and with the domain model itself ($this) as
+ * an argument to the builder, so you can put our event handlers on the domain model and
+ * have them respond to the statemachine.
  *
  * //eg: in the constructor of your domain model that uses object composition
  * $builder = new ModelBuilder($this);
@@ -26,8 +23,7 @@ use izzum\statemachine\Identifier;
  * $this->machine = new StateMachine($context);
  *
  *
- * //eg: in the constructor of your domain model that uses StateMachine as its'
- * superclass
+ * eg: in the constructor of your domain model that uses StateMachine as its' superclass
  * $builder = new ModelBuilder($this);
  * $identifier = new Identifier($this->getId(), 'my-model-machine');
  * $context = new Context($identifier, $builder);

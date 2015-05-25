@@ -565,13 +565,28 @@ class StateMachine {
     }
 
     /**
-     * Add a state.
+     * Add a state. without a transition.
+     * Normally, you would not use this method directly but instead use
+     * addTransition to add the transitions with the states in one go.
+     * 
+     * This method makes sense if you would want to load the statemachine with states
+     * and not transitions, and then add the transitions with regex states.
+     * This saves you the hassle of adding transitions before you add the
+     * regex transitions (just so the states are already known on the machine).
+     * 
+     * in case a State is not used in a Transition, it will be orphaned and not 
+     * reachable via other states.
      *
-     * @param State $state            
+     * @param State $state 
+     * @return boolean true if the state was not know to the machine, false otherwise.           
      */
-    protected function addState(State $state)
-    {
+    public function addState(State $state)
+    {   //check for duplicates
+        if(isset($this->states[$state->getName()])){
+            return false;
+        }
         $this->states [$state->getName()] = $state;
+        return true;
     }
 
     /**
@@ -674,9 +689,11 @@ class StateMachine {
      * Add a fully configured transition to the machine.
      *
      * It is possible to add transition that have 'regex' states: states that
-     * have a name in the format of 'regex:<regex-here>'. When adding a
-     * transition with a regex state, it will be matched against all currently
-     * known states if there is a match.
+     * have a name in the format of 'regex:/<regex-here>/' or 'not-regex:/<regex-here>/'. 
+     * When adding a transition with a regex state, it will be matched against all currently
+     * known states if there is a match. If you just want to use regex transitions, 
+     * it might be preferable to store some states via 'addState' first, so the 
+     * 
      * Self transitions for regex states are disallowed by default
      * since you would probably only want to do that explicitly. Regex states
      * can be both the 'to' and the 'from' state of a transition.
@@ -692,33 +709,34 @@ class StateMachine {
      * to and from state on this class.
      *
      * this method can also be used to add a Transition directly (instead of via
-     * a loader).
-     * Make sure that transitions that share a common State use the same
+     * a loader). Make sure that transitions that share a common State use the same
      * instance of that State object and vice versa.
      *
-     * @param Transition $transition            
+     * @param Transition $transition  
+     * @param boolean $allow_self_transition_by_regex optional: to allow regexes to set a self transition.
+     * @return int a count of how many transitions were added. In case of a regex transition this might be
+     *              multiple and in case a transition already exists it might be 0.
      */
-    public function addTransition(Transition $transition)
+    public function addTransition(Transition $transition, $allow_self_transition_by_regex = false)
     {
         // check if we have regex states in the transition and get either the
         // original state back if it's not a regex, or all currently known
         // states that match the regex.
+        $count = 0;
         $from = $transition->getStateFrom();
         $to = $transition->getStateTo();
         $all_states = $this->getStates();
-        //add both states since they might not be known to the machine yet.
-        array_push($all_states, $to, $from);
         $all_from = Utils::getAllRegexMatchingStates($from, $all_states);
         $all_to = Utils::getAllRegexMatchingStates($to, $all_states);
-        $contains_regex = Utils::isRegex($from) || Utils::isRegex($to);
+        $contains_regex = $from->isRegex() || $to->isRegex();
         $non_regex_transition = $transition;
         // loop trought all possible 'from' states
         foreach ($all_from as $from) {
             // loop through all possible 'to' states
             foreach ($all_to as $to) {
-                
-                if ($contains_regex && $from->getName() === $to->getName()) {
+                if ($contains_regex && $from->getName() === $to->getName() && !$allow_self_transition_by_regex) {
                     // disallow self transition for regexes and from final states
+                    //unless it is explicitely allowed.
                     continue;
                 }
                 if ($contains_regex) {
@@ -730,27 +748,32 @@ class StateMachine {
                      */
                     $non_regex_transition = $transition->getCopy($from, $to);
                 }
-                $this->addTransitionWithoutRegex($non_regex_transition);
+                if($this->addTransitionWithoutRegex($non_regex_transition)) {
+                    $count++;
+                }
             }
         }
+        return $count;
     }
 
     /**
      * Add the transition, after it has previously been checked that is did not
      * contain states with a regex.
      *
-     * @param Transition $transition            
+     * @param Transition $transition   
+     * @return boolean true in case it was added. false otherwise         
      */
     protected function addTransitionWithoutRegex(Transition $transition)
     {
         // don't allow transitions from a final state
         if ($transition->getStateFrom()->isFinal())
-            return;
+            return false;
             
         // add transition only if it already exists (no overwrites)
         if($this->getTransition($transition->getName()) !== null) {
-            return;
+            return false;
         }
+        
         $this->transitions [$transition->getName()] = $transition;
         
         $from = $transition->getStateFrom();
@@ -788,6 +811,7 @@ class StateMachine {
                 $this->state = $from;
             }
         }
+        return true;
     }
 
     /**

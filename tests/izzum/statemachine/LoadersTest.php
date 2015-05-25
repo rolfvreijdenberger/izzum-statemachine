@@ -62,7 +62,8 @@ class LoadersTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(count($loader->getTransitions()), $loader->count());
         $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
-        $loader->load($machine);
+        $count = $loader->load($machine);
+        $this->assertEquals(2, $count);
         $this->assertCount(2, $machine->getTransitions());
         $this->assertCount(3, $machine->getStates());
     }
@@ -91,6 +92,51 @@ class LoadersTest extends \PHPUnit_Framework_TestCase {
     	$loader->add(new Transition($s2, $s1));
     	$this->assertEquals(count($loader->getTransitions()), $loader->count());
     	$this->assertEquals(3, $loader->count());
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldAddRegexesLoaderOnlyWhenStatesAreSet()
+    {
+        
+        $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($context);
+        
+        $transitions = array();
+        $s1 = new State("1");
+        $s2 = new State("2");
+        $s3 = new State("3");
+        
+        //many to many
+        $transitions[] = new Transition(new State('regex:/.*/'), new State('regex:/.*/'));
+        $loader = new LoaderArray($transitions);
+        $this->assertEquals(count($transitions), $loader->count());
+        $this->assertEquals(1, $loader->count());
+        $this->assertEquals(0, count($machine->getStates()));
+        $this->assertEquals(0, count($machine->getTransitions()));
+        
+        $count = $loader->load($machine);
+        $this->assertEquals(0, $count, 'nothing because there are no known states');
+        
+        $this->assertTrue($machine->addState($s1));
+        $this->assertTrue($machine->addState($s2));
+        $this->assertTrue($machine->addState($s3));
+        $this->assertEquals(3, count($machine->getStates()));
+        $this->assertFalse($machine->addState($s1));
+        $this->assertFalse($machine->addState($s2));
+        $this->assertFalse($machine->addState($s3));
+        $this->assertEquals(3, count($machine->getStates()));
+        
+        $count = $loader->load($machine);
+        $this->assertEquals(6, count($machine->getTransitions()));
+        $this->assertEquals(6, $count, 'regexes have matched all states and created a mesh');
+        $count = $loader->load($machine);
+        $this->assertEquals(0, $count, 'transitions are not added since they have already been added');
+        $this->assertEquals(3, count($machine->getStates()));
+        $this->assertEquals(6, count($machine->getTransitions()));
+         
+
     }
 
 }

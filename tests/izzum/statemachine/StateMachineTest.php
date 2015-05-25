@@ -91,11 +91,11 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $t_c_to_d = new Transition($s_c, $s_d, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         $t_d_done = new Transition($s_d, $s_done, null, Transition::RULE_TRUE, Transition::COMMAND_NULL);
         
-        $machine->addTransition($t_new_to_a);
+        $this->assertEquals(1, $machine->addTransition($t_new_to_a));
         $this->assertCount(2, $machine->getStates());
         $this->assertCount(1, $machine->getTransitions());
         
-        $machine->addTransition($t_a_to_b);
+        $this->assertEquals(1, $machine->addTransition($t_a_to_b));
         $this->assertCount(3, $machine->getStates());
         $this->assertCount(2, $machine->getTransitions());
         
@@ -116,12 +116,12 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(6, $machine->getTransitions());
         
         // same, should not be added again
-        $machine->addTransition($t_d_done);
+        $this->assertEquals(0, $machine->addTransition($t_d_done));
         $this->assertCount(6, $machine->getStates());
         $this->assertCount(6, $machine->getTransitions());
         
         // same, should not be added again
-        $machine->addTransition($t_b_to_c);
+        $this->assertEquals(0,$machine->addTransition($t_b_to_c));
         $this->assertCount(6, $machine->getStates());
         $this->assertCount(6, $machine->getTransitions());
     }
@@ -164,7 +164,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $machine->addTransition(new Transition($b, $c));
         $machine->addTransition(new Transition($c, $d));
         $machine->addTransition(new Transition($d, $e));
-        $machine->addTransition(new Transition($regex_from_all, $done));
+        $this->assertEquals(4, $machine->addTransition(new Transition($regex_from_all, $done)), '5 to done, but a to done was already added');
         // echo "TRANSITIONS" . PHP_EOL;
         // echo implode(',', $machine->getTransitions());
         $this->assertNotNull($machine->getTransition('a_to_b'));
@@ -178,6 +178,94 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertNotNull($machine->getTransition('e_to_done'));
         $this->assertNull($machine->getTransition('done_to_done'), 'no self transitions for regex states');
         $this->assertNull($machine->getTransition('done_to_a'), 'not defined');
+    }
+    
+    /**
+     * @group regex
+     * @test
+     */
+    public function shouldAddRegexWithSelfTransitions()
+    {
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($object);
+    
+        $regex_all = new State('regex:/.+/'); // regex: all states
+        $a = new State('a', State::TYPE_INITIAL);
+        $b = new State('b');
+        $c = new State('c');
+        $this->assertCount(0, $machine->getStates());
+        $this->assertEquals(0, $machine->addTransition(new Transition($regex_all, $regex_all), true), 'no valid states known to the machine');
+        $this->assertTrue($machine->addState($a));
+        $this->assertTrue($machine->addState($b));
+        $this->assertTrue($machine->addState($c));
+        $this->assertCount(3, $machine->getStates());
+        $this->assertEquals(9, $machine->addTransition(new Transition($regex_all, $regex_all), true), 'create full mesh with self transitions');
+
+        $this->assertNotNull($machine->getTransition('a_to_a'));
+        $this->assertNotNull($machine->getTransition('a_to_b'));
+        $this->assertNotNull($machine->getTransition('a_to_c'));
+        $this->assertNotNull($machine->getTransition('b_to_b'));
+        $this->assertNotNull($machine->getTransition('b_to_a'));
+        $this->assertNotNull($machine->getTransition('b_to_c'));
+        $this->assertNotNull($machine->getTransition('c_to_c'));
+        $this->assertNotNull($machine->getTransition('c_to_a'));
+        $this->assertNotNull($machine->getTransition('c_to_b'));
+    }
+    
+    /**
+     * @group regex
+     * @test
+     */
+    public function shouldAddRegexWithoutSelfTransitions()
+    {
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($object);
+    
+        $regex_all = new State('regex:/.+/'); // regex: all states
+        $a = new State('a', State::TYPE_INITIAL);
+        $b = new State('b');
+        $c = new State('c');
+        $this->assertCount(0, $machine->getStates());
+        $this->assertEquals(0, $machine->addTransition(new Transition($regex_all, $regex_all)), 'no valid states known to the machine');
+        $this->assertTrue($machine->addState($a));
+        $this->assertTrue($machine->addState($b));
+        $this->assertTrue($machine->addState($c));
+        $this->assertCount(3, $machine->getStates());
+        $this->assertEquals(6, $machine->addTransition(new Transition($regex_all, $regex_all)), 'create mesh with self transitions');
+    
+        $this->assertNull($machine->getTransition('a_to_a'));
+        $this->assertNotNull($machine->getTransition('a_to_b'));
+        $this->assertNotNull($machine->getTransition('a_to_c'));
+        $this->assertNull($machine->getTransition('b_to_b'));
+        $this->assertNotNull($machine->getTransition('b_to_a'));
+        $this->assertNotNull($machine->getTransition('b_to_c'));
+        $this->assertNull($machine->getTransition('c_to_c'));
+        $this->assertNotNull($machine->getTransition('c_to_a'));
+        $this->assertNotNull($machine->getTransition('c_to_b'));
+    }
+    
+    /**
+     * @group regex
+     * @test
+     */
+    public function shouldAddState()
+    {
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($object);
+    
+        $regex_all = new State('regex:/.+/'); // regex: all states
+        $a = new State('a', State::TYPE_INITIAL);
+        $b = new State('b');
+        $c = new State('c');
+        $this->assertCount(0, $machine->getStates());
+        $this->assertTrue($machine->addState($a));
+        $this->assertTrue($machine->addState($b));
+        $this->assertTrue($machine->addState($c));
+        $this->assertCount(3, $machine->getStates());
+        $this->assertFalse($machine->addState($a));
+        $this->assertFalse($machine->addState($b));
+        $this->assertFalse($machine->addState($c));
+        $this->assertCount(3, $machine->getStates());
     }
     
     /**

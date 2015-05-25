@@ -16,8 +16,6 @@ use izzum\statemachine\StateMachine;
  */
 class Utils {
     const STATE_CONCATENATOR = '_to_';
-    const REGEX_PREFIX = 'regex:';
-    const REGEX_PREFIX_NEGATED = 'not-regex:';
 
     /**
      * gets the transition name by two state names, using the default convention
@@ -149,10 +147,10 @@ class Utils {
     public static function getAllRegexMatchingStates(State $regex, $targets)
     {
         $all = array();
-        if (self::isRegex($regex)) {
+        if ($regex->isRegex($regex)) {
             // lookup all from states that conform to this rgex
             foreach ($targets as $target) {
-                if (!self::isRegex($target) && self::matchesRegex($regex, $target)) {
+                if (!$target->isRegex() && self::matchesRegex($regex, $target)) {
                     $all [] = $target;
                 }
             }
@@ -160,31 +158,6 @@ class Utils {
             $all [] = $regex;
         }
         return $all;
-    }
-
-    /**
-     * is this state a regex type of state?
-     * formats: 
-     * "regex:<regular-expression-here>"
-     * "regex-not:<regular-expression-here>"
-     *          
-     *
-     * @param State $state            
-     * @return boolean
-     * @link https://php.net/manual/en/function.preg-match.php
-     * @link http://regexr.com/ for trying out regular expressions
-     */
-    public static function isRegex(State $state)
-    {
-        return  self::isNormalRegex($state->getName()) || self::isNegatedRegex($state->getName());
-    }
-    
-    private static function isNormalRegex($regex) {
-        return strpos($regex, self::REGEX_PREFIX) === 0;
-    }
-    
-    private static function isNegatedRegex($regex) {
-        return strpos($regex, self::REGEX_PREFIX_NEGATED) === 0;
     }
 
     /**
@@ -201,12 +174,12 @@ class Utils {
     public static function matchesRegex(State $regex, State $target)
     {
         $matches = false;
-        if (self::isNormalRegex($regex->getName())) {
-            $expression = str_replace(self::REGEX_PREFIX, '', $regex->getName());
+        if ($regex->isNormalRegex()) {
+            $expression = str_replace(State::REGEX_PREFIX, '', $regex->getName());
             $matches = preg_match($expression, $target->getName()) === 1;
         }
-        if(self::isNegatedRegex($regex->getName())) {
-            $expression = str_replace(self::REGEX_PREFIX_NEGATED, '', $regex->getName());
+        if($regex->isNegatedRegex()) {
+            $expression = str_replace(State::REGEX_PREFIX_NEGATED, '', $regex->getName());
             $matches = preg_match($expression, $target->getName()) !== 1;
         }
         return $matches;

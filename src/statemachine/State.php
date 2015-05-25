@@ -17,10 +17,29 @@ use izzum\statemachine\utils\Utils;
  *
  * A State instance can (and should) be shared by multiple Transition
  * objects when it is the same State for their origin/from State.
+ * 
+ * A State can be a regex state (or negated regex). 
+ * A regex state can be used in a transition and when added to a
+ * statemachine the regular expression will be matched on all currently
+ * known states on that statemachine and new Transitions will be added
+ * to the statemachine that match the from/to state regexes. This is very 
+ * useful to build a lot of transitions very quickly.
+ * 
+ * to build a full mesh of transitions (all states to all states):
+ * $a = new State('a');
+ * $b = new State('b');
+ * $c = new State('c');
+ * $machine->addState($a);
+ * $machine->addState($b);
+ * $machine->addState($c);
+ * $state_regex_all = new State('regex:|.*|');
+ * $machine->addTransition(new Transition($state_regex_all, $state_regex_all));
  *
  * @author Rolf Vreijdenberger
  * @link https://php.net/manual/en/language.types.callable.php
- * @link https://en.wikipedia.org/wiki/Command_pattern        
+ * @link https://en.wikipedia.org/wiki/Command_pattern    
+ * @link https://php.net/manual/en/function.preg-match.php
+ * @link http://regexr.com/ for trying out regular expressions    
  */
 class State {
     
@@ -57,6 +76,9 @@ class State {
      */
     const COMMAND_EMPTY = '';
     const CALLABLE_NULL = null;
+    
+    const REGEX_PREFIX = 'regex:';
+    const REGEX_PREFIX_NEGATED = 'not-regex:';
     
     /**
      * the state types:
@@ -492,4 +514,44 @@ class State {
     {
         return $this->description;
     }
+    
+    /**
+     * is this state a regex type of state?
+     * formats:
+     *      "regex:<regular-expression-here>"
+     *      "not-regex:<regular-expression-here>"
+     *
+     *
+     * @param State $state
+     * @return boolean
+     * @link https://php.net/manual/en/function.preg-match.php
+     * @link http://regexr.com/ for trying out regular expressions
+     */
+    public function isRegex()
+    {
+        return  $this->isNormalRegex($this->getName()) || $this->isNegatedRegex($this->getName());
+    }
+    
+    /**
+     * is this state a normal regex type of state?
+     * "regex:<regular-expression-here>"
+     *
+     * @param State $state
+     * @return boolean
+     */
+    public function isNormalRegex() {
+        return strpos($this->getName(), self::REGEX_PREFIX) === 0;
+    }
+    
+    /**
+     * is this state a negated regex type of state?
+     * "not-regex:<regular-expression-here>"
+     *
+     * @param State $state
+     * @return boolean
+     */
+    public function isNegatedRegex() {
+        return strpos($this, self::REGEX_PREFIX_NEGATED) === 0;
+    }
+    
 }

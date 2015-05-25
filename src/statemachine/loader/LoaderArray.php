@@ -29,6 +29,12 @@ use izzum\statemachine\persistence\PDO;
  * their origin/from state or their destination/to state) then at least make
  * sure that those states share the exact same data.
  * Ideally, they should point to the same State instance.
+ * Otherwise, transitions and states are actually stored on the statemachine
+ * on a first wins basis (the later transition/state instance is not stored).
+ * 
+ * Transitions will be sorted before they are added to the machine based on 
+ * if they contain a regex or not. All regex transitions will be added to 
+ * the machine after the non-regex transitions have been added.
  *
  *
  *
@@ -64,18 +70,34 @@ class LoaderArray implements Loader {
     /**
      * Load a statemachine with transition data
      *
-     * @param StateMachine $stateMachine            
+     * @param StateMachine $stateMachine   
+     * @return int the number of transitions actually added         
      */
     public function load(StateMachine $stateMachine)
     {
-        $transitions = $this->getTransitions();
-        // add the transitions. the transitions added will set the
-        // states (from/to) on the statemachine
-        foreach ($transitions as $transition) {
-            // when using transitions with 'regex' states, the statemachine will
-            // handle this for you.
-            $stateMachine->addTransition($transition);
+        $count = 0;
+        $unsorted = $this->getTransitions();
+        $has_regex = array();
+        $has_no_regex = array();
+        foreach ($unsorted as $transition) {
+            $to = $transition->getStateTo();
+            $from = $transition->getStateFrom();
+            //sort on regexes. they should come last in an automated loader like this
+            if($from->isRegex() || $to->isRegex()) {
+                $has_regex[] = $transition;
+            } else {
+                $has_no_regex[] = $transition;
+            }
         }
+        $sorted = array_merge($has_no_regex, $has_regex);
+        
+        // add the sorted transitions. the transitions added will set the
+        // states (from/to) on the statemachine
+        foreach ($sorted as $transition) {
+            // when using transitions with 'regex' states, the statemachine will handle this for you.
+            $count += $stateMachine->addTransition($transition);
+        }
+        return $count;
     }
 
     /**
@@ -101,6 +123,7 @@ class LoaderArray implements Loader {
 
     /**
      * counts the number of contained transitions.
+     * this is not the same as the possible amount of transitions added (because of regex transitions)
      *
      * @return int
      */

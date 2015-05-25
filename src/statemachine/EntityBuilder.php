@@ -3,41 +3,36 @@ namespace izzum\statemachine;
 
 /**
  * EntityBuilder is an object that builds an entity (an application domain
- * specific
- * model) for a Context object (by using the associated Identity object of the
- * Context)
- * It can be obtained via the factory method EntityBuilder::getEntity().
- *
- *
+ * specific model) for a Context object so your statemachine can interact with your
+ * domain model.
+ * 
  * The entity returned is the application domain specific object that will be
- * injected in the Rules and Commands for a specific statemachine (eg: Order).
+ * injected in the Rules and Commands for a specific statemachine (eg: Order)
+ * and can implement event handlers and callables.
  * A typical statemachine would use a subclass of this builder.
+ *
+ * The Context can build the entity by using the associated Identity object of the
+ * Context. the entity can be obtained via the factory method EntityBuilder::getEntity().
  *
  * Of course, a specific Rule or Command can just accept the Identifier directly
  * and use the entity_id to generate the domain object itself. But this would
- * also
- * mean that the Rules and Commands will not be specific to the applications'
- * problem
- * domain but to that of the statemachine (and therefore possibly less
- * reusable).
- * It is therefore advisable to let a builder build your domain model.
+ * also mean that the Rules and Commands will not be specific to the applications'
+ * problem domain but to that of the statemachine (and therefore possibly less
+ * reusable). It is therefore advisable to let a builder build your domain model.
  *
  * The Context instance is configured with this builder class by default. It can
- * be configured
- * with a subclass for your application domain if necessary (and the
- * configuration can be done
- * automatically by using a concrete instance of the AbstractFactory)
+ * be configured with a subclass for your application domain if necessary (and the
+ * configuration can be done automatically by using a concrete instance of the AbstractFactory)
  *
  * This class implements caching of the domain model/entity returned.
  * The builder is reusable for different statemachines (that have
  * a different Entity by definition). The cache will be rebuilt whenever a new
  * Identifier object is passed to the 'getEntity' method.
  *
- * This class returns the Identifier itself instead of a domain model. This is
- * useful because it allows us to test a lot of scenarios without side effects.
+ * This specific class (in contrast to subclasses) returns the Identifier itself instead of a domain model. 
+ * This is useful because it allows us to test a lot of scenarios without side effects.
  * It also allows us to use the Identifier object for our rules and commands, so
- * you
- * do not necessarily have to write your own entitybuilder.
+ * you do not necessarily have to write your own entitybuilder.
  *
  * This is a prime candidate to be overriden by subclasses (if need be).
  * Subclass this class and override the 'build' method to return a
@@ -45,13 +40,11 @@ namespace izzum\statemachine;
  * on the information in the Context, specifically the entity_id.
  *
  * the builder can be configured via dependency injection at creation time so
- * the builder can make use of the injected data when it is called via
- * 'getEntity'.
+ * the builder can make use of the injected data when it is called via 'getEntity'.
  *
  * An example of a builder would be an 'EntityBuilderOrder' class,
  * which would be used for a statemachine that uses rules and commands to act
- * upon an 'Order' object
- * from your applation domain.
+ * upon an 'Order' object from your applation domain.
  *
  * @see Context::getEntity()
  * @link https://en.wikipedia.org/wiki/Builder_pattern

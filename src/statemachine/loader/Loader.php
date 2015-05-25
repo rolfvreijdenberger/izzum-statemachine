@@ -21,11 +21,10 @@ use izzum\statemachine\StateMachine;
  *
  * Ideally your specific loader should:
  * - implement this interface: for use in a subclass of AbstractFactory
- * - create the transitions and states correctly (use LoaderArray via
- * composition)
+ * - create the transitions and states correctly (use LoaderArray via composition)
  * - work together with your persistence adapter (a concrete persistence adapter
- * could implement this interface) to retrieve the data for the creation of the
- * transitions and states
+ *      could implement this interface) to retrieve the data for the creation of the
+ *      transitions and states
  * - act as a Decorator for the LoaderArray
  *
  *
@@ -39,7 +38,8 @@ interface Loader {
     /**
      * Loads a state machine with the correct transitions and state data
      *
-     * @param StateMachine $stateMachine            
+     * @param StateMachine $stateMachine
+     * @return int the number of transitions actually loaded on the machine            
      */
     public function load(StateMachine $stateMachine);
 }
