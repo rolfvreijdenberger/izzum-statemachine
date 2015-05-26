@@ -8,8 +8,8 @@ and use it via composition. idea: use a mix and match Loader/Adapter that accept
 - redis backend adapter and loader: needs a data structure
 - ini file loader: needs a data structure
 - xml loader (which can use a file or string as it's source):  needs a data structure
-- yaml file loader: needs a data structure
-- json loader (which can use a file or json string as it's source): needs a datastructure
+- WON'T FIX: yaml file loader: needs a data structure
+- DONE: json loader (which can use a file or json string as it's source): needs a datastructure
 
 - DONE: a way to set closures or callback names on the statemachine for guard check, exit, entry and transition mechanisms. 
 this can be done by implementing a dispatch map on the statemachine's current hook methods. we need a nice interface

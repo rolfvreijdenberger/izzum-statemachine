@@ -581,8 +581,8 @@ class StateMachine {
      * @return boolean true if the state was not know to the machine, false otherwise.           
      */
     public function addState(State $state)
-    {   //check for duplicates
-        if(isset($this->states[$state->getName()])){
+    { //check for duplicates
+        if (isset($this->states [$state->getName()])) {
             return false;
         }
         $this->states [$state->getName()] = $state;
@@ -719,24 +719,23 @@ class StateMachine {
      */
     public function addTransition(Transition $transition, $allow_self_transition_by_regex = false)
     {
-        // check if we have regex states in the transition and get either the
-        // original state back if it's not a regex, or all currently known
-        // states that match the regex.
-        $count = 0;
         $from = $transition->getStateFrom();
         $to = $transition->getStateTo();
         $all_states = $this->getStates();
+        // check if we have regex states in the transition and get either the
+        // original state back if it's not a regex, or all currently known
+        // states that match the regex.
         $all_from = Utils::getAllRegexMatchingStates($from, $all_states);
         $all_to = Utils::getAllRegexMatchingStates($to, $all_states);
         $contains_regex = $from->isRegex() || $to->isRegex();
         $non_regex_transition = $transition;
+        $count = 0;
         // loop trought all possible 'from' states
         foreach ($all_from as $from) {
             // loop through all possible 'to' states
             foreach ($all_to as $to) {
                 if ($contains_regex && $from->getName() === $to->getName() && !$allow_self_transition_by_regex) {
-                    // disallow self transition for regexes and from final states
-                    //unless it is explicitely allowed.
+                    // disallow self transition for regexes and from final states unless it is explicitely allowed.
                     continue;
                 }
                 if ($contains_regex) {
@@ -748,7 +747,7 @@ class StateMachine {
                      */
                     $non_regex_transition = $transition->getCopy($from, $to);
                 }
-                if($this->addTransitionWithoutRegex($non_regex_transition)) {
+                if ($this->addTransitionWithoutRegex($non_regex_transition)) {
                     $count++;
                 }
             }
@@ -766,51 +765,39 @@ class StateMachine {
     protected function addTransitionWithoutRegex(Transition $transition)
     {
         // don't allow transitions from a final state
-        if ($transition->getStateFrom()->isFinal())
-            return false;
-            
-        // add transition only if it already exists (no overwrites)
-        if($this->getTransition($transition->getName()) !== null) {
+        if ($transition->getStateFrom()->isFinal()) {
             return false;
         }
-        
+            
+        // add the transition only if it already exists (no overwrites)
+        if ($this->getTransition($transition->getName()) !== null) {
+            return false;
+        }
         $this->transitions [$transition->getName()] = $transition;
         
         $from = $transition->getStateFrom();
-        if (!$this->getState($from->getName())) {
-            $this->addState($from);
-        }
-        // transitions create bidirectional references to the States
-        // when they are made, but here the States that are set on the machine
-        // can actually be different instances from different transitions (eg:
-        // a->b and a->c => we now have two State instances of a)
-        // we therefore need to merge the transitions on the existing states.
-        // The LoaderArray class does this for us by default, but we do it here
-        // too, just in case a client decides to call the 'addTransition' method
-        // directly without a loader.
+        // adds state only if it does not already exist (no overwrites)
+        $this->addState($from);
+        /* 
+         * transitions create bidirectional references to the States
+         * when they are made, but here the States that are set on the machine
+         * can actually be different instances from different transitions (eg:
+         * a->b and a->c => we now have two State instances of a)
+         * we therefore need to merge the transitions on the existing states.
+         * The LoaderArray class does this for us by default, but we do it here
+         * too, just in case a client decides to call the 'addTransition' method
+         * directly without a loader.
+         */
+        //get the state known to the machine, to prevent possible bug where client 
+        //creates 2 different state instances with different configs. we won't know
+        //how to resolve this anyway, so just pick the existing state (first in wins)
         $state = $this->getState($from->getName());
-        if (!$state->hasTransition($transition->getName())) {
-            $state->addTransition($transition);
-        }
+        // adds transition only if it does not already exist (no overwrites)
+        $state->addTransition($transition);
         
         $to = $transition->getStateTo();
-        if (!$this->getState($to->getName())) {
-            $this->addState($to);
-        }
-        
-        if ($this->state != null) {
-            // we have a current state, so check if we need to set the 'current
-            // state' to a fully configured state (with transitions) that we
-            // retrieve from the loaded Transition (in case the client did not
-            // set a fully configured state with the correct transition via
-            // setState)
-            if ($to->getName() == $this->state->getName()) {
-                $this->state = $to;
-            }
-            if ($from->getName() == $this->state->getName()) {
-                $this->state = $from;
-            }
-        }
+        // adds state only if it dooes not already exist (no overwrites)
+        $this->addState($to);
         return true;
     }
 
@@ -983,17 +970,23 @@ class StateMachine {
         return $transition;
     }
 
-    public function toString()
+    public function toString($elaborate = false)
     {
-        return get_class($this) . ": [" . $this->getContext()->getId(true) . "]";
+        $output = get_class($this) . ": [" . $this->getContext()->getId(true) . "]";
+        if(!$elaborate) {
+            return $output;
+        } else {
+            return $output . ' transitions: ' . count($this->getTransitions()) . ', states: ' . count($this->getStates());
+        }
     }
 
     public function __toString()
     {
-        return $this->toString();
+        return $this->toString(true);
     }
     
     // ###################### HOOK METHODS #######################
+    
 
     /**
      * hook method.
@@ -1028,7 +1021,8 @@ class StateMachine {
      * @param Transition $transition            
      * @param string $event            
      */
-    protected function _onExitState(Transition $transition, $event = null) {}
+    protected function _onExitState(Transition $transition, $event = null)
+    {}
 
     /**
      * hook method.
@@ -1037,7 +1031,8 @@ class StateMachine {
      * @param Transition $transition            
      * @param string $event            
      */
-    protected function _onTransition(Transition $transition, $event = null) {}
+    protected function _onTransition(Transition $transition, $event = null)
+    {}
 
     /**
      * hook method.
@@ -1052,7 +1047,8 @@ class StateMachine {
      * @param Transition $transition            
      * @param string $event            
      */
-    protected function _onEnterState(Transition $transition, $event = null) {}
+    protected function _onEnterState(Transition $transition, $event = null)
+    {}
 
     /**
      * process a string to a name that is a valid method name.

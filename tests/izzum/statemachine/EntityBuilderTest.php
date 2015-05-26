@@ -101,27 +101,6 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
             $this->assertEquals(Exception::BUILDER_FAILURE, $e->getCode());
         }
     }
-    
-    /**
-     * @test
-     */
-    public function shouldUseModelBuilderCorrectly()
-    {
-    	$identifier = new Identifier(-1, 'order');
-    	$entity = new \stdClass();
-    	$entity->id = 123;
-    	$builder = new ModelBuilder($entity);
-    	$this->assertEquals($entity, $builder->getEntity($identifier));
-    	$this->assertEquals($entity, $builder->getEntity($identifier, true));
-    	$this->assertNotEquals($identifier, $entity);
-    	$this->assertNotEquals($identifier, $builder->getEntity($identifier), 'default builder returns $identifer and modelbuilder does not');
-    	
-    	//now use a different model
-    	$builder = new ModelBuilder($identifier);
-    	$this->assertEquals($identifier, $builder->getEntity($identifier), 'the argument being the same is the method signature, it has no influence on the object returned (in this case)');
-    	$this->assertEquals($identifier, $builder->getEntity($identifier, true));
-    
-    }
 }
 
 /**

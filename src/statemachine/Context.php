@@ -144,8 +144,7 @@ class Context {
         }
         // not found, try to get it from the states loaded on the statemachine
         if (!$this->getStateMachine()) {
-            // reference to statemachine does not exist (standalone context
-            // object)
+            // reference to statemachine does not exist (possible standalone context object)
             return $state;
         }
         // reference to machine exists, just try to get the initial state

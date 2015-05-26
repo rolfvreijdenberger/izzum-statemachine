@@ -139,7 +139,7 @@ class Utils {
      * @param State[] $targets
      *            all target State instances that we check the regex against.
      * @return State[] an array of State instances from the $targets State
-     *         instances that matched the regex, or the $regex State if it was
+     *         instances that matched the (negated) regex, or the $regex State if it was
      *         not a regex State after all.
      * @link https://php.net/manual/en/function.preg-match.php
      * @link http://regexr.com/ for trying out regular expressions

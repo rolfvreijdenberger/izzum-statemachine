@@ -293,13 +293,13 @@ class State {
      */
     public function addTransition(Transition $transition)
     {
-        $output = true;
+        $output = false;
         // check all existing transitions.
-        if ($this->hasTransition($transition->getName())) {
-            $output = false;
+        if (!$this->hasTransition($transition->getName())) {
+            $output = true;
+            $this->transitions [] = $transition;
         }
         
-        $this->transitions [] = $transition;
         return $output;
     }
 

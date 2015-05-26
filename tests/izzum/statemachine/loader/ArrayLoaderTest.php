@@ -1,8 +1,12 @@
 <?php
-namespace izzum\statemachine;
+namespace izzum\statemachine\loader;
 use izzum\statemachine\Transition;
 use izzum\statemachine\State;
+use izzum\statemachine\StateMachine;
+use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
 use izzum\statemachine\Entity;
+use izzum\statemachine\Exception;
 use izzum\statemachine\loader\Loader;
 use izzum\statemachine\loader\LoaderArray;
 use izzum\statemachine\utils\Utils;
@@ -12,7 +16,7 @@ use izzum\statemachine\utils\Utils;
  * @author rolf
  *
  */
-class LoadersTest extends \PHPUnit_Framework_TestCase {
+class ArrayLoaderTest extends \PHPUnit_Framework_TestCase {
     
     
     

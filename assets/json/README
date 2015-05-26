@@ -1,0 +1,5 @@
+- schema.json contains a valid json schema which the izzum\statemachine\loader\JSON  
+needs to build the correct transitions.
+use https://www.jsoneditoronline.org/ for online json editing
+use http://jsonschemalint.com/draft4/# to validate your json against a schema.
+- example.json contains a valid example which validates against the schema.

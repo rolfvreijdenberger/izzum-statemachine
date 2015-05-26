@@ -1,9 +1,12 @@
 <?php
-namespace izzum\statemachine;
+namespace izzum\statemachine\persistence;
 use izzum\statemachine\Context;
 use izzum\statemachine\EntityBuilder;
 use izzum\statemachine\State;
-use izzum\statemachine\persistence\Memory;
+use izzum\statemachine\Transition;
+use izzum\statemachine\Identifier;
+use izzum\statemachine\StateMachine;
+use izzum\statemachine\Exception;
 use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\StorageData;
 use izzum\statemachine\persistence\Session;
@@ -456,17 +459,15 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertPersistenceAdapterPDO($adapter, $machine);
 
     }
-    
-    
-    
-    
-    
 }
 
+namespace izzum\statemachine\persistence;
+use izzum\statemachine\Identifier;
 class MemoryEntityConcatenator extends Memory {
     /**
      * overriden implementation
      */
+
     protected function processSetState(Identifier $identifier, $state){
         return $identifier->getMachine() . "_" . 
         $identifier->getEntityId() . "_" .
@@ -477,7 +478,9 @@ class MemoryEntityConcatenator extends Memory {
         return $identifier->getMachine() .  "_" . $identifier->getEntityId();
     }
 }
-
+namespace izzum\statemachine\persistence;
+use izzum\statemachine\Identifier;
+use izzum\statemachine\Exception;
 class MemoryException extends Memory {
     private $bool;
     public function __construct($bool) {

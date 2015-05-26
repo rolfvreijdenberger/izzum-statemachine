@@ -1,0 +1,116 @@
+{
+  "machines": [
+    {
+      "name": "test-machine",
+      "factory": "fully\\\\qualified\\\\factory-for-test-machine",
+      "description": "my test-machine description",
+      "states": [
+        {
+          "name": "a",
+          "type": "initial",
+          "entry_command": "",
+          "exit_command": null,
+          "entry_callable": null,
+          "exit_callable": null,
+          "description": "state a description"
+        },
+        {
+          "name": "b",
+          "type": "normal",
+          "entry_command": "izzum\\\\command\\\\Null",
+          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_callable": "Static::method",
+          "exit_callable": "Static::method",
+          "description": "state b description"
+        },
+        {
+          "name": "done",
+          "type": "final",
+          "entry_command": "izzum\\\\command\\\\Null",
+          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_callable": "Static::method",
+          "exit_callable": null,
+          "description": "state done description"
+        }
+      ],
+      "transitions": [
+        {
+          "state_from": "a",
+          "state_to": "b",
+          "rule": "izzum\\\\rules\\\\True",
+          "command": "izzum\\\\command\\\\Null",
+          "guard_callable": "Static::guard",
+          "transition_callable": "Static::method",
+          "event": "ab",
+          "description": "my description for a_to_b"
+        },
+        {
+          "state_from": "b",
+          "state_to": "done",
+          "rule": null,
+          "command": null,
+          "guard_callable": null,
+          "transition_callable": null,
+          "event": "bdone",
+          "description": "my description for b_to_done"
+        }
+      ]
+    },
+    {
+      "name": "json-machine",
+      "factory": "fully\\\\qualified\\\\factory-for-json-machine",
+      "description": "my json-machine description",
+      "states": [
+        {
+          "name": "a",
+          "type": "initial",
+          "entry_command": "",
+          "exit_command": null,
+          "entry_callable": null,
+          "exit_callable": null,
+          "description": "state a description"
+        },
+        {
+          "name": "b",
+          "type": "normal",
+          "entry_command": "izzum\\\\command\\\\Null",
+          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_callable": "Static::method",
+          "exit_callable": "Static::method",
+          "description": "state b description"
+        },
+        {
+          "name": "done",
+          "type": "final",
+          "entry_command": "izzum\\\\command\\\\Null",
+          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_callable": "Static::method",
+          "exit_callable": null,
+          "description": "state done description"
+        }
+      ],
+      "transitions": [
+        {
+          "state_from": "a",
+          "state_to": "b",
+          "rule": "izzum\\\\rules\\\\True",
+          "command": "izzum\\\\command\\\\Null",
+          "guard_callable": "Static::guard",
+          "transition_callable": "Static::method",
+          "event": "ab",
+          "description": "my description for a_to_b"
+        },
+        {
+          "state_from": "b",
+          "state_to": "done",
+          "rule": null,
+          "command": null,
+          "guard_callable": null,
+          "transition_callable": null,
+          "event": "bdone",
+          "description": "my description for b_to_done"
+        }
+      ]
+    }
+  ]
+}

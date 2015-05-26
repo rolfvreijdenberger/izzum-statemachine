@@ -1,11 +1,19 @@
 <?php
-namespace izzum\statemachine;
+namespace izzum\statemachine\utils;
 use izzum\statemachine\utils\EntityNull;
 use izzum\command\ExceptionCommand;
 use izzum\command\Command;
 use izzum\command\Null;
 use izzum\statemachine\builder\ModelBuilder;
-use izzum\statemachine\utils\Utils;
+use izzum\statemachine\Transition;
+use izzum\statemachine\State;
+use izzum\statemachine\StateMachine;
+use izzum\statemachine\Context;
+use izzum\statemachine\Identifier;
+use izzum\statemachine\Entity;
+use izzum\statemachine\Exception;
+use izzum\statemachine\loader\Loader;
+use izzum\statemachine\loader\LoaderArray;
 
 /**
  * @group statemachine
@@ -20,7 +28,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldGetCommandWithEntity(){
     
-    	$command_name = 'izzum\statemachine\IncreaseId';
+    	$command_name = 'izzum\statemachine\utils\IncreaseId';
     	$entity = new \stdClass();
     	$entity->id = 0;
     	$entity->event = null;
@@ -43,7 +51,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldGetCommandWithEntityAndEvent(){
     
-    	$command_name = 'izzum\statemachine\IncreaseId';
+    	$command_name = 'izzum\statemachine\utils\IncreaseId';
     	$entity = new \stdClass();
     	$entity->id = 0;
     	$entity->event = null;
@@ -67,7 +75,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     public function shouldGetCompositeCommand(){
     
     	//id should be increased three times
-    	$command_name = 'izzum\statemachine\IncreaseId,izzum\statemachine\IncreaseId,izzum\statemachine\IncreaseId';
+    	$command_name = 'izzum\statemachine\utils\IncreaseId,izzum\statemachine\utils\IncreaseId,izzum\statemachine\utils\IncreaseId';
     	$entity = new \stdClass();
     	$entity->id = 0;
     	$entity->event = null;
@@ -113,7 +121,7 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
      * @test
      */
     public function shouldGetExceptionForInvalidCommand(){
-    	$command_name = 'izzum\statemachine\CannotCreate';
+    	$command_name = 'izzum\statemachine\utils\CannotCreate';
     	$context = new Context(new Identifier('1','test'));
     	$event = '';
     	

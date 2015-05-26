@@ -1,5 +1,5 @@
 <?php
-namespace izzum\statemachine;
+namespace izzum\statemachine\utils;
 use izzum\statemachine\utils\ExternalData;
 
 /**
