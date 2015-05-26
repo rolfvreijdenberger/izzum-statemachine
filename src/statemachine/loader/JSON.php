@@ -9,7 +9,9 @@ use izzum\statemachine\Exception;
 /**
  * JSON loader. accepts a json string and loads a machine from it.
  * This class also provides a way to load json from a file.
- * The format of the data to be loaded is specified via a json-schema. see getJSONSchema
+ * The format of the data to be loaded is specified via a json-schema. 
+ * The schema can be retrieved via JSON::getJSONSchema() and the schema itself and 
+ * a full example of the data can be found in 'assets/json'
  * 
  * @link https://en.wikipedia.org/wiki/JSON
  * @Link http://json-schema.org
@@ -107,7 +109,7 @@ class JSON implements Loader {
         $loader = new LoaderArray($transitions);
         return $loader->load($stateMachine);
     }
-    
+
     public function toString()
     {
         return get_class($this);
@@ -118,3 +120,4 @@ class JSON implements Loader {
         return $this->toString();
     }
 }
+
