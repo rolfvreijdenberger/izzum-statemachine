@@ -57,8 +57,9 @@ ALTER TABLE statemachine_machines ADD PRIMARY KEY (machine);
 -- states
 CREATE TABLE statemachine_states (
 	machine varchar NOT NULL, -- a foreign key to the machine name.
-	state varchar NOT NULL, -- a state for the machine. use lowercase and hyphen seperated. eg: my-state
-	type varchar DEFAULT 'normal'::character varying NOT NULL, -- one of initial, normal or final
+	state varchar NOT NULL, -- a state for the machine. use lowercase and hyphen seperated. eg: my-state.
+							-- or use a regex specifier: <[not-]regex:/<regular-expresion-here>/>
+	type varchar DEFAULT 'normal'::character varying NOT NULL, -- one of initial, normal, regex or final
 	entry_command varchar NULL, -- the fully qualified name of a Command class to execute as part of entering this state 
 	exit_command varchar NULL, -- the fully qualified name of a Command class to instantiate as part of exiting this state
 	description text -- optional: a descriptive text
@@ -70,11 +71,12 @@ The implicit assumption is that a statemachine always has (and can only have) ON
 which is the entry point. The default name for this state is "new".
 As part of a transition a state can have an exit action and the new state an entry action.
 These actions will execute a command. The order is: exit-command, transition-command, entry-command
-All states must be lowercase and use hyphens instead of spaces eg: my-state.
+All states must be lowercase and use hyphens instead of spaces eg: my-state unless it is a regex state,
+then you need to use the regex format of [not-]regex:/<regular-expression-here>/.
 changes in the name of a state will be cascaded through the other tables';
 CREATE UNIQUE INDEX u_statemachine_states_m_s ON statemachine_states (machine, state);
 ALTER TABLE statemachine_states ADD CHECK ((state)::text = lower((state)::text));
-ALTER TABLE statemachine_states ADD CHECK ((type)::text = ANY ((ARRAY['normal'::character varying, 'final'::character varying, 'initial'::character varying])::text[]));
+ALTER TABLE statemachine_states ADD CHECK ((type)::text = ANY ((ARRAY['normal'::character varying, 'final'::character varying, 'initial'::character varying, , 'regex'::character varying])::text[]));
 ALTER TABLE statemachine_states ADD PRIMARY KEY (state, machine);
 ALTER TABLE statemachine_states ADD FOREIGN KEY (machine) REFERENCES statemachine_machines (machine) ON DELETE NO ACTION ON UPDATE CASCADE;
 
@@ -86,10 +88,10 @@ CREATE TABLE statemachine_transitions (
 	machine varchar  NOT NULL, 
 	state_from varchar  NOT NULL, -- the state this transition is from
 	state_to varchar  NOT NULL, -- the state this transition is to
+	event varchar NULL, --optional: can be used for giving 'event' input to the statemachine.
 	rule varchar  DEFAULT '\izzum\rules\True'::character varying NOT NULL, -- the fully qualified name of a Rule class to instantiate
 	command varchar  DEFAULT '\izzum\command\Null'::character varying NOT NULL, -- the fully qualified name of a Command class to instantiate
 	priority int4 DEFAULT 1 NOT NULL, -- optional: can be used if you want your rules to be tried in a certain order. make sure to ORDER in your retrieval query.
-	event varchar NULL, --optional: can be used for giving 'event' input to the statemachine.
 	description text -- optional: a descriptive text
 );
 COMMENT ON TABLE statemachine_transitions IS '
@@ -133,27 +135,30 @@ there can be only ONE entry per {entity_id, machine} tuple.
 
 The actual state is stored here. Transition information will be stored in the
 statemachine_history table, where the latest record should equal the actual state.
-If there is no previous state (first transition), the state should default to the 
-first state of the machine with type "initial".
+The first entry in this table should default to the 
+only state of the machine with type "initial" (for theoretical purposes)
 
 
 The data that will be written to this table by a subclass 
 of izzum\statemachine\persistence\Adapter specifically written for postgres. 
 Entities should be explicitely added to the statemachine by application logic. 
-This will be done in the method "add($context)" which should write 
-the first entry for this entity: a "new" state.
+This will be done in the method "$context->add($state)" which should write 
+the first entry for this entity: it should be the only 'initial' state, the "new" state.
 
 After a transition, the new state will be set in this table and will overwrite the current value.
-This will be done in the overriden method "processSetState($context, $state)".
+This will be done in the overriden method "processSetState($identifier, $state)".
 
 The current state should be read from this table via the overriden 
-method "processGetState($context)".
+method "processGetState($identifier)".
 
 All entity_ids for a machine in a specific state should be retrieved from this 
 table via the method "getEntityIds($machine, $state)".';
 CREATE INDEX i_statemachine_entities_entity_id ON statemachine_entities (entity_id);
 ALTER TABLE statemachine_entities ADD PRIMARY KEY (machine, entity_id);
-ALTER TABLE statemachine_entities ADD FOREIGN KEY (machine, state) REFERENCES statemachine_states (machine, state) ON DELETE NO ACTION ON UPDATE CASCADE;
+-- only add foreign keys if you use the database for both 
+-- 1. the configuration of the statemachine and 
+-- 2. for persistence of state data.
+-- ALTER TABLE statemachine_entities ADD FOREIGN KEY (machine, state) REFERENCES statemachine_states (machine, state) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 
 
@@ -172,13 +177,17 @@ CREATE TABLE statemachine_history (
 	id int4 DEFAULT nextval('s_statemachine_history_id'::regclass) NOT NULL, -- we use a surrogate key since we have no natural primary key
 	machine varchar  NOT NULL,
 	entity_id varchar NOT NULL,
-	state varchar NOT NULL, -- the state to which the transition was done
+	state varchar NOT NULL, -- the state to which the transition was (partially in case of error) done
 	changetime timestamp(6) DEFAULT now() NOT NULL, -- when the transition was made
 	message text, 	-- optional: this should only be set when there is an error thrown from the statemachine.
-			-- both state_from and state_to will then be the same AND this field will be filled,
+			-- the state will then reflect the actual current state for the machine; either
+			-- the from state in case the transition was only partially succesful or 
+			-- the to state in case the transition was only partial succesful but 
+			-- got so far as to enter the next state. 
+			-- This field will be filled,
 			-- preferably with json, to store both exception code and message.
 			-- application code will then be able to display this.
-			-- If/when state_to and state_from are the same AND this field is empty,
+			-- If/when the state and the previous state are the same AND this field is empty,
 			-- it will mean a succesfull self transition has been made.
 	exception boolean DEFAULT FALSE -- if it is an exceptional transition or not. 
 );
@@ -209,12 +218,14 @@ and message in this field.
 
 Entities should be explicitely added to the statemachine by application logic. 
 This will be done in a subclass of izzum\statemachine\persistence\Adapter. 
-The logic will be implemented in the method "add($context)" for the first entry,
-and in the method "processsetState($context, $state)" for all subsequent entries.';
+The logic will be implemented in the method "$context->add($state)" for the first entry,
+and in the method "processetState($identifier, $state)" for all subsequent entries.';
 CREATE INDEX i_statemachine_history_entity_id ON statemachine_history (entity_id);
 ALTER TABLE statemachine_history ADD PRIMARY KEY (id);
-ALTER TABLE statemachine_history ADD FOREIGN KEY (machine, state) REFERENCES statemachine_states (machine, state) ON DELETE NO ACTION ON UPDATE CASCADE;
-
+-- only add foreign keys if you use the database for both 
+-- 1. the configuration of the statemachine and 
+-- 2. for persistence of state data.
+-- ALTER TABLE statemachine_history ADD FOREIGN KEY (machine, state) REFERENCES statemachine_states (machine, state) ON DELETE NO ACTION ON UPDATE CASCADE;
 
 
 ---------------------------------------------

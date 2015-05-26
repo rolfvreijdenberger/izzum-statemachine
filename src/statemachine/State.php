@@ -45,59 +45,57 @@ class State {
     
     /**
      * state name if it is unknown (not configured)
-     * 
      * @var string
      */
     const STATE_UNKNOWN = 'unknown';
+    
     /**
-     * default name for the first/only initial state
-     * 
+     * default name for the first/only initial state (but you can specify whatever you want for your initial state)
      * @var string
      */
     const STATE_NEW = 'new';
+    
     /**
      * default name for a normal final state
-     * 
      * @var string
      */
     const STATE_DONE = 'done';
     
     /**
      * default exit/entry command
-     * 
      * @var string
      */
-    const COMMAND_NULL = 'izzum\command\Null';
+    const COMMAND_NULL = '\izzum\command\Null';
     
     /**
      * default exit/entry command for constructor
-     * 
      * @var string
      */
     const COMMAND_EMPTY = '';
     const CALLABLE_NULL = null;
-    
     const REGEX_PREFIX = 'regex:';
     const REGEX_PREFIX_NEGATED = 'not-regex:';
     
     /**
      * the state types:
-     * - a statemachine has exactly 1 initial type, this is always the only
-     * entrance into the statemachine.
-     * - a statemachine can have 0-n normal types.
-     * - a statemachine should have at least 1 final type where it has no
-     * further transitions.
+     * - 'initial':     a statemachine has exactly 1 initial type, this is always the only
+     *                  entrance into the statemachine.
+     * - 'normal':      a statemachine can have 0-n normal types.
+     * - 'done':        a statemachine should have at least 1 final type where it has no
+     *                  further transitions.
+     * - 'regex':       a statemachine configuration could have regex states, which serve a purpose to create transitions
+     *                  from or to multiple other states
      * 
      * @var string
      */
-    const TYPE_INITIAL = 'initial', TYPE_NORMAL = 'normal', TYPE_FINAL = 'final';
+    const TYPE_INITIAL = 'initial', TYPE_NORMAL = 'normal', TYPE_FINAL = 'final', TYPE_REGEX = 'regex';
     
     /**
      * The state type:
      * - State::TYPE_INITIAL
      * - State::TYPE_NORMAL
      * - State::TYPE_FINAL
-     *
+     * - State::TYPE_REGEX
      * @var string
      */
     protected $type;
@@ -164,7 +162,7 @@ class State {
     /**
      *
      * @param string $name
-     *            the name of the state
+     *            the name of the state (can also be a regex in format: [not-]regex:/<regex-specification-here>/)
      * @param string $type
      *            the type of the state (on of self::TYPE_<*>)
      * @param $command_entry_name optional:
@@ -262,12 +260,56 @@ class State {
     }
 
     /**
+     * is this state a regex type of state?
+     * formats:
+     *      "regex:<regular-expression-here>"
+     *      "not-regex:<regular-expression-here>"
+     *
+     *
+     * @param State $state
+     * @return boolean
+     * @link https://php.net/manual/en/function.preg-match.php
+     * @link http://regexr.com/ for trying out regular expressions
+     */
+    public function isRegex()
+    {
+        //check the type (and check the state name for regex matches)
+        return $this->type === self::TYPE_REGEX || $this->isNormalRegex($this->getName()) || $this->isNegatedRegex($this->getName());
+    }
+
+    /**
+     * is this state a normal regex type of state?
+     * "regex:<regular-expression-here>"
+     *
+     * @param State $state
+     * @return boolean
+     */
+    public function isNormalRegex()
+    {
+        return strpos($this->getName(), self::REGEX_PREFIX) === 0;
+    }
+
+    /**
+     * is this state a negated regex type of state?
+     * "not-regex:<regular-expression-here>"
+     *
+     * @param State $state
+     * @return boolean
+     */
+    public function isNegatedRegex()
+    {
+        return strpos($this, self::REGEX_PREFIX_NEGATED) === 0;
+    }
+
+    /**
      * get the state type
      * 
      * @return string
      */
     public function getType()
     {
+        
+        $this->isRegex();
         return $this->type;
     }
 
@@ -278,6 +320,11 @@ class State {
      */
     protected function setType($type)
     {
+        //if a client mistakenly creates a regex State (a name of [not-]<regex:>), but with a non-regex type, 
+        //we will set it to a regex state.
+        if($this->isRegex()) {
+            $type = self::TYPE_REGEX;
+        }
         $this->type = trim($type);
     }
 
@@ -381,7 +428,7 @@ class State {
      */
     protected function callCallable($callable, Context $context, $event = null)
     {
-        if($callable != self::CALLABLE_NULL && is_callable($callable)) {
+        if ($callable != self::CALLABLE_NULL && is_callable($callable)) {
             call_user_func($callable, $context->getEntity(), $event);
         }
     }
@@ -514,44 +561,4 @@ class State {
     {
         return $this->description;
     }
-    
-    /**
-     * is this state a regex type of state?
-     * formats:
-     *      "regex:<regular-expression-here>"
-     *      "not-regex:<regular-expression-here>"
-     *
-     *
-     * @param State $state
-     * @return boolean
-     * @link https://php.net/manual/en/function.preg-match.php
-     * @link http://regexr.com/ for trying out regular expressions
-     */
-    public function isRegex()
-    {
-        return  $this->isNormalRegex($this->getName()) || $this->isNegatedRegex($this->getName());
-    }
-    
-    /**
-     * is this state a normal regex type of state?
-     * "regex:<regular-expression-here>"
-     *
-     * @param State $state
-     * @return boolean
-     */
-    public function isNormalRegex() {
-        return strpos($this->getName(), self::REGEX_PREFIX) === 0;
-    }
-    
-    /**
-     * is this state a negated regex type of state?
-     * "not-regex:<regular-expression-here>"
-     *
-     * @param State $state
-     * @return boolean
-     */
-    public function isNegatedRegex() {
-        return strpos($this, self::REGEX_PREFIX_NEGATED) === 0;
-    }
-    
 }

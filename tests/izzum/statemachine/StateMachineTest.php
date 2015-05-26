@@ -198,6 +198,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($machine->addState($a));
         $this->assertTrue($machine->addState($b));
         $this->assertTrue($machine->addState($c));
+        $this->assertFalse($machine->addState($regex_all), 'no regex states allowed');
         $this->assertCount(3, $machine->getStates());
         $this->assertEquals(9, $machine->addTransition(new Transition($regex_all, $regex_all), true), 'create full mesh with self transitions');
 

@@ -299,13 +299,17 @@ class StateTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldReturnRegexState(){
         $name = 'regex:.*';
-        $regex = new State($name);
+        $regex = new State($name, State::TYPE_REGEX);
+        $this->assertEquals(State::TYPE_REGEX, $regex->getType());
+        $regex = new State($name, State::TYPE_FINAL);
+        $this->assertEquals(State::TYPE_REGEX, $regex->getType(), 'should be converted to regex in case it is a regex name but the type was incorrectly set');
         $this->assertTrue($regex->isRegex());
         $this->assertTrue($regex->isNormalRegex());
         $this->assertFalse($regex->isNegatedRegex());
     
         $name = 'not-regex:/go[o,l]d/';
         $regex = new State($name);
+        $this->assertEquals(State::TYPE_REGEX, $regex->getType(), 'auto convert to regex type if regex name is given');
         $this->assertTrue($regex->isRegex());
         $this->assertTrue($regex->isNegatedRegex());
         $this->assertFalse($regex->isNormalRegex());

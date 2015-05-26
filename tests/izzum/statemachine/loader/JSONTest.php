@@ -22,19 +22,30 @@ use izzum\statemachine\utils\Utils;
  */
 class JSONTest extends \PHPUnit_Framework_TestCase {
 
-    
-    
     /**
      * @test
      */
     public function shouldLoadTransitionsFromFile()
     {
-        $machine = new StateMachine(new Context(new Identifier('json-test', 'json-machine')));
+        $machine = new StateMachine(new Context(new Identifier('json-test', 'test-machine')));
         $this->assertCount(0, $machine->getTransitions());
-        $loader = JSON::createFromFile(__DIR__ . '/fixture.json');
+        $loader = JSON::createFromFile(__DIR__ . '/../../../../assets/json/example.json');
         $count = $loader->load($machine);
         $this->assertCount(2, $machine->getTransitions());
         $this->assertEquals(2, $count);
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldBehave()
+    {
+        $machine = new StateMachine(new Context(new Identifier('json-test', 'test-machine')));
+        $loader = JSON::createFromFile(__DIR__ . '/../../../../assets/json/example.json');
+        $count = $loader->load($machine);
+        $this->assertContains('bdone', $loader->getJSON());
+        $this->assertContains('json-schema', $loader->getJSONSchema());
+        $this->assertContains('JSON', $loader->toString());
     }
     
     /**
@@ -89,7 +100,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shouldLoadTransitions()
+    public function shouldLoadTransitionsFromJSONString()
     {
         $machine = new StateMachine(new Context(new Identifier('json-test', 'json-machine')));
         $this->assertCount(0, $machine->getTransitions());

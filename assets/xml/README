@@ -1,0 +1,11 @@
+- schema.xsd contains a valid xml schema definition which the izzum\statemachine\loader\XML needs to build the correct transitions.
+- use http://www.freeformatter.com/xml-validator-xsd.html to validate your xml against this schema
+- https://en.wikipedia.org/wiki/XML_Schema_(W3C)
+- example.xml contains a valid example which validates against the schema.
+
+When using an xml file to read configuration data from, you still would want
+to use a persistence adapter to store/write the state and transition history data.
+
+That can be achieved with one of adapters (like PDO, Session, Memory, Redis) in 
+combination with the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
+and an adapter (writer) to delegate to.

@@ -1,0 +1,115 @@
+<xs:schema attributeFormDefault="unqualified"
+	elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:element name="machines">
+		<xs:complexType>
+			<xs:sequence>
+			<xs:element type="xs:string" name="comment" minOccurs="0" />
+				<xs:element name="machine" maxOccurs="unbounded"
+					minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="name">
+								<xs:annotation>
+									<xs:documentation>The machine name</xs:documentation>
+								</xs:annotation>
+								<xs:simpleType>
+									<xs:restriction base="xs:token">
+										<xs:pattern value="([a-z0-9])+((-)?([a-z0-9])+)*" />
+									</xs:restriction>
+								</xs:simpleType>
+							</xs:element>
+							<xs:element type="xs:string" name="factory" minOccurs="0" />
+							<xs:element type="xs:string" name="description" />
+							<xs:element name="states">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="state" maxOccurs="unbounded"
+											minOccurs="2">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="name">
+														<xs:simpleType>
+															<xs:restriction base="xs:token">
+																<xs:pattern value="([a-z0-9])+((-)?([a-z0-9])+)|(not-)?regex:(.*)*" />
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+													<xs:element name="type">
+														<xs:simpleType>
+															<xs:restriction base="xs:string">
+																<xs:enumeration value="initial" />
+																<xs:enumeration value="normal" />
+																<xs:enumeration value="final" />
+																<xs:enumeration value="regex" />
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+													<xs:element type="xs:string" name="entry_command"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="exit_command"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="entry_callable"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="exit_callable"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="description"
+														minOccurs="0" />
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="transitions">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="transition" maxOccurs="unbounded"
+											minOccurs="2">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:element name="state_from">
+														<xs:simpleType>
+															<xs:restriction base="xs:token">
+																<xs:pattern
+																	value="([a-z0-9])+((-)?([a-z0-9])+)*|(not-)?regex:(.*)" />
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+													<xs:element name="state_to">
+														<xs:simpleType>
+															<xs:restriction base="xs:token">
+																<xs:pattern
+																	value="([a-z0-9])+((-)?([a-z0-9])+)*|(not-)?regex:(.*)" />
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+													<xs:element name="event">
+														<xs:simpleType>
+															<xs:restriction base="xs:token">
+																<xs:pattern value="[a-zA-Z0-9]+" />
+															</xs:restriction>
+														</xs:simpleType>
+													</xs:element>
+													<xs:element type="xs:string" name="rule"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="command"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="guard_callable"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="transition_callable"
+														minOccurs="0" />
+													<xs:element type="xs:string" name="description"
+														minOccurs="0" />
+												</xs:sequence>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

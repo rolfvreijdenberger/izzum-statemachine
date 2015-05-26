@@ -83,10 +83,10 @@ class LoaderArray implements Loader {
             $to = $transition->getStateTo();
             $from = $transition->getStateFrom();
             //sort on regexes. they should come last in an automated loader like this
-            if($from->isRegex() || $to->isRegex()) {
-                $has_regex[] = $transition;
+            if ($from->isRegex() || $to->isRegex()) {
+                $has_regex [] = $transition;
             } else {
-                $has_no_regex[] = $transition;
+                $has_no_regex [] = $transition;
             }
         }
         $sorted = array_merge($has_no_regex, $has_regex);
@@ -130,5 +130,15 @@ class LoaderArray implements Loader {
     public function count()
     {
         return (int) count($this->transitions);
+    }
+
+    public function toString()
+    {
+        return get_class($this);
+    }
+
+    public function __toString()
+    {
+        return $this->toString();
     }
 }

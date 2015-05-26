@@ -101,7 +101,7 @@ use izzum\statemachine\utils\Utils;
  * 5. logic: _onExitState($transition, $event) //hook: inheritance
  * 6. logic: $entity->onExitState($transition, $event) //event handler: delegation, composition, inheritance
  * 7. logic: $state_from->exitAction($event) //execute Command: delegation, composition, inheritance, standalone
- * 8. logic: state entry: $callable($entity, $event) // callable: standalone, delegation, composition, inheritance
+ * 8. logic: state exit: $callable($entity, $event) // callable: standalone, delegation, composition, inheritance
  * 9. logic: _onTransition($transition, $event) //hook: inheritance
  * 10. logic: $entity->onEvent($transition, $event) //event handler: delegation, composition, inheritance, only if transition was event driven
  * 11. logic: $entity->on<$event>($transition, $event) //event handler: delegation, composition, inheritance, only if transition was event driven
@@ -110,7 +110,7 @@ use izzum\statemachine\utils\Utils;
  * 14. logic: $transition->process(event) // callable: standalone, delegation, composition, inheritance
  * 15. logic: $entity->onEnterState($transition, $event) //event handler: delegation, composition, inheritance
  * 16. logic: $state_to->entryAction($event) //execute Command: delegation, composition, inheritance, standalone
- * 17. logic: state exit: $callable($entity, $event) // callable: standalone, delegation, composition, inheritance
+ * 17. logic: state entry: $callable($entity, $event) // callable: standalone, delegation, composition, inheritance
  * 18. logic: _onEnterState($transition, $event) //hook: inheritance
  *
  * each hook can be overriden and implemented in a subclass, providing
@@ -581,7 +581,12 @@ class StateMachine {
      * @return boolean true if the state was not know to the machine, false otherwise.           
      */
     public function addState(State $state)
-    { //check for duplicates
+    { 
+        //no regex states
+        if($state->isRegex()) {
+            return false;
+        }
+        //check for duplicates
         if (isset($this->states [$state->getName()])) {
             return false;
         }

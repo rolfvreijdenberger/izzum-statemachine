@@ -35,10 +35,10 @@ use izzum\rules\IRule;
  *        
  */
 class Transition {
-    const RULE_TRUE = 'izzum\rules\True';
-    const RULE_FALSE = 'izzum\rules\False';
+    const RULE_TRUE = '\izzum\rules\True';
+    const RULE_FALSE = '\izzum\rules\False';
     const RULE_EMPTY = '';
-    const COMMAND_NULL = 'izzum\command\Null';
+    const COMMAND_NULL = '\izzum\command\Null';
     const COMMAND_EMPTY = '';
     const CALLABLE_NULL = null;
     

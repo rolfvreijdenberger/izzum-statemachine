@@ -35,14 +35,13 @@ use izzum\statemachine\utils\Utils;
  *
  * This class is a helper class for Context. Context delegates reading and
  * writing states to this class and it's subclasses.
- *
+ * 
  * @author rolf
  */
 abstract class Adapter {
 
     /**
-     * Get all the entity id's for a specific
-     * statemachine.
+     * Get all the entity id's for a specific statemachine.
      * All entity id's in all states are returned unless a specific
      * state is given via the optional parameter.
      *
@@ -71,7 +70,7 @@ abstract class Adapter {
      * @param string $state            
      * @return boolean true if just added to storage, false if stored before
      */
-    abstract protected function processSetState(Identifier $identifier, $state);
+    abstract public function processSetState(Identifier $identifier, $state);
 
     /**
      * A hook to be able to process the getting of the current state.
@@ -81,7 +80,7 @@ abstract class Adapter {
      * @param Identifier $identifier            
      * @return string the current state of the entity represented in the context
      */
-    abstract protected function processGetState(Identifier $identifier);
+    abstract public function processGetState(Identifier $identifier);
 
     /**
      * This method adds state information to the persistence layer so

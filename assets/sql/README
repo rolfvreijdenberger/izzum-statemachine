@@ -1,0 +1,16 @@
+- postgresql.sql : a full implementation of a posgresql backend which the izzum\statemachine\persistence\PDO can use.
+- mysql.sql : a full implementation of a mysql backend which the izzum\statemachine\persistence\PDO can use.
+- sqlite.sql : a full implementation of a sqlite backend which the izzum\statemachine\persistence\PDO can use.
+
+- all sql implementations in these files can do 2 things:
+	1. store the configuration for machines, states and transitions (can be loaded)
+	2. store the state data (can store current states and history)
+	
+	It's important to realize that the concepts of loading configurations and storing state can be mixed with
+	different loaders (like XML, JSON, PDO, Redis or just from within php code)
+	and with different persistence adapters (like PDO, Redis, Session, Memory).
+	
+	This is easily done via the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
+	and an adapter (writer) to delegate to.
+	
+	again: loading of configuration and storing state data/history can be viewed as 2 seperate things.

@@ -468,13 +468,13 @@ class MemoryEntityConcatenator extends Memory {
      * overriden implementation
      */
 
-    protected function processSetState(Identifier $identifier, $state){
+    public function processSetState(Identifier $identifier, $state){
         return $identifier->getMachine() . "_" . 
         $identifier->getEntityId() . "_" .
         $state;
     }
     
-    protected function processGetState(Identifier $identifier) {
+    public function processGetState(Identifier $identifier) {
         return $identifier->getMachine() .  "_" . $identifier->getEntityId();
     }
 }
@@ -486,7 +486,7 @@ class MemoryException extends Memory {
     public function __construct($bool) {
         $this->bool = $bool;
     }
-    protected function processSetState(Identifier $identifier, $state){
+    public function processSetState(Identifier $identifier, $state){
         if($this->bool) {
             throw new \Exception('processing setstate exception');
         } else {
@@ -494,7 +494,7 @@ class MemoryException extends Memory {
         }
     }
     
-    protected function processGetState(Identifier $identifier) {
+    public function processGetState(Identifier $identifier) {
        if($this->bool) {
             throw new \Exception('processing setstate exception');
         } else {

@@ -7,6 +7,13 @@
     "machines"
   ],
   "properties": {
+    "comment": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "comments for the description of the file contents can be placed here."
+    },
     "machines": {
       "minItems": 1,
       "uniqueItems": true,
@@ -57,15 +64,16 @@
                 "name": {
                   "type": "string",
                   "description": "the state name",
-                  "pattern": "^([a-z0-9])+((-)?([a-z0-9])+)*$"
+                  "pattern": "^([a-z0-9])+((-)?([a-z0-9])+)*$|^(not-)?regex:(.*)$"
                 },
                 "type": {
                   "enum": [
                     "initial",
                     "normal",
-                    "final"
+                    "final",
+                    "regex"
                   ],
-                  "description": "the type of state: initial (1), normal(0..n) or final (1..n)"
+                  "description": "the type of state: initial (1), normal(0..n), final (1..n) or regex (0..n)"
                 },
                 "entry_command": {
                   "type": [
@@ -122,12 +130,12 @@
                 "state_from": {
                   "type": "string",
                   "description": "the state from which the transition is made. this can be a regex.",
-                  "pattern": "^([a-z0-9])+((-)?([a-z0-9])+)*$|^regex:|^not-regex:"
+                  "pattern": "^([a-z0-9])+((-)?([a-z0-9])+)*$|^(not-)?regex:(.*)$"
                 },
                 "state_to": {
                   "type": "string",
                   "description": "the state to which the transition is made. this can be a regex.",
-                  "pattern": "^([a-z0-9])+((-)?([a-z0-9])+)*$|^regex:|^not-regex:"
+                  "pattern": "^([a-z0-9])+((-)?([a-z0-9])+)*$|^(not-)?regex:(.*)$"
                 },
                 "event": {
                   "type": [

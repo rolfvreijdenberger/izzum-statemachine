@@ -24,12 +24,12 @@ class Memory extends Adapter {
      */
     private static $registry = array();
 
-    protected function processGetState(Identifier $identifier)
+    public function processGetState(Identifier $identifier)
     {
         return $this->getStateFromRegistry($identifier);
     }
 
-    protected function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state)
     {
         return $this->setStateInRegistry($identifier, $state);
     }
@@ -114,7 +114,7 @@ class Memory extends Adapter {
         return self::$registry;
     }
 
-    protected final function getStorageFromRegistry(Identifier $identifier)
+    public final function getStorageFromRegistry(Identifier $identifier)
     {
         $registry = $this->getRegistry();
         if (!isset($registry [$identifier->getId()])) {
@@ -139,4 +139,6 @@ class Memory extends Adapter {
     {
         return self::$registry;
     }
+    
+   
 }

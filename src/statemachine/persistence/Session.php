@@ -53,7 +53,7 @@ class Session extends Adapter {
         }
     }
 
-    protected function processGetState(Identifier $identifier)
+    public function processGetState(Identifier $identifier)
     {
         $key = $identifier->getId();
         if (isset($_SESSION [$this->namespace] [$key])) {
@@ -64,7 +64,7 @@ class Session extends Adapter {
         return $state;
     }
 
-    protected function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state)
     {
         $already_stored = true;
         // session key is a unique string from the Identifier

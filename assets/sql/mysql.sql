@@ -26,7 +26,7 @@ CREATE TABLE statemachine_machines (
 CREATE TABLE statemachine_states (
 	machine VARCHAR(255) NOT NULL, 
 	state VARCHAR(255) NOT NULL, 
-	type VARCHAR(255) DEFAULT 'normal' NOT NULL CHECK(type IN ('final','initial','normal')), 
+	type VARCHAR(255) DEFAULT 'normal' NOT NULL CHECK(type IN ('final','initial','normal', 'regex')), 
 	entry_command VARCHAR(255) NULL,
 	exit_command VARCHAR(255) NULL,
 	description text,
@@ -39,10 +39,10 @@ CREATE TABLE statemachine_transitions (
 	machine VARCHAR(255) NOT NULL, 
 	state_from VARCHAR(255) NOT NULL,
 	state_to VARCHAR(255) NOT NULL, 
+	event VARCHAR(255) NULL,
 	rule VARCHAR(255) DEFAULT '\izzum\rules\True' NOT NULL,
 	command VARCHAR(255) DEFAULT '\izzum\command\Null' NOT NULL,
 	priority TINYINT DEFAULT 1 NOT NULL, 
-	event VARCHAR(255) NULL,
 	description text,
         PRIMARY KEY (machine, state_from, state_to),
         FOREIGN KEY (machine, state_from) REFERENCES statemachine_states(machine, state) ON UPDATE CASCADE,
@@ -55,8 +55,11 @@ CREATE TABLE statemachine_entities (
 	entity_id VARCHAR(255) NOT NULL, 
 	state VARCHAR(255) NOT NULL, 
 	changetime TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        PRIMARY KEY (machine, entity_id),
-        FOREIGN KEY (machine, state) REFERENCES statemachine_states(machine, state)
+        PRIMARY KEY (machine, entity_id)
+        -- only add foreign keys if you use the database for both 
+        -- 1. the configuration of the statemachine and 
+        -- 2. for persistence of state data.
+        -- FOREIGN KEY (machine, state) REFERENCES statemachine_states(machine, state)
 );
 CREATE INDEX i_statemachine_entities_entity_id ON statemachine_entities (entity_id);
 

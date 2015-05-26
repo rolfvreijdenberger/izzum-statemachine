@@ -167,6 +167,22 @@ class PDO extends Adapter implements Loader {
     {
         return $this->prefix;
     }
+    
+    /**
+     * Load the statemachine with data.
+     * This is an implemented method from the Loader interface.
+     * All other methods are actually implemented methods from the Adapter
+     * class.
+     *
+     * @param StateMachine $statemachine
+     */
+    public function load(StateMachine $statemachine)
+    {
+        $data = $this->getLoaderData($statemachine->getContext()->getMachine());
+        // delegate to LoaderArray
+        $loader = new LoaderArray($data);
+        $loader->load($statemachine);
+    }
 
     /**
      * implementation of the hook in the Adapter::getState() template method
@@ -174,7 +190,7 @@ class PDO extends Adapter implements Loader {
      * @param Identifier $identifier            
      * @param string $state            
      */
-    protected function processGetState(Identifier $identifier)
+    public function processGetState(Identifier $identifier)
     {
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
@@ -205,7 +221,7 @@ class PDO extends Adapter implements Loader {
      * @param string $state            
      * @return boolean true if not already present, false if stored before
      */
-    protected function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state)
     {
         if ($this->isPersisted($identifier)) {
             $this->updateState($identifier, $state);
@@ -230,6 +246,77 @@ class PDO extends Adapter implements Loader {
         }
         $this->insertState($identifier, $state);
         return true;
+    }
+    
+    /**
+     * Stores a failed transition in the storage facility.
+     *
+     * @param Identifier $identifier
+     * @param Transition $transition
+     * @param \Exception $e
+     */
+    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
+    {
+        // check if it is persisted, otherwise we cannot get the current state
+        if ($this->isPersisted($identifier)) {
+            $message = new \stdClass();
+            $message->code = $e->getCode();
+            $message->transition = $transition->getName();
+            $message->message = $e->getMessage();
+            $message->file = $e->getFile();
+            $message->line = $e->getLine();
+            $state = $this->getState($identifier);
+            $message->state = $state;
+            // convert to json for storage (text field with json can be searched
+            // via sql)
+            $json = json_encode($message);
+            $this->addHistory($identifier, $state, $json, true);
+        }
+    }
+    
+    /**
+     *
+     * @param string $machine
+     *            the machine to get the names for
+     * @param string $state
+     * @return string[] an array of entity ids
+     * @throws Exception
+     */
+    public function getEntityIds($machine, $state = null)
+    {
+        $connection = $this->getConnection();
+        $prefix = $this->getPrefix();
+        $query = 'SELECT se.entity_id FROM ' . $prefix . 'statemachine_entities AS se
+                JOIN ' . $prefix . 'statemachine_states AS ss ON (se.state = ss.state AND
+                se.machine = ss.machine) WHERE se.machine = :machine';
+        $output = array();
+        try {
+            if ($state != null) {
+                $query .= ' AND se.state = :state';
+            }
+            $statement = $connection->prepare($query);
+            $statement->bindParam(":machine", $machine);
+            if ($state != null) {
+                $statement->bindParam(":state", $state);
+            }
+    
+            $result = $statement->execute();
+            if ($result === false) {
+                throw new Exception($this->getErrorInfo($statement));
+            }
+    
+            $rows = $statement->fetchAll();
+            if ($rows === false) {
+                throw new Exception("failed getting rows: " . $this->getErrorInfo($statement));
+            }
+    
+            foreach ($rows as $row) {
+                $output [] = $row ['entity_id'];
+            }
+        } catch(\Exception $e) {
+            throw new Exception($e->getMessage(), Exception::PERSISTENCE_LAYER_EXCEPTION, $e);
+        }
+        return $output;
     }
 
     /**
@@ -408,93 +495,6 @@ class PDO extends Adapter implements Loader {
         } catch(\Exception $e) {
             throw new Exception(sprintf('query for updating state failed: [%s]', $e->getMessage()), Exception::PERSISTENCE_LAYER_EXCEPTION);
         }
-    }
-
-    /**
-     * Stores a failed transition in the storage facility.
-     * 
-     * @param Identifier $identifier            
-     * @param Transition $transition            
-     * @param \Exception $e            
-     */
-    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
-    {
-        // check if it is persisted, otherwise we cannot get the current state
-        if ($this->isPersisted($identifier)) {
-            $message = new \stdClass();
-            $message->code = $e->getCode();
-            $message->transition = $transition->getName();
-            $message->message = $e->getMessage();
-            $message->file = $e->getFile();
-            $message->line = $e->getLine();
-            $state = $this->getState($identifier);
-            $message->state = $state;
-            // convert to json for storage (text field with json can be searched
-            // via sql)
-            $json = json_encode($message);
-            $this->addHistory($identifier, $state, $json, true);
-        }
-    }
-
-    /**
-     *
-     * @param string $machine
-     *            the machine to get the names for
-     * @param string $state            
-     * @return string[] an array of entity ids
-     * @throws Exception
-     */
-    public function getEntityIds($machine, $state = null)
-    {
-        $connection = $this->getConnection();
-        $prefix = $this->getPrefix();
-        $query = 'SELECT se.entity_id FROM ' . $prefix . 'statemachine_entities AS se
-                JOIN ' . $prefix . 'statemachine_states AS ss ON (se.state = ss.state AND 
-                se.machine = ss.machine) WHERE se.machine = :machine';
-        $output = array();
-        try {
-            if ($state != null) {
-                $query .= ' AND se.state = :state';
-            }
-            $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $machine);
-            if ($state != null) {
-                $statement->bindParam(":state", $state);
-            }
-            
-            $result = $statement->execute();
-            if ($result === false) {
-                throw new Exception($this->getErrorInfo($statement));
-            }
-            
-            $rows = $statement->fetchAll();
-            if ($rows === false) {
-                throw new Exception("failed getting rows: " . $this->getErrorInfo($statement));
-            }
-            
-            foreach ($rows as $row) {
-                $output [] = $row ['entity_id'];
-            }
-        } catch(\Exception $e) {
-            throw new Exception($e->getMessage(), Exception::PERSISTENCE_LAYER_EXCEPTION, $e);
-        }
-        return $output;
-    }
-
-    /**
-     * Load the statemachine with data.
-     * This is an implemented method from the Loader interface.
-     * All other methods are actually implemented methods from the Adapter
-     * class.
-     * 
-     * @param StateMachine $statemachine            
-     */
-    public function load(StateMachine $statemachine)
-    {
-        $data = $this->getLoaderData($statemachine->getContext()->getMachine());
-        // delegate to LoaderArray
-        $loader = new LoaderArray($data);
-        $loader->load($statemachine);
     }
 
     /**
