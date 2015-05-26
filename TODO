@@ -1,4 +1,4 @@
-- In Progress: backend adapter that only writes history and current state (and does not read the configuration). At the moment we
+DONE: ReaderWriterDelegator: backend adapter that only writes history and current state (and does not read the configuration). At the moment we
 cannot do this when the definition of the machine is not in the tables
 This might need adjustment of tables to relax constraints. we want this because the configuration of the statemachine
 could be provided via a yaml file or in the php program itself, but we still would wish to get the current state when 
@@ -6,9 +6,9 @@ recreating the statemachine and have a history of transitions in the backend. We
 and use it via composition. idea: use a mix and match Loader/Adapter that accepts a loader and a persistance adapter.
 
 - redis backend adapter and loader: needs a data structure
-- ini file loader: needs a data structure
-- xml loader (which can use a file or string as it's source):  needs a data structure
-- WON'T FIX: yaml file loader: needs a data structure
+- WON't DO ini file loader: needs a data structure
+- DONE: xml loader (which can use a file or string as it's source):  needs a data structure
+- WON'T Do: yaml file loader: needs a data structure
 - DONE: json loader (which can use a file or json string as it's source): needs a datastructure
 
 - DONE: a way to set closures or callback names on the statemachine for guard check, exit, entry and transition mechanisms. 
