@@ -1,5 +1,2 @@
-<?xml version="1.0" encoding="UTF-8" ?>
-<machines>
-	<comment>no machines here.</comment>
-
-</machines>
+give this file 220 permissions
+chmod 220
