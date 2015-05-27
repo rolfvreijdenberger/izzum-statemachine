@@ -215,7 +215,7 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(0, count($command->getEvents()));
         $this->assertEquals('izzum\statemachine\EventCommand', $a->getEntryCommandName());
         $this->assertEquals(State::COMMAND_EMPTY, $a->getExitCommandName());
-        $a->exitAction($context, $event);
+        $a->exitAction($context, null);
         $this->assertEquals(0, count($command->getEvents()));
         $a->entryAction($context, '1');
         $this->assertEquals(1, count($command->getEvents()));
@@ -344,7 +344,7 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(0, count($command->getEvents()));
         $this->assertEquals('izzum\statemachine\EventCommand', $a->getExitCommandName());
         $this->assertEquals(State::COMMAND_EMPTY, $a->getEntryCommandName());
-        $a->entryAction($context, $event);
+        $a->entryAction($context, null);
         $this->assertEquals(0, count($command->getEvents()));
         $a->exitAction($context, '1');
         $this->assertEquals(1, count($command->getEvents()));

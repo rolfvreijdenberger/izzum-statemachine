@@ -79,7 +79,7 @@ class JSON implements Loader {
             throw new Exception(sprintf('could not decode json data. check the json format against %s', 'http://jsonlint.com/'), Exception::BAD_LOADERDATA);
         }
         $name = $stateMachine->getContext()->getMachine();
-        $data;
+        $data = null;
         if(is_array($decoded->machines)) {
             foreach ($decoded->machines as $data) {
                 if ($data->name === $name) {

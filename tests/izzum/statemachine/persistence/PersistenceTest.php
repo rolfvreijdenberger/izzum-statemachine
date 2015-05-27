@@ -45,16 +45,6 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($state, $data->state);
         $this->assertEquals($time, $data->timestamp);
         
-        
-        //scenario: optional param left out of constructor
-        $time = time();
-        $data = new StorageData($machine, $id, $state);
-        $this->assertEquals($id, $data->id);
-        $this->assertEquals($machine, $data->machine);
-        $this->assertEquals($state, $data->state);
-        $this->assertNull($data->state_from);
-        $this->assertEquals($time, $data->timestamp);
-        
     }
     
 

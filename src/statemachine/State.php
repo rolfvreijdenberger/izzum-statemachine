@@ -444,7 +444,7 @@ class State {
      *            (mealy machine)
      * @throws Exception
      */
-    public function exitAction(Context $context, $event = nul)
+    public function exitAction(Context $context, $event = null)
     {
         $command = $this->getCommand($this->getExitCommandName(), $context, $event);
         $this->execute($command);

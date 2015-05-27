@@ -370,12 +370,12 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         
         
         //scenario 2: Closure with Inheriting variables from the parent scope
-        $x = 0;
+        $x = 4;
         $transition_callable = function($entity, $event) use (&$x) { $x+=1;};
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
-        $this->assertEquals(0, $x);
+        $this->assertEquals(4, $x);
         $t->process($context, $event);
-        $this->assertEquals(1, $x);
+        $this->assertEquals(5, $x);
         
         //scenario 3: Anonymous function / literal
         $context->getIdentifier()->setEntityId('123');
@@ -384,17 +384,7 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $t->process($context, $event);
         $this->assertEquals('234', $context->getEntityId());
         
-        //scenario 4: instance method invocation (method not as string)
-        $helper = new CallableHelper();
-        $transition_callable = array($helper, increaseInstanceId);
-        $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
-        $this->assertEquals(0, $helper->instance_id);
-        $t->process($context, $event);
-        $this->assertEquals(1, $helper->instance_id);
-        $t->process($context, $event);
-        $this->assertEquals(2, $helper->instance_id);
-        
-        //scenario 5: instance method invocation (method as string)
+        //scenario 4: instance method invocation (method as string)
         $helper = new CallableHelper();
         $transition_callable = array($helper, 'increaseInstanceId');
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
@@ -404,7 +394,7 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $t->process($context, $event);
         $this->assertEquals(2, $helper->instance_id);
         
-        //scenario 6: static method invocation in array (use fully qualified name)
+        //scenario 5: static method invocation in array (use fully qualified name)
         $helper = new CallableHelper();
         $transition_callable = array('izzum\statemachine\CallableHelper', 'increaseId');
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
@@ -412,7 +402,8 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $t->process($context, $event);
         $this->assertEquals(1, CallableHelper::$id);
         
-        //scenario 7: static method invocation in string (use fully qualified name)
+        //scenario 6: static method invocation in string (use fully qualified name)
+        //THIS IS THE WAY TO be able to specify a callable in a configuration file.
         $helper = new CallableHelper();
         $transition_callable = 'izzum\statemachine\CallableHelper::increaseId';
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
@@ -420,7 +411,7 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $t->process($context, $event);
         $this->assertEquals(2, CallableHelper::$id);
         
-        //scenario 8: wrap an existing method in a closure (this is the only way to reuse an existing method)
+        //scenario 7: wrap an existing method in a closure (this is THE way to reuse an existing method)
         function jo($entity, $event) {
             $entity->setEntityId(($entity->getEntityId() +1));
         }

@@ -74,8 +74,7 @@ class XML implements Loader {
             throw new Exception(sprintf('could not load xml data. check the xml format'), Exception::BAD_LOADERDATA);
         }
         $name = $stateMachine->getContext()->getMachine();
-        //var_dump($xml->machine);
-        $data;
+        $data = null;
         foreach ($xml->machine as $data) {
             if ($data->name === $name) {
                 break;
