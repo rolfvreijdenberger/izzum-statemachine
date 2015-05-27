@@ -33,6 +33,7 @@ class XMLTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('xml', $loader->getXSD());
         $this->assertContains('bdone', $loader->getXML());
         $this->assertContains('XML', $loader->toString());
+        $this->assertContains('XML', $loader . '', '_toString()');
     }
     
     /**

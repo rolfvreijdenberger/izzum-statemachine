@@ -27,12 +27,16 @@ class ReaderWriterDelegatorTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldLoadAndWriteViaDelegator()
     {
-        $loader = XML::createFromFile(__DIR__ . '/../../../../assets/xml/example.xml');
+        $loader = XML::createFromFile(__DIR__ . '/../loader/fixture-example.xml');
         $writer = new Memory();
+        $identifier = new Identifier('readerwriter-test', 'test-machine');
         $delegator = new ReaderWriterDelegator($loader, $writer);
-        $machine = new StateMachine(new Context(new Identifier('readerwriter-test', 'test-machine')), null, $delegator);
+        $context = new Context($identifier, null, $delegator);
+        $machine = new StateMachine($context);
         $this->assertCount(0, $machine->getTransitions());
         $count = $delegator->load($machine);
+        //add to the backend
+        $this->assertTrue($context->add('a'));
         
         $this->assertCount(2, $machine->getTransitions());
         $this->assertEquals(2, $count);

@@ -1,5 +1,5 @@
 filter:
-    excluded_paths: [vendor/*, tests/*, examples/*, src/statemachine/utils/*]
+    excluded_paths: [vendor/*, tests/*, examples/*, assets/*, src/statemachine/utils/PlantUML.php]
 before_commands:
     - 'composer install --dev --prefer-source'
 tools:
@@ -11,7 +11,7 @@ tools:
     php_pdepend: true
     php_loc:
         enabled: true
-        excluded_dirs: [vendor, tests, examples]
+        excluded_dirs: [vendor, tests, examples, asssets]
     php_cpd:
         enabled: true
-        excluded_dirs: [vendor, tests, examples]
+        excluded_dirs: [vendor, tests, examples, assets]
