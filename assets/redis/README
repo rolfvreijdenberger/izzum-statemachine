@@ -1,1 +1,2 @@
-TODO: implement redis adapter and create a usable redis datastructure.
+TODO: implement redis adapter and create a usable redis datastructure so that we can do fast queries on state and history records.
+TODO: think about: using the existing JSON schema for configuration (a JSON string in redis) and using the JSON loader in the Redis persister.

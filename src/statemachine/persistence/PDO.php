@@ -425,7 +425,7 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * update state for context into persistance layer
+     * update state for statemachine/entity into persistance layer
      * This method is public for testing purposes
      * 
      * @param Identifier $identifier            
