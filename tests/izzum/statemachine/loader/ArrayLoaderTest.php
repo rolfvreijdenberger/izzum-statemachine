@@ -24,6 +24,8 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase {
     {
         //scenario: test loader supported stuff
         $loader = new LoaderArray();
+        $this->assertContains('LoaderArray', $loader->toString());
+        $this->assertContains('LoaderArray', $loader .'', '__toString');
         $this->assertEquals(0, $loader->count());
 
         

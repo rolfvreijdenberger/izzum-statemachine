@@ -39,6 +39,8 @@ class EntityBuilderTest extends \PHPUnit_Framework_TestCase {
         //different result when we call it again
         $result_2 = $builder->getEntity($object_2);
         $this->assertEquals($object_2, $result_2);
+        
+        $this->assertContains('EntityBuilder', $builder . '', '__toString()');
     }
     
     /**

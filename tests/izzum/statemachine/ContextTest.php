@@ -146,5 +146,6 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         // for coverage.
         $statemachine = new StateMachine($o);
         $this->assertNull($o->setStateMachine($statemachine));
+        $this->assertContains('Context', $o . '', '__toString()');
     }
 }

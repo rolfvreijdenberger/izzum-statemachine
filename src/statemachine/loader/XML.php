@@ -42,7 +42,8 @@ class XML implements Loader {
         if (!file_exists($filename)) {
             throw new Exception(sprintf('Failed to load xml from file %s. The file does not exist', $filename), Exception::BAD_LOADERDATA);
         }
-        $xml = file_get_contents($filename);
+        //suppress warning with @ operator, since we explicitely check the return value
+        $xml = @file_get_contents($filename);
         if (false === $xml) {
             throw new Exception(sprintf('Failed to read xml data from file %s. Unknown error (permissions?)', $filename), Exception::BAD_LOADERDATA);
         }
@@ -66,8 +67,8 @@ class XML implements Loader {
 
     public function load(StateMachine $stateMachine)
     {
-        //load the xml in a php object structure
-        $xml = simplexml_load_string($this->getXML());
+        //load the xml in a php object structure. suppres warning with @ operator since we explicitely check the return value
+        $xml = @simplexml_load_string($this->getXML());
         if ($xml === false) {
             //could not load
             throw new Exception(sprintf('could not load xml data. check the xml format'), Exception::BAD_LOADERDATA);

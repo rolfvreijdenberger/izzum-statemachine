@@ -29,6 +29,8 @@ class RuleTest extends PHPUnit_Framework_TestCase
         
         $rule = new False();
         $this->assertFalse($rule->applies());
+        
+        $this->assertContains('False', $rule . '', '__toString');
     }
     
     public function testExceptionRule() {

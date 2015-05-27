@@ -29,7 +29,8 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
     {
         $machine = new StateMachine(new Context(new Identifier('json-test', 'test-machine')));
         $this->assertCount(0, $machine->getTransitions());
-        $loader = JSON::createFromFile(__DIR__ . '/../../../../assets/json/example.json');
+        //this is a symbolic link to the assets/json/example.json file
+        $loader = JSON::createFromFile(__DIR__ . '/fixture-example.json');
         $count = $loader->load($machine);
         $this->assertCount(2, $machine->getTransitions());
         $this->assertEquals(2, $count);
@@ -46,6 +47,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('bdone', $loader->getJSON());
         $this->assertContains('json-schema', $loader->getJSONSchema());
         $this->assertContains('JSON', $loader->toString());
+        $this->assertContains('JSON', $loader . '' , '__toString()');
     }
     
     /**
@@ -67,10 +69,25 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
+    public function shouldThrowExceptionForNoReadPermissions()
+    {
+        $machine = new StateMachine(new Context(new Identifier('json-test', 'json-machine')));
+        try {
+            $loader = JSON::createFromFile(__DIR__ . '/fixture-no-permission.json');
+            $this->fail('should not come here');
+        }catch(Exception $e) {
+            $this->assertEquals(Exception::BAD_LOADERDATA, $e->getCode());
+            $this->assertContains('Failed to read', $e->getMessage());
+        }
+    }
+    
+    /**
+     * @test
+     */
     public function shouldThrowExceptionForBadJsonData()
     {
         $machine = new StateMachine(new Context(new Identifier('json-test', 'json-machine')));
-        $loader = JSON::createFromFile(__DIR__ . '/fixture_bad_json.json');
+        $loader = JSON::createFromFile(__DIR__ . '/fixture-bad-json.json');
         try {
             $loader->load($machine);
             $this->fail('should not come here');
@@ -86,7 +103,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
     public function shouldThrowExceptionForNoMachineData()
     {
         $machine = new StateMachine(new Context(new Identifier('json-test', 'json-machine')));
-        $loader = JSON::createFromFile(__DIR__ . '/fixture_no_machines.json');
+        $loader = JSON::createFromFile(__DIR__ . '/fixture-no-machines.json');
         try {
             $loader->load($machine);
             $this->fail('should not come here');

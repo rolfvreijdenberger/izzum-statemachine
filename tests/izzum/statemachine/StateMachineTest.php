@@ -43,6 +43,11 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
             // echo $e->getMessage();
         }
         $this->assertNotNull($machine);
+        $this->assertContains('StateMachine', $machine . '', '__toString()');
+        $this->assertContains('transitions', $machine->toString(true));
+        $this->assertNotContains('transitions', $machine->toString(false));
+        $this->assertContains('states', $machine->toString(true));
+        $this->assertNotContains('states', $machine->toString(false));
     }
 
     /**
@@ -67,6 +72,13 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         $machine->transition('b_to_c');
         $this->assertEquals('c', $machine->getCurrentState(), 'this actually works because of __toString');
+        
+        try {
+            $machine->transition('foo_to_bar');
+            $this->fail('should not come here..');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::SM_NO_TRANSITION_FOUND, $e->getCode());                
+        }
     }
 
     /**
@@ -267,6 +279,29 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($machine->addState($b));
         $this->assertFalse($machine->addState($c));
         $this->assertCount(3, $machine->getStates());
+    }
+    
+    /**
+     * @group guard
+     * @test
+     */
+    public function shouldBeAbleToBlockTransitionInSubclass()
+    {
+        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new SubClassedStateMachine($object);
+    
+        $regex_all = new State('regex:/.+/'); // regex: all states
+        $a = new State('a', State::TYPE_INITIAL);
+        $b = new State('b');
+        $c = new State('c');
+        $machine->addState($a);
+        $machine->addState($b);
+        $machine->addState($c);
+        $machine->addTransition(new Transition($regex_all, $regex_all));//full mesh
+        $this->assertCount(6, $machine->getTransitions());
+        $this->assertTrue($machine->transition('a_to_b'));
+        $this->assertEquals('b', $machine->getCurrentState());
+        $this->assertFalse($machine->transition('b_to_c'));
     }
     
     /**
@@ -1005,4 +1040,22 @@ class CallableHandler {
                 $event
         );
     }
+}
+
+namespace izzum\statemachine;
+/**
+ * helper class that implements the 'hook' methods
+ * @author rolf
+ *
+ */
+class SubClassedStateMachine extends StateMachine {
+    protected function _onCheckCanTransition(Transition $transition, $event = null) {
+        //only block a specific transition
+        if($transition->getName() == 'b_to_c') return false;
+        return true;
+    }
+    
+    protected function _onExitState(Transition $transition, $event = null) {}
+    protected function _onTransition(Transition $transition, $event = null) {}
+    protected function _onEnterState(Transition $transition, $event = null) {}
 }

@@ -306,7 +306,7 @@ class Transition {
         // therefore, see if the rule expects an event to be set that it can use
         // in it's 'applies' method.
         if (method_exists($rule, 'setEvent')) {
-            $and_rule->setEvent($event);
+            $rule->setEvent($event);
         }
     }
 

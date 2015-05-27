@@ -38,6 +38,7 @@ class CommandTest extends PHPUnit_Framework_TestCase {
         $this->assertEquals(2, count($list));
         
         $this->assertNotNull($command->toString());
+        $this->assertContains('AddToListCommand', $command . '', '__toString()');
     }
     
     public function testNullCommand()

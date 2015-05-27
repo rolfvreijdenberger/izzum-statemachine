@@ -48,7 +48,8 @@ class JSON implements Loader {
         if (!file_exists($filename)) {
             throw new Exception(sprintf('Failed to load json from file %s. The file does not exist', $filename), Exception::BAD_LOADERDATA);
         }
-        $json = file_get_contents($filename);
+        //suppres warning with @ operator. we are explicitely testing the return value.
+        $json = @file_get_contents($filename);
         if (false === $json) {
             throw new Exception(sprintf('Failed to read json data from file %s. Unknown error (permissions?)', $filename), Exception::BAD_LOADERDATA);
         }

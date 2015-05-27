@@ -324,6 +324,29 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
+    public function shouldSetEventOnRuleAndCommand()
+    {
+        $context = new Context(new Identifier('123','foo-machine'));
+        $event = 'block';
+        $a = new State('a');
+        $b = new State('b');
+        $x = 0;
+        $t = new Transition($a, $b, $event, 'izzum\rules\AcceptsEventRule', 'izzum\command\AcceptsEventCommand');
+        $this->assertTrue($t->can($context));
+        $this->assertFalse($t->can($context, $event));
+        
+        $this->assertNull($t->process($context, $event));
+        try {
+            $t->process($context);//without the 'block' event, this command throws an exception
+            $this->fail('should not come here');
+        }catch (\Exception $e) {
+            $this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
+        }
+    }
+    
+    /**
+     * @test
+     */
     public function shouldAcceptMultipleCallableTypes()
     {
         //there are diverse ways to use callables: closures, anonymous function, instance methods
@@ -499,6 +522,34 @@ class ExceptionOnConstructionRule extends \izzum\rules\Rule {
     protected function _applies()
     {
         return true;
+    }
+}
+
+namespace izzum\rules;
+
+class AcceptsEventRule extends \izzum\rules\Rule {
+    private $event;
+    protected function _applies()
+    {
+        return $this->event !== 'block';
+    }
+    public function setEvent($event) {
+        $this->event = $event;
+    }
+}
+
+namespace izzum\command;
+
+class AcceptsEventCommand extends \izzum\command\Command {
+    private $event;
+    protected function _execute()
+    {
+        if($this->event !== 'block') {
+            throw new Exception('event is not "block" but ' . $this->event, 111);
+        }
+    }
+    public function setEvent($event) {
+        $this->event = $event;
     }
 }
 

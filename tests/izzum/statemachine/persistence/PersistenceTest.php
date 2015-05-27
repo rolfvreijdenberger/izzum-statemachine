@@ -11,8 +11,8 @@ use izzum\statemachine\persistence\Adapter;
 use izzum\statemachine\persistence\StorageData;
 use izzum\statemachine\persistence\Session;
 use izzum\statemachine\utils\PlantUml;
-
 use izzum\statemachine\persistence\PDO;
+
 /**
  * @group statemachine
  * @author rolf
@@ -96,6 +96,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //scenario
         $this->assert_Add_GetEntityIds_Set($io);
+        
+        $this->assertContains('Memory' , $io . '', '__toSring()');
 
         
     }
