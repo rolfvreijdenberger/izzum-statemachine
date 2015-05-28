@@ -39,27 +39,14 @@ class StorageData {
 
     /**
      *
-     * @param string $machine            
-     * @param string $id            
+     * @param Identifier $identifier          
      * @param string $state            
      */
-    public function __construct($machine, $id, $state)
+    public function __construct(Identifier $identifier, $state)
     {
-        $this->id = $id;
-        $this->machine = $machine;
+        $this->id = $identifier->getEntityId();
+        $this->machine = $identifier->getMachine();
         $this->state = $state;
         $this->timestamp = time();
-    }
-
-    /**
-     * factory method
-     * 
-     * @param Identifier $identifier            
-     * @param string $state            
-     * @return StorageData
-     */
-    public static function get(Identifier $identifier, $state = null)
-    {
-        return new static($identifier->getMachine(), $identifier->getEntityId(), $state);
     }
 }

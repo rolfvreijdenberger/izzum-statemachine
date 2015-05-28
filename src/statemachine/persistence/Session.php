@@ -73,7 +73,7 @@ class Session extends Adapter {
             $already_stored = false;
         }
         // set object on the session
-        $data = StorageData::get($identifier, $state);
+        $data = new StorageData($identifier, $state);
         $_SESSION [$this->namespace] [$key] = $data;
         return !$already_stored;
     }
@@ -84,7 +84,7 @@ class Session extends Adapter {
         if (isset($_SESSION [$this->namespace] [$key])) {
             return false;
         }
-        $data = new StorageData($identifier->getMachine(), $identifier->getEntityId(), $state, null);
+        $data = new StorageData($identifier, $state);
         $_SESSION [$this->namespace] [$key] = $data;
         return true;
     }
