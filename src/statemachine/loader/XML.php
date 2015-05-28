@@ -74,28 +74,31 @@ class XML implements Loader {
             throw new Exception(sprintf('could not load xml data. check the xml format'), Exception::BAD_LOADERDATA);
         }
         $name = $stateMachine->getContext()->getMachine();
-        $data = null;
+        $found = false;
         foreach ($xml->machine as $data) {
-            if ($data->name === $name) {
+            if ((string) @$data->name === $name) {
+                $found = true;
                 break;
             }
         }
-        if (!$data) {
+        if (!$found) {
             //no name match found
             throw new Exception(sprintf('no machine data found for %s in xml. seems like a wrong configuration.', $name), Exception::BAD_LOADERDATA);
         }
-        //accessing xml as an object allows you to get properties, even if they do not exist, without notices.
+        //accessing xml as an object with the @ error suppresion operator ('shut the fuck up' operator)
+        //allows you to get properties, even if they do not exist, without notices.
+        //this let's us be a littlebit lazy since we know some nonessential properties could not be there
         $states = array();
         foreach ($data->states->state as $state) {
-            $tmp = new State((string) $state->name, (string) $state->type, (string) $state->entry_command, (string) $state->exit_command, (string) $state->entry_callable, (string) $state->exit_callable);
-            $tmp->setDescription((string) $state->description);
+            $tmp = new State((string) $state->name, (string) $state->type, (string) @$state->entry_command, (string) @$state->exit_command, (string) @$state->entry_callable, (string) @$state->exit_callable);
+            $tmp->setDescription((string) @$state->description);
             $states [$tmp->getName()] = $tmp;
         }
         
         $transitions = array();
         foreach ($data->transitions->transition as $transition) {
-            $tmp = new Transition($states [(string) $transition->state_from], $states [(string) $transition->state_to], (string) $transition->event, (string) $transition->rule, (string) $transition->command, (string) $transition->guard_callable, (string) $transition->transition_callable);
-            $tmp->setDescription((string) $transition->description);
+            $tmp = new Transition($states [(string) @$transition->state_from], $states [(string) @$transition->state_to], (string) @$transition->event, (string) @$transition->rule, (string) @$transition->command, (string) @$transition->guard_callable, (string) @$transition->transition_callable);
+            $tmp->setDescription((string) @$transition->description);
             $transitions [] = $tmp;
         }
         //delegate to loader
