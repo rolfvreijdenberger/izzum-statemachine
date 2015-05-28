@@ -30,21 +30,11 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         //scenario:  constructor with all params
         $time = time();
-        $data = new StorageData($machine, $id, $state);
+        $data = new StorageData(new Identifier($id, $machine), $state);
         $this->assertEquals($id, $data->id);
         $this->assertEquals($machine, $data->machine);
         $this->assertEquals($state, $data->state);
         $this->assertEquals($time, $data->timestamp);
-        
-        //scenario: use the factory method
-        $object = new Identifier($id, $machine);
-        $time = time();
-        $data = StorageData::get($object, $state);
-        $this->assertEquals($id, $data->id);
-        $this->assertEquals($machine, $data->machine);
-        $this->assertEquals($state, $data->state);
-        $this->assertEquals($time, $data->timestamp);
-        
     }
     
 

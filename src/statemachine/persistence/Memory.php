@@ -42,7 +42,7 @@ class Memory extends Adapter {
         if ($storage != null) {
             $added = false;
         } else {
-            $data = new StorageData($identifier->getMachine(), $identifier->getEntityId(), $state, null);
+            $data = new StorageData($identifier, $state);
             $this->writeRegistry($identifier->getId(), $data);
         }
         return $added;
@@ -90,7 +90,7 @@ class Memory extends Adapter {
         if (!$storage) {
             $already_stored = false;
         }
-        $data = StorageData::get($identifier, $state);
+        $data = new StorageData($identifier, $state);
         $this->writeRegistry($identifier->getId(), $data);
         return !$already_stored;
     }
