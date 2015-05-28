@@ -8,14 +8,38 @@ use izzum\statemachine\loader\LoaderData;
 use izzum\statemachine\Exception;
 use izzum\statemachine\Identifier;
 use izzum\statemachine\Transition;
+use izzum\statemachine\loader\JSON;
 /**
  * Redis is an open source advanced key-value (nosql database) cache and store using
  * datastructures.
+ * 
+ * Since redis has no schemas (as a nosql db), it should store data based on the way you want to retrieve data.
+ * There will be multiple views on the data which should make sense for a lot of use cases (counters, 
+ * sets, sorted sets, lists, aggregates etc).
+ * 
+ * An instance uses a redis key prefix of 'izzum:' by default. but this can be set to whatever you like.
+ * 
+ * You can even set the prefix key to something else temporarily for loading the configuration data and
+ * then set it to another prefix for writing state data. This allows you to store multiple machine 
+ * configurations under different prefixes so you can load different machines from different places, 
+ * which facilitates multiple dev teams working on configuration of different machines without them
+ * overwriting other teams' definitions (which will happen if you work with one file)
+ * 
+ * The configuration of statemachines is a JSON string. The specification of the JSON string can 
+ * be found in izzum\statemachine\loader\JSON::getJSONSchema. see asset/json/json.schema
+ * 
+ * Internally, this class uses the JSON loader to load the configuration. It can be set up to 
+ * store multiple configurations under multiple keys.
+ * 
+ * You can use the normal redis connection settings to connect to redis.
  *
  * @link http://redis.io
  * @link https://github.com/nicolasff/phpredis a php module for redis you'll need to use this class.
  * you need to install the php module:
  * - debian/ubuntu: via the apt package manager: apt-get install php5-redis
+ * - osx: use homebrew
+ *      - install homebrew php https://github.com/Homebrew/homebrew-php
+ *      - install php5-redis: brew install php55-redis
  *
  *
  * @author rolf
@@ -23,6 +47,24 @@ use izzum\statemachine\Transition;
  */
 class Redis extends Adapter implements Loader {
 
+    const DATABASE_DEFAULT = 0;//default database to use
+    const KEY_PREFIX_IZZUM = 'izzum:';//default key prefix
+    const KEY_CONFIGURATION = 'configuration';//default key for configuration of machines
+    const KEY_ENTITYIDS = '%sentities:%s:ids';//set of entities in a machine: <prefix>, <machine>
+    const KEY_CURRENT_STATES = '%sentities:%s:state:%s';//set of entities per state: <prefix>, <machine>, <state>
+    const KEY_STATES = '%sstates:%s:%s';//state of an entity: <prefix>, <machine>, <id>
+    const KEY_HISTORY = '%shistory:%s:%s';//sorted set history of entity transitions <prefix>, <machine>, <id>
+
+    //TODO: implement all these counters
+    const KEY_COUNTER_TRANSITIONS_ALL = '%scount:transitions:all';//prefix
+    const KEY_COUNTER_TRANSITIONS_ERROR_ALL = '%scount:transitions:errors:all';//prefix,
+    const KEY_COUNTER_TRANSITIONS_STATES = '%scount:transitions:states:%s:%s';//prefix, <machine>, <state>
+    const KEY_COUNTER_TRANSITIONS_ERROR_STATES = '%scount:transitions:errors:states:%s:%s';//prefix, <machine>, <state>
+    const KEY_COUNTER_TRANSITIONS_MACHINES = '%scount:transitions:machines:%s';//prefix, <machine>
+    const KEY_COUNTER_TRANSITIONS_ERROR_MACHINES = '%scount:transitions:errors:machines:%s';//prefix, <machine>>
+    const KEY_COUNTER_TRANSITIONS_ENTITIES = '%scount:transitions:entities:%s:%s';//prefix, <machine>, <entity>
+    const KEY_COUNTER_TRANSITIONS_ERROR_ENTITIES = '%scount:transitions:errors:entities:%s:%s';//prefix, <machine>, <entity>
+    
     private $host;
     private $port;
     private $timeout;
@@ -30,7 +72,9 @@ class Redis extends Adapter implements Loader {
     private $retry;
     private $socket;
     private $password;
+    private $database;
     private $prefix;
+    private $configuration_key;
 
     /**
      * connected and optionally authenticated redis connection.
@@ -42,8 +86,8 @@ class Redis extends Adapter implements Loader {
     /**
      * The constructor accepts default connection parameters.
      *
-     * You can also use an existing Redis instance. Just construct without parameters
-     * and call 'setConnection($instance)' before doing anything else
+     * You can also use an existing \Redis instance used by your application. 
+     * Just construct without parameters and call 'setConnection($instance)' before doing anything else.
      *
      * You can also use a unix domain socket. Just construct without parameters
      * and call 'setUnixDomainSocket' before doing anything else.
@@ -63,6 +107,9 @@ class Redis extends Adapter implements Loader {
         $this->reserved = $reserved;
         $this->retry = $retry;
         $this->socket = null;
+        $this->setPrefix(self::KEY_PREFIX_IZZUM);
+        $this->setConfigurationKey(self::KEY_CONFIGURATION);
+        $this->setDatabase(self::DATABASE_DEFAULT);
 
 
     }
@@ -78,8 +125,23 @@ class Redis extends Adapter implements Loader {
         $this->socket = null;
     }
 
+    /**
+     * set password to authenticate to the redis server
+     * @param string $password
+     */
     public function setPassword($password) {
         $this->password = $password;
+    }
+    
+    /**
+     * set the redis database. in case there is an active connection, it switches the database.
+     * @param int $database a redis database is an integer starting from 0 (the default)
+     */
+    public function setDatabase($database) {
+        if($this->redis) {
+            $this->redis->select($database);
+        }
+        $this->database = $database;
     }
 
     /**
@@ -99,6 +161,22 @@ class Redis extends Adapter implements Loader {
     public final function setPrefix($prefix) {
         $this->prefix = $prefix;
     }
+    
+    /**
+     * set the configuration key to be used for storing a json string of machine configurations.
+     * @param string $key
+     */
+    public final function setConfigurationKey($key) {
+        $this->configuration_key = $key;
+    }
+    
+    /**
+     * get the configuration key used for storing a json string of machine configurations.
+     * @return string $key
+     */
+    public final function getConfigurationKey() {
+        return $this->configuration_key;
+    }
 
     /**
      * get the prefix for all keys used
@@ -117,13 +195,12 @@ class Redis extends Adapter implements Loader {
      */
     public function getConnection() {
         //lazy loaded connection
-
         try {
             if($this->redis === null) {
                 $this->redis = new \Redis();
                 if($this->socket) {
                     $connected = $this->redis->connect($this->socket);
-                } else {
+                } else { /* default connection with different parameters */
                     if($this->retry) {
                         $connected = $this->redis->connect($this->host, $this->port, $this->timeout, null, $this->retry);
                     } else {
@@ -144,8 +221,10 @@ class Redis extends Adapter implements Loader {
                         throw new Exception('authentication failed', Exception::PERSISTENCE_FAILED_TO_CONNECT);
                     }
                 }
+                //set the database
+                $this->redis->select($this->database);
                 //hook for subclass
-                $this->onConnect($this->redis);
+                $this->onConnect();
             }
 
             return $this->redis;
@@ -161,9 +240,9 @@ class Redis extends Adapter implements Loader {
 
     /**
      * A hook to use in a subclass.
-     * @param \Redis $redis
+     * you can do you initial setup here if you like.
      */
-    protected function onConnect(\Redis $redis) {
+    protected function onConnect() {
         //override if necessary
     }
 
@@ -173,11 +252,11 @@ class Redis extends Adapter implements Loader {
      * @param string $state
      */
     public function processGetState(Identifier $identifier) {
-        $connection = $this->getConnection();
-        $prefix = $this->getPrefix();
+        $redis = $this->getConnection();
         try {
-            //TODO
-            $state;
+            //get state from key
+            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $state = $redis->get($key);
         } catch (\Exception $e) {
             throw new Exception(sprintf('getting current state failed: [%s]',
                     $e->getMessage()), Exception::PERSISTENCE_LAYER_EXCEPTION);
@@ -185,7 +264,7 @@ class Redis extends Adapter implements Loader {
         if(!$state) {
             throw new Exception(sprintf('no state found for [%s]. '
                     . 'Did you add it to the persistence layer?',
-                    $context->getId(true)),
+                    $identifier->getId(true)),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
         }
         return $state;
@@ -217,7 +296,7 @@ class Redis extends Adapter implements Loader {
         if($this->isPersisted($identifier)) {
             return false;
         }
-        $this->insertState($identifier, $this->getInitialState($identifier));
+        $this->insertState($identifier, $state);
         return true;
     }
 
@@ -228,12 +307,11 @@ class Redis extends Adapter implements Loader {
      * @throws Exception
      */
     public function isPersisted(Identifier $identifier) {
-        $connection = $this->getConnection();
-        $prefix = $this->getPrefix();
+        $redis = $this->getConnection();
         try {
-            //TODO
-            $id;
-            return ($id == $identifier->getEntityId());
+            //get key from known entity ids set
+            $key = sprintf(self::KEY_ENTITYIDS, $this->getPrefix(), $identifier->getMachine());
+            return $redis->sismember($key, $identifier->getEntityId());
         } catch (\Exception $e) {
             throw new Exception(
                     sprintf('getting persistence info failed: [%s]',
@@ -250,14 +328,20 @@ class Redis extends Adapter implements Loader {
      */
     public function insertState(Identifier $identifier, $state)
     {
-
         //add a history record
         $this->addHistory($identifier, $state);
-
-        $connection = $this->getConnection();
-        $prefix = $this->getPrefix();
+        $redis = $this->getConnection();
         try {
-            //TODO
+            //add to set of known id's
+            $key = sprintf(self::KEY_ENTITYIDS, $this->getPrefix(), $identifier->getMachine());
+            $redis->sadd($key, $identifier->getEntityId());
+            //set the state
+            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $redis->set($key, $state);
+            //set on current states set
+            $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $identifier->getMachine(), $state);
+            $redis->sadd($key, $identifier->getEntityId());
+            
         } catch (\Exception $e) {
             throw new Exception(sprintf('query for inserting state failed: [%s]',
                     $e->getMessage()),
@@ -279,10 +363,20 @@ class Redis extends Adapter implements Loader {
         //add a history record
         $this->addHistory($identifier, $state);
 
-        $connection = $this->getConnection();
-        $prefix = $this->getPrefix();
+        $redis = $this->getConnection();
         try {
-            //TODO
+            //remove from current state set
+            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $current = $redis->get($key);
+            $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $identifier->getMachine(), $current);
+            $redis->srem($key, $identifier->getEntityId());
+            //set the new state
+            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $redis->set($key, $state);
+            //set on current states set
+            $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $identifier->getMachine(), $state);
+            $redis->sadd($key, $identifier->getEntityId());
+            
         } catch (\Exception $e) {
             throw new Exception(sprintf('updating state failed: [%s]',
                     $e->getMessage()),
@@ -299,10 +393,21 @@ class Redis extends Adapter implements Loader {
      */
     public function addHistory(Identifier $identifier, $state, $message = null)
     {
-        $connection = $this->getConnection();
+        $redis = $this->getConnection();
         $prefix = $this->getPrefix();
         try {
-            //TODO
+            //add to sorted set for machine
+            $key = sprintf(self::KEY_HISTORY, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $value = new \stdClass();
+            $value->state = $state;
+            $value->machine = $identifier->getMachine();
+            $value->entity_id = $identifier->getEntityId();
+            $value->timestamp = time();
+            $value->message = $message;
+            $redis->zadd($key, time(), json_encode($value));
+            
+            //TODO: counters (also for errors)
+            
         } catch (\Exception $e) {
             throw new Exception(sprintf('adding history failed: [%s]',
                     $e->getMessage()),
@@ -311,26 +416,30 @@ class Redis extends Adapter implements Loader {
     }
 
 
+    
     /**
      * Stores a failed transition in the storage facility.
-     * @param Context $context
+     *
+     * @param Identifier $identifier
      * @param Transition $transition
-     * @param Exception $e
+     * @param \Exception $e
      */
-    public function setFailedTransition(Identifier $identifier, Transition $transition, Exception $e)
+    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
     {
-        //check if it is persisted, otherwise we cannot get the current state
-        if($this->isPersisted($identifier)) {
+        // check if it is persisted, otherwise we cannot get the current state
+        if ($this->isPersisted($identifier)) {
             $message = new \stdClass();
             $message->code = $e->getCode();
-            $message->transition = $transition_name;
+            $message->transition = $transition->getName();
             $message->message = $e->getMessage();
             $message->file = $e->getFile();
             $message->line = $e->getLine();
-            //convert to json for storage
-            $json = json_encode($message);
             $state = $this->getState($identifier);
-            $this->addHistory($identifier, $state, $json);
+            $message->state = $state;
+            // convert to json for storage (text field with json can be searched
+            // via sql)
+            $json = json_encode($message);
+            $this->addHistory($identifier, $state, $json, true);
         }
     }
 
@@ -342,12 +451,18 @@ class Redis extends Adapter implements Loader {
      * @throws Exception
      */
     public function getEntityIds($machine, $state = null) {
-        $connection = $this->getConnection();
+        $redis = $this->getConnection();
         $prefix = $this->getPrefix();
         try {
-            //TODO
-            $output = array();
-
+            if($state) {
+                //get from set of entities per state
+                $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $machine, $state);
+                return $redis->smembers($key);
+            } else {
+                //get state directly
+                $key = sprintf(self::KEY_ENTITYIDS, $this->getPrefix(), $machine);
+                return $redis->smembers($key);
+            }
         } catch (\Exception $e) {
             throw new Exception($e->getMessage(),
                     Exception::PERSISTENCE_LAYER_EXCEPTION, $e);
@@ -357,38 +472,14 @@ class Redis extends Adapter implements Loader {
 
     /**
      * Load the statemachine with data.
-     * This is an implemented method from the Loader interface.
-     * All other methods are actually implemented methods from the Adapter class.
      * @param StateMachine $statemachine
      */
     public function load(StateMachine $statemachine) {
-        $data = $this->getTransitions($statemachine->getMachine());
-        //delegate to LoaderArray
-        $loader = new LoaderArray($data);
-        $loader->load($statemachine);
-    }
-
-    /**
-     * get all the ordered transition information for a specific machine.
-     * This method is made public for testing purposes
-     * @param string $machine
-     * @return [][] something
-     * @throws Exception
-     */
-    public function getTransitions($machine)
-    {
-        $connection = $this->getConnection();
-        $prefix = $this->getPrefix();
-
-        try {
-            //TODO
-            $transitions;
-        } catch (\Exception $e) {
-            throw new Exception($e->getMessage(),
-                    Exception::PERSISTENCE_LAYER_EXCEPTION, $e);
-        }
-
-        return $transitions;
+        //use the JSON loader to load the configuration (see the json schema we expect in JSON::getJSONSchema)
+        $key = $this->getPrefix() . $this->getConfigurationKey();
+        $loader = new JSON($this->redis->get($key));
+        $count = $loader->load($statemachine);
+        return $count;
     }
 
 
@@ -408,11 +499,14 @@ class Redis extends Adapter implements Loader {
     }
 
     /**
-     * very very dumb proxy to redis connection. only used during testing.
+     * very very dumb proxy to redis connection. should only be used for testing.
      * The assumption is that the first of the arguments is a call to redis
-     * that accepts a KEY as it's first argument.
+     * that accepts a KEY as it's first argument in $arguments.
+     * 
      * This makes it useful to test most of the datastructure commands but definitely
      * not all of them (eg: hset, zadd etc. are ok. but: migrate, scan, object etc. are not ok).
+     * 
+     * Also, it makes use of the prefix you set on the adapter
      * @param string $name name of the method to route to the active redis connection
      * @param mixed $arguments
      * @return mixed
@@ -420,9 +514,20 @@ class Redis extends Adapter implements Loader {
     public function __call($name, $arguments)
     {
         if($arguments) {
+            //prefix with the currently chosen prefix
             $arguments[0] = $this->getPrefix() . $arguments[0];
         }
         return call_user_func_array(array($this->getConnection(), $name), $arguments);
+    }
+    
+    public function toString()
+    {
+        return get_class($this) . 'redis://'. $this->host . ':' . $this->port . '/' . $this->database;
+    }
+    
+    public function __toString()
+    {
+        return $this->toString();
     }
 
 }

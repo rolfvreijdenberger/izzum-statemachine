@@ -8,7 +8,9 @@ use izzum\statemachine\Exception;
 
 /**
  * JSON loader. accepts a json string and loads a machine from it.
- * This class also provides a way to load json from a file.
+ * 
+ * This class provides a way to load json from a file on your file system (fast access)
+ * and is also used by the Redis adapter to load a json string from a redis server.
  * 
  * The format of the data to be loaded is specified via a json-schema. 
  * The schema can be retrieved via JSON::getJSONSchema() and the schema itself and 
@@ -40,9 +42,9 @@ class JSON implements Loader {
 
     /**
      * creates an instance of this class with the data loaded from a file.
-     * @param string $filename
+     * @param string $filename eg: __DIR__ . '/../../configuration.json'
+     * @return JSON an instance of JSON with the data read from the file
      * @throws Exception
-     * @return JSON an instance of JSON with the data from the file
      */
     public static function createFromFile($filename)
     {
@@ -77,12 +79,12 @@ class JSON implements Loader {
         $decoded = json_decode($this->getJSON(), false);
         if (!$decoded) {
             //could not decode (make sure that fully qualified names are escaped with 
-            //4 backslashes: \\\\izzum\\\\commands\\\\Null and that only double quotes are used.
+            //2 backslashes: \\izzum\\commands\\Null and that only double quotes are used.
             throw new Exception(sprintf('could not decode json data. did you only use double quotes? check the json format against %s', 'http://jsonlint.com/'), Exception::BAD_LOADERDATA);
         }
         $name = $stateMachine->getContext()->getMachine();
         $found = false;
-        if(is_array($decoded->machines)) {
+        if(is_array(@$decoded->machines)) {
             foreach ($decoded->machines as $data) {
                 if ($data->name === $name) {
                     $found = true;

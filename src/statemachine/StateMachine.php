@@ -612,6 +612,26 @@ class StateMachine {
         $this->getContext()->setState($state->getName());
         $this->state = $state;
     }
+    
+     /**
+     * add state information to the persistence layer if it is not there.
+     * 
+     * Used to mark the initial construction of a statemachine at a certain
+     * point in time. This method only makes sense the first time a statemachine
+     * is initialized and used since it will do nothing once a transition has been made.
+     * 
+     * It will set the initial state on the backend which sets
+     * the construction time.
+     * 
+     * Make sure that the transitions and states are loaded before you call this method.
+     * in other words: the machine should be ready to go.
+     * 
+     * @return boolean true if not persisted before, false otherwise
+     */
+    public function add()
+    {
+        return $this->getContext()->add($this->getInitialState()->getName());
+    }
 
     /**
      * gets the current state (or retrieve it from the backend if not set).

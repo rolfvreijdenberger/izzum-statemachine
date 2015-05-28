@@ -132,20 +132,4 @@ abstract class AbstractFactory {
         $context = new Context($identifier, $this->createBuilder(), $this->createAdapter());
         return $context;
     }
-
-    /**
-     * add state information to the persistence layer if it is not there.
-     * Used to mark the initial construction of a statemachine at a certain
-     * point in time. This method only makes sense the first time a statemachine
-     * is initialized since it will do nothing once a transition has been made.
-     *
-     * This is a convenience method since it delegates to the Context.
-     *
-     * @param Identifier $identifier            
-     * @param string $state            
-     */
-    public final function add(Identifier $identifier, $state)
-    {
-        $context = $this->createContext($identifier)->add($state);
-    }
 }

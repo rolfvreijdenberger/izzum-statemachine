@@ -8,6 +8,9 @@ namespace izzum\statemachine;
  * id and a machine name (that provides the relation to the statemachine the
  * entity is governed by).
  * 
+ * the machine name should be a 'machine readable' string, since it will be stored in different
+ * backends and might be used as a key there (eg: in redis).
+ * 
  * The entity id is something that uniquely identifies a domain model. Probably 
  * something that is stored in your application, like a primary key in a table, a GUID or a hash.
  *
