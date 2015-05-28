@@ -9,6 +9,7 @@ use izzum\statemachine\Exception;
 /**
  * JSON loader. accepts a json string and loads a machine from it.
  * This class also provides a way to load json from a file.
+ * 
  * The format of the data to be loaded is specified via a json-schema. 
  * The schema can be retrieved via JSON::getJSONSchema() and the schema itself and 
  * a full example of the data can be found in 'assets/json'
@@ -75,34 +76,38 @@ class JSON implements Loader {
         //decode the json in a php object structure
         $decoded = json_decode($this->getJSON(), false);
         if (!$decoded) {
-            //could not decode (make sure that fully qualified names are \\\\izzum\\\\commands\\\\Null escaped
-            throw new Exception(sprintf('could not decode json data. check the json format against %s', 'http://jsonlint.com/'), Exception::BAD_LOADERDATA);
+            //could not decode (make sure that fully qualified names are escaped with 
+            //4 backslashes: \\\\izzum\\\\commands\\\\Null and that only double quotes are used.
+            throw new Exception(sprintf('could not decode json data. did you only use double quotes? check the json format against %s', 'http://jsonlint.com/'), Exception::BAD_LOADERDATA);
         }
         $name = $stateMachine->getContext()->getMachine();
-        $data = null;
+        $found = false;
         if(is_array($decoded->machines)) {
             foreach ($decoded->machines as $data) {
                 if ($data->name === $name) {
+                    $found = true;
                     break;
                 }
             }
         }
-        if (!$data) {
+        if (!$found) {
             //no name match found
             throw new Exception(sprintf('no machine data found for %s in json. seems like a wrong configuration.', $name), Exception::BAD_LOADERDATA);
         }
-        //accessing json as an object allows you to get properties on a stdClass ,even if they do not exist, without notices.
+        //accessing json as an object with an @ error suppresion operator ('shut the fuck up' operator),
+        //allows you to get properties, even if they do not exist, without notices.
+        //this lets us be a little lazy in mapping the json properties to the state and transition properties
         $states = array();
         foreach ($data->states as $state) {
-            $tmp = new State($state->name, $state->type, $state->entry_command, $state->exit_command, $state->entry_callable, $state->exit_callable);
-            $tmp->setDescription($state->description);
+            $tmp = new State($state->name, $state->type, @$state->entry_command, @$state->exit_command, @$state->entry_callable, @$state->exit_callable);
+            $tmp->setDescription(@$state->description);
             $states [$tmp->getName()] = $tmp;
         }
         
         $transitions = array();
         foreach ($data->transitions as $transition) {
-            $tmp = new Transition($states [$transition->state_from], $states [$transition->state_to], $transition->event, $transition->rule, $transition->command, $transition->guard_callable, $transition->transition_callable);
-            $tmp->setDescription($transition->description);
+            $tmp = new Transition($states [$transition->state_from], $states [$transition->state_to], @$transition->event, @$transition->rule, @$transition->command, @$transition->guard_callable, @$transition->transition_callable);
+            $tmp->setDescription(@$transition->description);
             $transitions [] = $tmp;
         }
         
