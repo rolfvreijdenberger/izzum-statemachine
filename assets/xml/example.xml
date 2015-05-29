@@ -2,9 +2,9 @@
 <machines>
 	<comment>an example with 2 minimally configured machines. also used for the unittests. this example exactly mirrors the example.json configuration file.</comment>
 	<machine>
-		<name>my-test-machine</name>
+		<name>non-used-machine</name>
 		<factory>\fully\qualified\FactoryName</factory>
-		<description>my-test-machine description</description>
+		<description>this machine is not used in the unittests.</description>
 		<states>
 			<state>
 				<name>a</name>
@@ -71,6 +71,16 @@
 				<description>description for state b</description>
 			</state>
 			<state>
+				<name>c</name>
+				<type>normal</type>
+				<description>state c in the test should not be reachable by transitions</description>
+			</state>
+			<state>
+				<name>regex:/.*/</name>
+				<type>regex</type>
+				<description>used for the transitions of a and b to c. (done is a final state and will not be used by the regex)</description>
+			</state>
+			<state>
 				<name>done</name>
 				<type>final</type>
 				<entry_command>\izzum\command\Null</entry_command>
@@ -96,6 +106,14 @@
 				<event>bdone</event>
 				<rule />
 				<description>my description for b_to_done</description>
+			</transition>
+			<transition>
+				<!-- state name should refer to the name, which is the regex state in this case. should match exactly -->
+				<state_from>regex:/.*/</state_from>
+				<state_to>c</state_to>
+				<event>goToC</event>
+				<rule>\izzum\rules\ExceptionRule</rule>
+				<description>transitions from a and b to c will throw an exception. used in the unittests. (done is a final state and will not be used by the regex)</description>
 			</transition>
 		</transitions>
 	</machine>

@@ -46,6 +46,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('StateMachine', $machine . '', '__toString()');
         $this->assertContains('transitions', $machine->toString(true));
         $this->assertNotContains('transitions', $machine->toString(false));
+        //echo $machine->toString(false);
         $this->assertContains('states', $machine->toString(true));
         $this->assertNotContains('states', $machine->toString(false));
     }

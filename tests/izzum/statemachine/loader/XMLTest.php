@@ -46,8 +46,8 @@ class XMLTest extends \PHPUnit_Framework_TestCase {
         //this is a symbolic link to the asset/xml/example.xml file
         $loader = XML::createFromFile(__DIR__ . '/fixture-example.xml');
         $count = $loader->load($machine);
-        $this->assertCount(2, $machine->getTransitions());
-        $this->assertEquals(2, $count);
+        $this->assertCount(4, $machine->getTransitions(), 'there is a regex transition that adds 2 transitions (a-c and b-c)');
+        $this->assertEquals(4, $count);
         $this->assertEquals(0, MyStatic::$guard);
         $this->assertTrue($machine->ab());
         $this->assertEquals(1, MyStatic::$guard, 'guard callable specified in xml should be called');

@@ -86,6 +86,62 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($gc, $copy->getGuardCallable());
         $this->assertEquals($tc, $copy->getTransitionCallable());
     }
+    
+    /**
+     * @test
+     */
+    public function shouldSetBiDirectionalReferenceOnFromStateOnlyForInitialOrNormalStates()
+    {
+        $a = new State('a', State::TYPE_INITIAL);
+        $b = new State('b', State::TYPE_NORMAL);
+        $c = new State('regex:/.*/', State::TYPE_REGEX);
+        $d = new State('done', State::TYPE_FINAL);
+        
+        $this->assertCount(0, $a->getTransitions());
+        $this->assertCount(0, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+        
+        $t = new Transition($a, $b);
+        $this->assertCount(1, $a->getTransitions());
+        $this->assertCount(0, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+        
+        $t = new Transition($b, $a);
+        $this->assertCount(1, $a->getTransitions());
+        $this->assertCount(1, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+        
+        //no bi-directional association for 'regex' type in from state
+        $t = new Transition($c, $a);
+        $this->assertCount(1, $a->getTransitions());
+        $this->assertCount(1, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+        
+        //no bi-directional association for 'done' type in from state
+        $t = new Transition($d, $a);
+        $this->assertCount(1, $a->getTransitions());
+        $this->assertCount(1, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+        
+        //no bi-directional association for 'regex' because it is in the 'to' state
+        $t = new Transition($a, $c);
+        $this->assertCount(2, $a->getTransitions());
+        $this->assertCount(1, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+        
+        //no bi-directional association for 'done' because it is in the 'to' state
+        $t = new Transition($a, $d);
+        $this->assertCount(3, $a->getTransitions());
+        $this->assertCount(1, $b->getTransitions());
+        $this->assertCount(0, $c->getTransitions());
+        $this->assertCount(0, $d->getTransitions());
+    }
 
     /**
      * @test

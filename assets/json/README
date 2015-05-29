@@ -10,3 +10,7 @@ to use a persistence adapter to store/write the state and transition history dat
 That can be achieved with one of adapters (like PDO, Session, Memory, Redis) in 
 combination with the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
 and an adapter (writer) to delegate to.
+
+The redis adapter actually uses the same JSON schema (as specified here) to retrieve it's configuration data.
+
+see also tests/loader/JSONTest.php for examples of how to use it.

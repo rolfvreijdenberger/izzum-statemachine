@@ -38,8 +38,8 @@ class ReaderWriterDelegatorTest extends \PHPUnit_Framework_TestCase {
         //add to the backend
         $this->assertTrue($context->add('a'));
         
-        $this->assertCount(2, $machine->getTransitions());
-        $this->assertEquals(2, $count);
+        $this->assertCount(4, $machine->getTransitions(), 'there is a regex transition that adds 2 transitions (a-c and b-c)');
+        $this->assertEquals(4, $count);
         $this->assertTrue($machine->ab());
         
         //get the data from the memory storage facility

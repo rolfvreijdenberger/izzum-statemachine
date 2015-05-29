@@ -333,16 +333,20 @@ class State {
      *
      * TRICKY: this method should be package visibility only,
      * so don't use directly. it is used to set the bidirectional association
-     * for State and Transition from a Transition instance
+     * for State and Transition from a Transition instance on the state the transition will be allowed to 
+     * run from ('state from').
      *
      * @param Transition $transition            
-     * @return boolan yes in case the transition was not on the State already
+     * @return boolan yes in case the transition was not on the State already or in case of an invalid transition
      */
     public function addTransition(Transition $transition)
     {
         $output = false;
         // check all existing transitions.
-        if (!$this->hasTransition($transition->getName())) {
+        if (!$this->hasTransition($transition->getName()) 
+                && $transition->getStateFrom()->getName() == $this->getName() 
+                && !$this->isFinal()
+                 && !$this->isRegex()) {
             $output = true;
             $this->transitions [] = $transition;
         }

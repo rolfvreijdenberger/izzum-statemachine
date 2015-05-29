@@ -32,8 +32,8 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         //this is a symbolic link to the assets/json/example.json file
         $loader = JSON::createFromFile(__DIR__ . '/fixture-example.json');
         $count = $loader->load($machine);
-        $this->assertCount(2, $machine->getTransitions());
-        $this->assertEquals(2, $count);
+        $this->assertCount(4, $machine->getTransitions(),'there is a regex transition that adds 2 transitions (a-c and b-c)');
+        $this->assertEquals(4, $count);
     }
     
     /**

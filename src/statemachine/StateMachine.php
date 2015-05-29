@@ -653,7 +653,7 @@ class StateMachine {
         }
         // retrieve state from the context if we do not find any state set.
         $state = $this->getState($this->getContext()->getState());
-        if (!$state) {
+        if (!$state || $state == State::STATE_UNKNOWN) {
             // possible wrong configuration
             throw new Exception(sprintf("%s current state not found for state with name '%s'. %s", $this->toString(), $this->getContext()->getState(), 'are the transitions/states loaded and configured correctly?'), Exception::SM_NO_CURRENT_STATE_FOUND);
         }
@@ -1001,7 +1001,10 @@ class StateMachine {
         if(!$elaborate) {
             return $output;
         } else {
-            return $output . ' transitions: ' . count($this->getTransitions()) . ', states: ' . count($this->getStates());
+            $output . ' transitions: ' . count($this->getTransitions()) . ', states: ' . count($this->getStates()) . '.';
+            $output .= '[transitions]: ' . implode(",", $this->getTransitions()); 
+            $output .= '. [states]: ' . implode(",", $this->getStates()) . '.'; 
+            return $output;
         }
     }
 

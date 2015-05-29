@@ -1,2 +1,7 @@
-TODO: implement redis adapter and create a usable redis datastructure so that we can do fast queries on state and history records.
-TODO: think about: using the existing JSON schema for configuration (a JSON string in redis) and using the JSON loader in the Redis persister.
+the redis implementation for a backend persistence adapter is in izzum\statemachine\persistence\redis
+See that file's comments for more information on how to use it and where to find more information.
+a screenshot is present in this directory that contains a view on the data stored.
+
+the redis implementation uses the JSON data for configuration of the machines as specified in the json schema /asset/json/schema.json
+
+see also tests/persistence/RedisTest.php for examples of how to use it.

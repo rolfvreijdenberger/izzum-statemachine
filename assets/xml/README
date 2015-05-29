@@ -9,3 +9,5 @@ to use a persistence adapter to store/write the state and transition history dat
 That can be achieved with one of adapters (like PDO, Session, Memory, Redis) in 
 combination with the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
 and an adapter (writer) to delegate to.
+
+see also tests/loader/XMLTest.php for examples of how to use it.

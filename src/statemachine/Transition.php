@@ -131,8 +131,8 @@ class Transition {
         $this->setGuardCallable($callable_guard);
         $this->setTransitionCallable($callable_transition);
         // setup bidirectional relationship with state this transition
-        // originates from. only if it's not a regex transition
-        if (!$state_from->isRegex()) {
+        // originates from. only if it's not a regex or final state type
+        if (!$state_from->isRegex() && !$state_from->isFinal()) {
             $state_from->addTransition($this);
         }
         // set and sanitize event name
@@ -203,7 +203,7 @@ class Transition {
             }
             return $this->callCallable($this->getGuardCallable(), $context, $event);
         } catch(\Exception $e) {
-            $e = new Exception($e->getMessage(), Exception::RULE_APPLY_FAILURE, $e);
+            $e = new Exception($this->toString() . ' '. $e->getMessage(), Exception::RULE_APPLY_FAILURE, $e);
             throw $e;
         }
     }

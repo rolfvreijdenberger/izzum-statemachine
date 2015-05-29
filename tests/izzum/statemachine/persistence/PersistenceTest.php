@@ -14,7 +14,9 @@ use izzum\statemachine\utils\PlantUml;
 use izzum\statemachine\persistence\PDO;
 
 /**
- * @group statemachine
+ * @group persistence
+ * @group pdo
+ * @group session
  * @author rolf
  *
  */
