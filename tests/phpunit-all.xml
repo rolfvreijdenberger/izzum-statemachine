@@ -6,6 +6,7 @@
         <exclude>
            <!--
             <group>sqlite</group>
+            <group>redis</group>
             -->
             <group>uses-sessions</group>
             <group>mysql</group>

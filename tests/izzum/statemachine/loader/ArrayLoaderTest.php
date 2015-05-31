@@ -66,7 +66,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase {
         $loader = new LoaderArray($transitions);
         $this->assertEquals(count($transitions), $loader->count());
         $this->assertEquals(count($loader->getTransitions()), $loader->count());
-        $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $context = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         $count = $loader->load($machine);
         $this->assertEquals(2, $count);
@@ -106,7 +106,7 @@ class ArrayLoaderTest extends \PHPUnit_Framework_TestCase {
     public function shouldAddRegexesLoaderOnlyWhenStatesAreSet()
     {
         
-        $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $context = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
         
         $transitions = array();

@@ -29,12 +29,12 @@ class Memory extends Adapter {
         return $this->getStateFromRegistry($identifier);
     }
 
-    public function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state, $message = null)
     {
-        return $this->setStateInRegistry($identifier, $state);
+        return $this->setStateInRegistry($identifier, $state, $message);
     }
 
-    public function add(Identifier $identifier, $state)
+    public function add(Identifier $identifier, $state, $message = null)
     {
         // var_dump (debug_backtrace()[2]);
         $added = true;
@@ -42,7 +42,7 @@ class Memory extends Adapter {
         if ($storage != null) {
             $added = false;
         } else {
-            $data = new StorageData($identifier, $state);
+            $data = new StorageData($identifier, $state, $message);
             $this->writeRegistry($identifier->getId(), $data);
         }
         return $added;
@@ -83,14 +83,14 @@ class Memory extends Adapter {
      * @return boolan false if already stored and overwritten, true if not
      *         stored before
      */
-    protected final function setStateInRegistry(Identifier $identifier, $state)
+    protected final function setStateInRegistry(Identifier $identifier, $state, $message = null)
     {
         $already_stored = true;
         $storage = $this->getStorageFromRegistry($identifier);
         if (!$storage) {
             $already_stored = false;
         }
-        $data = new StorageData($identifier, $state);
+        $data = new StorageData($identifier, $state, $message);
         $this->writeRegistry($identifier->getId(), $data);
         return !$already_stored;
     }
@@ -139,6 +139,5 @@ class Memory extends Adapter {
     {
         return self::$registry;
     }
-    
    
 }

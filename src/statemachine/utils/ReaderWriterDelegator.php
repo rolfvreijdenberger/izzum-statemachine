@@ -78,9 +78,9 @@ class ReaderWriterDelegator extends Adapter implements Loader {
         return $this->writer->getEntityIds($machine, $state);
     }
 
-    public function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state, $message = null)
     {
-        return $this->writer->processSetState($identifier, $state);
+        return $this->writer->processSetState($identifier, $state, $message);
     }
 
     public function processGetState(Identifier $identifier)
@@ -88,9 +88,9 @@ class ReaderWriterDelegator extends Adapter implements Loader {
         return $this->writer->processGetState($identifier);
     }
 
-    public function add(Identifier $identifier, $state)
+    public function add(Identifier $identifier, $state, $message = null)
     {
-        return $this->writer->add($identifier, $state);
+        return $this->writer->add($identifier, $state, $message);
     }
     
     public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)

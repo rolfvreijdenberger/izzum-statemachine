@@ -15,10 +15,14 @@ use izzum\statemachine\loader\JSON;
  * 
  * Since redis has no schemas (as a nosql db), it should store data based on the way you want to retrieve data.
  * There will be multiple views on the data which should make sense for a lot of use cases (counters, 
- * sets, sorted sets, lists, aggregates etc) to retrieve the data.
+ * sets, sorted sets, lists, hashes etc) to retrieve the data.
+ * All keys that izzum uses in redis can be found in this classes' constants with a 'KEY_' prefix.
+ * 
+ * This class uses the php redis module and your php build should be setup with this module loaded.
  * 
  * An instance uses a redis key prefix of 'izzum:' by default. but this can be set to whatever you like.
- * 
+ *
+ * .
  * You can even set the prefix key to something else temporarily for loading the configuration data and
  * then set it to another prefix for writing state data. This allows you to store multiple machine 
  * configurations under different prefixes so you can load different machines from different places, 
@@ -35,12 +39,16 @@ use izzum\statemachine\loader\JSON;
  *
  * @link http://redis.io
  * @link https://github.com/nicolasff/phpredis a php module for redis you'll need to use this class.
- * you need to install the php module:
+ * you need to install the php module and make it available to php:
  * - debian/ubuntu: via the apt package manager: apt-get install php5-redis
  * - osx: use homebrew
  *      - install homebrew php https://github.com/Homebrew/homebrew-php
  *      - install php5-redis: brew install php55-redis
  *
+ * @link http://redis.io/commands/sort#using-hashes-in-codebycode-and-codegetcode to get information 
+ *      about how to query a set or list of referenced keys
+ * @link https://stackoverflow.com/questions/10155398/getting-multiple-key-values-from-redis methods of retrieval of data in redis
+ * @link https://github.com/antirez/lamernews redis implementation with interesting datastructures (by the redis author)
  *
  * @author rolf
  *
@@ -49,25 +57,56 @@ class Redis extends Adapter implements Loader {
 
     const DATABASE_DEFAULT = 0;//default database to use
     const KEY_PREFIX_IZZUM = 'izzum:';//default key prefix
-    const KEY_CONFIGURATION = 'configuration';//default key for configuration of machines
-    const KEY_ENTITYIDS = '%sentities:%s:ids';//set of entities in a machine: <prefix>, <machine>
-    const KEY_CURRENT_STATES = '%sentities:%s:state:%s';//set of entities per state: <prefix>, <machine>, <state>
-    const KEY_STATES = '%sstates:%s:%s';//state of an entity: <prefix>, <machine>, <id>
-
-    //TODO: implement all these counters
-    const KEY_COUNTER_TRANSITIONS_ALL = '%scount:transitions:all';//prefix
-    const KEY_COUNTER_TRANSITIONS_ERROR_ALL = '%scount:transitions:errors:all';//prefix,
-    const KEY_COUNTER_TRANSITIONS_STATES = '%scount:transitions:states:%s:%s';//prefix, <machine>, <state>
-    const KEY_COUNTER_TRANSITIONS_ERROR_STATES = '%scount:transitions:errors:states:%s:%s';//prefix, <machine>, <state>
-    const KEY_COUNTER_TRANSITIONS_MACHINES = '%scount:transitions:machines:%s';//prefix, <machine>
-    const KEY_COUNTER_TRANSITIONS_ERROR_MACHINES = '%scount:transitions:errors:machines:%s';//prefix, <machine>>
-    const KEY_COUNTER_TRANSITIONS_ENTITIES = '%scount:transitions:entities:%s:%s';//prefix, <machine>, <entity>
-    const KEY_COUNTER_TRANSITIONS_ERROR_ENTITIES = '%scount:transitions:errors:entities:%s:%s';//prefix, <machine>, <entity>
     
-    //TODO: store in sorted set (state, id, time, machine in json)
-    const KEY_TRANSITIONS_FAILED = '%stransitions:failed';
-    const KEY_TRANSITIONS_ALL = '%stransitions:all';
-    const KEY_TRANSITIONS_MACHINE = '%stransitions:machines:%s:%s';//sorted set history of entity transitions <prefix>, <machine>, <id>
+    /**
+     * default key for configuration of machines
+     */
+    const KEY_CONFIGURATION = 'configuration';
+    /**
+     * set of entities in a machine:  <machine>
+     */
+    const KEY_ENTITYIDS = 'entities:%s:ids';
+    /**
+     * set of entities per state:  <machine>, <state>
+     */
+    const KEY_CURRENT_STATES = 'entities:%s:states:%s';
+    
+    /**
+     * state of an entity: <machine>, <id>
+     */
+    const KEY_ENTITY_STATE = 'entities:%s:state:%s';
+
+    
+    /**
+     * this key stores the count of all transitions and is used as the id that references the canonical form.
+     * transitions are added by incrementing this counter and using that id as key to the entries of the canonical forms
+     * of the transitions (stored as a redis hash)
+     */
+    const KEY_COUNTERS_TRANSITIONS_ALL = 'counters:transitions:all';
+
+    /**
+     * the keys that stores the canonical form of the transitions, storing the transition data.
+     * all other transitions will reference the id/counter of the canonical form
+     */
+    const KEY_TRANSITIONS_CANONICAL = 'transitions:canonical:%s';//hash: $counter (KEY_COUNTERS_TRANSITIONS_ALL)
+
+    /**
+     * the next keys store id's in sorted sets, scored by timestamp. the id's reference the canonical form.
+     * the keys provide different views on the data that can easily be retrieved by using:
+     * - sort: the sort command allows you to reference multiple transitions as referenced in a list or set, in one command
+     * - zcount: count the elements in a sorted set. this gives you an easy count on the number of transitions per
+     *      machine, state, entity etc. since those are all stored.
+     */
+    const KEY_TRANSITIONS_ALL = 'transitions:all:normal';//sorted set
+    const KEY_TRANSITIONS_MACHINES = 'transitions:machines:normal:%s';//sorted set: $machine
+    const KEY_TRANSITIONS_STATES = 'transitions:states:normal:%s:%s';//sorted set: $machine, $state
+    const KEY_TRANSITIONS_ENTITIES = 'transitions:entities:normal:%s:%s';//sorted set: $machine, $entity_id
+    const KEY_TRANSITIONS_ALL_FAILED = 'transitions:all:failed';//sorted set
+    const KEY_TRANSITIONS_MACHINES_FAILED = 'transitions:machines:failed:%s';//sorted set:$machine
+    const KEY_TRANSITIONS_STATES_FAILED = 'transitions:states:failed:%s:%s';//sorted set: $machine, $state
+    const KEY_TRANSITIONS_ENTITIES_FAILED = 'transitions:entities:failed:%s:%s';//sorted set: $machine, $entity_id
+    
+    
     
     private $host;
     private $port;
@@ -163,6 +202,9 @@ class Redis extends Adapter implements Loader {
      * @param string $prefix
      */
     public final function setPrefix($prefix) {
+        if($this->redis) {
+            $this->redis->setOption(\Redis::OPT_PREFIX, $prefix);
+        }
         $this->prefix = $prefix;
     }
     
@@ -227,6 +269,7 @@ class Redis extends Adapter implements Loader {
                 }
                 //set the database
                 $this->redis->select($this->database);
+                $this->redis->setOption(\Redis::OPT_PREFIX, $this->getPrefix());
                 //hook for subclass
                 $this->onConnect();
             }
@@ -259,7 +302,7 @@ class Redis extends Adapter implements Loader {
         $redis = $this->getConnection();
         try {
             //get state from key
-            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $key = sprintf(self::KEY_ENTITY_STATE, $identifier->getMachine(), $identifier->getEntityId());
             $state = $redis->get($key);
         } catch (\Exception $e) {
             throw new Exception(sprintf('getting current state failed: [%s]',
@@ -280,12 +323,12 @@ class Redis extends Adapter implements Loader {
      * @param string $state
      * @return boolean true if not already present, false if stored before
      */
-    public function processSetState(Identifier $identifier, $state) {
+    public function processSetState(Identifier $identifier, $state, $message = null) {
         if($this->isPersisted($identifier)) {
-            $this->updateState($identifier, $state);
+            $this->updateState($identifier, $state, $message);
             return false;
         } else {
-            $this->insertState($identifier, $state);
+            $this->insertState($identifier, $state, $message);
             return true;
         }
     }
@@ -296,11 +339,11 @@ class Redis extends Adapter implements Loader {
      * @param Identifier $identifier
      * @return boolean
      */
-    public function add(Identifier $identifier, $state) {
+    public function add(Identifier $identifier, $state, $message = null) {
         if($this->isPersisted($identifier)) {
             return false;
         }
-        $this->insertState($identifier, $state);
+        $this->insertState($identifier, $state, $message);
         return true;
     }
 
@@ -314,7 +357,7 @@ class Redis extends Adapter implements Loader {
         try {
             $redis = $this->getConnection();
             //get key from known entity ids set
-            $key = sprintf(self::KEY_ENTITYIDS, $this->getPrefix(), $identifier->getMachine());
+            $key = sprintf(self::KEY_ENTITYIDS, $identifier->getMachine());
             return $redis->sismember($key, $identifier->getEntityId());
         } catch (\Exception $e) {
             throw new Exception(
@@ -330,23 +373,26 @@ class Redis extends Adapter implements Loader {
      * @param Context $context
      * @param string $state
      */
-    public function insertState(Identifier $identifier, $state)
+    public function insertState(Identifier $identifier, $state, $message = null)
     {
+        $redis = $this->getConnection();
         try {
-            $redis = $this->getConnection();
             //add a history record
-            $this->addHistory($identifier, $state);
+            $this->addHistory($identifier, $state, $message);
+            $redis->multi(\Redis::MULTI);
             //add to set of known id's
-            $key = sprintf(self::KEY_ENTITYIDS, $this->getPrefix(), $identifier->getMachine());
+            $key = sprintf(self::KEY_ENTITYIDS, $identifier->getMachine());
             $redis->sadd($key, $identifier->getEntityId());
             //set the state
-            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $key = sprintf(self::KEY_ENTITY_STATE, $identifier->getMachine(), $identifier->getEntityId());
             $redis->set($key, $state);
             //set on current states set
-            $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $identifier->getMachine(), $state);
+            $key = sprintf(self::KEY_CURRENT_STATES, $identifier->getMachine(), $state);
             $redis->sadd($key, $identifier->getEntityId());
+            $redis->exec();
             
         } catch (\Exception $e) {
+            $redis->discard();
             throw new Exception(sprintf('query for inserting state failed: [%s]',
                     $e->getMessage()),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
@@ -362,26 +408,35 @@ class Redis extends Adapter implements Loader {
      * @param string $state
      * @throws Exception
      */
-    public function updateState(Identifier $identifier, $state)
+    public function updateState(Identifier $identifier, $state, $message = null)
     {
 
+        $redis = $this->getConnection();
         try {
             //add a history record
-            $this->addHistory($identifier, $state);
-            $redis = $this->getConnection();
-            //remove from current state set
-            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $this->addHistory($identifier, $state, $message);
+            
+            //first, get the current state
+            $key = sprintf(self::KEY_ENTITY_STATE, $identifier->getMachine(), $identifier->getEntityId());
             $current = $redis->get($key);
-            $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $identifier->getMachine(), $current);
+            
+            
+            //now that we have the current state, start multi in pipeline mode for faster execution (single server roundtrip)
+            $redis->multi(\Redis::PIPELINE);
+            //remove from current state set
+            $key = sprintf(self::KEY_CURRENT_STATES, $identifier->getMachine(), $current);
             $redis->srem($key, $identifier->getEntityId());
             //set the new state
-            $key = sprintf(self::KEY_STATES, $this->getPrefix(), $identifier->getMachine(), $identifier->getEntityId());
+            $key = sprintf(self::KEY_ENTITY_STATE, $identifier->getMachine(), $identifier->getEntityId());
             $redis->set($key, $state);
             //set on current states set
-            $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $identifier->getMachine(), $state);
+            $key = sprintf(self::KEY_CURRENT_STATES, $identifier->getMachine(), $state);
             $redis->sadd($key, $identifier->getEntityId());
+            //execute the sequence of redis commands
+            $redis->exec();
             
         } catch (\Exception $e) {
+            $redis->discard();
             throw new Exception(sprintf('updating state failed: [%s]',
                     $e->getMessage()),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
@@ -392,41 +447,86 @@ class Redis extends Adapter implements Loader {
      * Adds a history record for a transition
      * @param Identifier $identifier
      * @param string $state
-     * @param string $message an optional message. which would imply an error.
+     * @param mixed $message an optional message. 
+     * @param boolean $is_exception indicates if the transition is an exception
      * @throws Exception
      */
-    public function addHistory(Identifier $identifier, $state, $message = null)
+    public function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {
+        $redis = $this->getConnection();
         try {
-            $redis = $this->getConnection();
-            $prefix = $this->getPrefix();
+            $machine = $identifier->getMachine();
+            $entity_id = $identifier->getEntityId();
             
+            //counter for the number of transitions.
+            $key = self::KEY_COUNTERS_TRANSITIONS_ALL;
+            //this will function as the id of the transition data, stored as a redis hash
+            $counter = $redis->incr($key);
             
-            //create the record for the transition
+            //now that we have the counter, start a redis multi command in pipeline mode
+            $redis->multi(\Redis::PIPELINE);
+            
+            //create the record for the transition to store in a redis hash
             $timestamp = time();
-            $record = new \stdClass();
-            $record->state = $state;
-            $record->machine = $identifier->getMachine();
-            $record->entity_id = $identifier->getEntityId();
-            $record->timestamp = $timestamp;
-            $record->message = $message;//TODO: check it is not double encoded
-            $record = json_encode($record);
-            
-            //add to lists for specific machines
-            $key = sprintf(self::KEY_TRANSITIONS_MACHINE, $prefix, $identifier->getMachine(), $identifier->getEntityId());
-            $redis->rpush($key, $record);
-            //add to list of all transitions
-            $key = sprintf(self::KEY_TRANSITIONS_ALL, $prefix);
-            $redis->rpush($key, $record);
-            if($message != null ) {
-                //add failed message to list
-                $key = sprintf(self::KEY_TRANSITIONS_FAILED, $prefix);
-                $redis->rpush($key, $record);
+            $record = array();
+            $record['state'] = $state;
+            $record['machine'] = $machine;
+            $record['entity_id'] = $entity_id;
+            if($message) {
+                if(is_string($message)) {
+                    $info = new \stdClass();
+                    $info->message = $message;
+                    $message = $info;
+                }
+                //always json_encode so we can pass objects as messages
+                $message = json_encode($message);
             }
+            $record['message'] = $message;
+            $record['timestamp'] = $timestamp;
+            $record['datetime'] = date('Y-m-d H:i:s', $timestamp);//ISO_8601
+            $record['exception'] = $is_exception ? 1 : 0;
+            $record['id'] = $counter;
             
-            //TODO: counters (also for errors)
+            /*
+             * set the canonical form of the transition as a hash with the counter as the id.
+             * This allows you to get data from the canonical from by storing a reference to the transaction id
+             * in other lists or sets (memory optimization) via:
+             * sort izzum:transitions:all:normal by nosort get izzum:transitions:canonical:*->message STORE mymessages
+             * @see http://redis.io/commands/sort
+             */
+            
+            $key_hash_id = sprintf(self::KEY_TRANSITIONS_CANONICAL, $counter);
+            $redis->hmset($key_hash_id, $record);
+            
+            
+            //store all transitions referencing the id of the canonical form in sorted sets (keyed by timestamp),
+            //set manipulations are powerful in redis (diff, union, intersect etc with the exceptions for example)
+            $key = self::KEY_TRANSITIONS_ALL;
+            $redis->zadd($key, $timestamp, $counter);
+            $key = sprintf(self::KEY_TRANSITIONS_MACHINES, $machine);
+            $redis->zadd($key, $timestamp, $counter);
+            $key = sprintf(self::KEY_TRANSITIONS_STATES, $machine, $state);
+            $redis->zadd($key, $timestamp, $counter);
+            $key = sprintf(self::KEY_TRANSITIONS_ENTITIES, $machine, $entity_id);
+            $redis->zadd($key, $timestamp, $counter);
+            
+            
+            if($is_exception) {
+                //store all failed transitions referencing the id of the canonical form in sets
+                $key = self::KEY_TRANSITIONS_ALL_FAILED;
+                $redis->zadd($key, $timestamp, $counter);
+                $key = sprintf(self::KEY_TRANSITIONS_MACHINES_FAILED, $machine);
+                $redis->zadd($key, $timestamp, $counter);
+                $key = sprintf(self::KEY_TRANSITIONS_STATES_FAILED, $machine, $state);
+                $redis->zadd($key, $timestamp, $counter);
+                $key = sprintf(self::KEY_TRANSITIONS_ENTITIES_FAILED, $machine, $entity_id);
+                $redis->zadd($key, $timestamp, $counter);
+            }
+            //execute the sequence of redis commands
+            $redis->exec();
             
         } catch (\Exception $e) {
+            $redis->discard();
             throw new Exception(sprintf('adding history failed: [%s]',
                     $e->getMessage()),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
@@ -466,16 +566,15 @@ class Redis extends Adapter implements Loader {
      * @throws Exception
      */
     public function getEntityIds($machine, $state = null) {
-        $redis = $this->getConnection();
-        $prefix = $this->getPrefix();
         try {
+            $redis = $this->getConnection();
             if($state) {
                 //get from set of entities per state
-                $key = sprintf(self::KEY_CURRENT_STATES, $this->getPrefix(), $machine, $state);
+                $key = sprintf(self::KEY_CURRENT_STATES, $machine, $state);
                 return $redis->smembers($key);
             } else {
                 //get state directly
-                $key = sprintf(self::KEY_ENTITYIDS, $this->getPrefix(), $machine);
+                $key = sprintf(self::KEY_ENTITYIDS, $machine);
                 return $redis->smembers($key);
             }
         } catch (\Exception $e) {
@@ -486,12 +585,14 @@ class Redis extends Adapter implements Loader {
     }
 
     /**
-     * Load the statemachine with data.
+     * Load the statemachine with data from a JSON string.
+     * the JSON string is stored at the redis key <prefix:>configuration by default.
+     * you can alter the configuration key by using Redis::setPrefix() and Redis::setConfigurationKey()
      * @param StateMachine $statemachine
      */
     public function load(StateMachine $statemachine) {
         //use the JSON loader to load the configuration (see the json schema we expect in JSON::getJSONSchema)
-        $key = $this->getPrefix() . $this->getConfigurationKey();
+        $key = $this->getConfigurationKey();
         $loader = new JSON($this->redis->get($key));
         $count = $loader->load($statemachine);
         return $count;
@@ -515,23 +616,19 @@ class Redis extends Adapter implements Loader {
 
     /**
      * very very dumb proxy to redis connection. should only be used for testing.
-     * The assumption is that the first of the arguments is a call to redis
-     * that accepts a KEY as it's first argument in $arguments.
+     * calls methods on a https://github.com/phpredis/phpredis instance.
      * 
-     * This makes it useful to test most of the datastructure commands but definitely
-     * not all of them (eg: hset, zadd etc. are ok. but: migrate, scan, object etc. are not ok).
+     * some method calls will only accept an array as the second argument (like hmset)
      * 
-     * Also, it makes use of the prefix you set on the adapter
+     * This makes it useful to test the redis commands or just use this class as an interface to redis.
+     * 
      * @param string $name name of the method to route to the active redis connection
      * @param mixed $arguments
      * @return mixed
      */
     public function __call($name, $arguments)
     {
-        if($arguments) {
-            //prefix with the currently chosen prefix
-            $arguments[0] = $this->getPrefix() . $arguments[0];
-        }
+        //call the method with $name on the \Redis instance
         return call_user_func_array(array($this->getConnection(), $name), $arguments);
     }
     

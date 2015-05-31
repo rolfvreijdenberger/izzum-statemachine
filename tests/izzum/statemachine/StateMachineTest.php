@@ -29,7 +29,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldWorkWhenInitialized()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->assertEquals(Identifier::NULL_STATEMACHINE, $machine->getContext()->getMachine());
         $this->assertEquals($machine->getContext(), $object);
@@ -57,7 +57,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToTransition()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         
@@ -87,7 +87,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseAddTransitions()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
@@ -141,7 +141,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
 
     public function testGetInitialState()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->assertNull($machine->getInitialState(true), 'try to get initial state and expect null if not there');
         try {
@@ -162,7 +162,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldAddRegexFromState()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         
         $regex_from_all = new State('regex:/.+/'); // regex: all states
@@ -199,7 +199,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldAddRegexWithSelfTransitions()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
     
         $regex_all = new State('regex:/.+/'); // regex: all states
@@ -232,7 +232,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldAddRegexWithoutSelfTransitions()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
     
         $regex_all = new State('regex:/.+/'); // regex: all states
@@ -264,7 +264,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldAddState()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
     
         $regex_all = new State('regex:/.+/'); // regex: all states
@@ -280,6 +280,8 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         $this->assertFalse($machine->addState($b));
         $this->assertFalse($machine->addState($c));
         $this->assertCount(3, $machine->getStates());
+        $this->assertFalse($machine->addState($regex_all), 'cannot add regex state');
+        $this->assertCount(3, $machine->getStates());
     }
     
     /**
@@ -288,7 +290,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToBlockTransitionInSubclass()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new SubClassedStateMachine($object);
     
         $regex_all = new State('regex:/.+/'); // regex: all states
@@ -311,7 +313,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldAddRegexToState()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
     
         $regex_to_all = new State('regex:/.+/'); // regex: to all states
@@ -346,7 +348,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldAddRegexToAndFromState()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
     
         $regex_to = new State('regex:/.+/'); // regex: to all states
@@ -381,7 +383,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
 
     public function testReferencesOnStatesAndTransitions()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         $transitions = $machine->getTransitions();
@@ -453,7 +455,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseEventHandlingMethods()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         $this->assertTrue($machine->hasEvent('newAAH'), 'event name for new to a');
@@ -487,7 +489,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseEventForMoreTransitionsInCurrentState()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $a = new State('new', State::TYPE_INITIAL);
         $b = new State('b');
@@ -544,7 +546,6 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
-        // $context->add();
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
         $s_a = new State('a', State::TYPE_NORMAL);
@@ -626,7 +627,6 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $context_1 = new Context(new Identifier(1, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context_1);
-        // $context_1->add();
         $this->assertEquals($context_1, $machine->getContext());
         
         try {
@@ -674,20 +674,41 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      * @test
      * @group 3.1
      */
-    public function shouldBeAbleTosetState()
+    public function shouldBeAbleToAddToPersistenceLayerAndsetStateWithAndWithoutMessage()
     {
-        $machine = new StateMachine(new Context(new Identifier('123', 'test-machine')));
+        $identifier = new Identifier('123', 'test-machine');
+        $machine = new StateMachine(new Context($identifier));
         $a = new State('a');
         $b = new State('b', State::TYPE_INITIAL);
         $t = new Transition($b, $a, 'go');
         $machine->addTransition($t);
         // var_dump(Memory::get());
         $this->assertEquals($b, $machine->getCurrentState());
-        $machine->go();
+        $message = 'this is a message about the initial adding to the persistence layer: adding from ' . __METHOD__;
+        $this->assertTrue($machine->add($message));
+        $memory = new Memory();
+        $storage = $memory->getStorageFromRegistry($identifier);
+        $this->assertEquals($message, $storage->message, 'persisted with the message');
+        $this->assertFalse($machine->add(), 'second addition will not work, since we already added.');
+        $this->assertEquals($message, $storage->message, 'still persisted with the same message');
+        $anotherMessage = 'foo-bar';
+        $machine->go($anotherMessage);
+        $storage = $memory->getStorageFromRegistry($identifier);
+        $this->assertEquals($anotherMessage, $storage->message, 'persisted with another message');
         // var_dump(Memory::get());
         $this->assertEquals($a, $machine->getCurrentState());
-        $machine->setState($b);
+        $machine->setState($b, "this is a message to be stored for why we set this state: testing, setting state to b");
         $this->assertEquals($b, $machine->getCurrentState());
+        $machine->transition("b_to_a");
+        $storage = $memory->getStorageFromRegistry($identifier);
+        $this->assertNull($storage->message, 'persisted without message');
+        
+        try {
+            $machine->setState(new State('state not known to machine'));
+            $this->fail('should not come here');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::SM_UNKNOWN_STATE, $e->getCode());
+        }
     }
 
     /**
@@ -773,7 +794,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldBeAbleToUseRunAndCanTransitionAndTestStateTypes()
     {
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         
@@ -815,7 +836,6 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
     {
         $context = new Context(new Identifier(54321, Identifier::NULL_STATEMACHINE));
         $machine = new StateMachine($context);
-        // $context->add();
         
         $s_new = new State(State::STATE_NEW, State::TYPE_INITIAL);
         $s_a = new State('a', State::TYPE_NORMAL);
@@ -965,7 +985,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         // pass the model to the builder that uses that model as entity
         $builder = new ModelBuilder($model);
         
-        $object = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE), $builder);
+        $object = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE), $builder);
         $machine = new StateMachine($object);
         $this->addTransitionsToMachine($machine);
         

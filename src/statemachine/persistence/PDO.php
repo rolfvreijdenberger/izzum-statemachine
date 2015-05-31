@@ -26,15 +26,16 @@ use izzum\statemachine\State;
  *
  * This Adapter does double duty as a Loader since both use the
  * same backend. You could use two seperate classes for this, but you can
- * implement both in one class.
- * Loader::load(), Adapter::getEntityIds(), Adapter::processGetState()
- * Adapter::processSetState(), Adapter::add()
+ * implement both in one class. 
+ * You could use the ReaderWriterDelegator to seperate
+ * the reading of configuration and the persisting of state and transition data.
+ * 
  *
  * This is not a highly optimized adapter, but serves as something you can use
  * out of the box. If you need an adapter more specialized to your
  * needs/framework/system you can easily write one yourself.
  *
- * More functionality related to a backend can be implemented here:
+ * More functionality related to a backend can be implemented on this class eg:
  * - get the history of transitions from the history table
  * - get the factories for machines from the machine table
  *
@@ -221,13 +222,13 @@ class PDO extends Adapter implements Loader {
      * @param string $state            
      * @return boolean true if not already present, false if stored before
      */
-    public function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state, $message = null)
     {
         if ($this->isPersisted($identifier)) {
-            $this->updateState($identifier, $state);
+            $this->updateState($identifier, $state, $message);
             return false;
         } else {
-            $this->insertState($identifier, $state);
+            $this->insertState($identifier, $state, $message);
             return true;
         }
     }
@@ -239,12 +240,12 @@ class PDO extends Adapter implements Loader {
      * @param Identifier $identifier            
      * @return boolean
      */
-    public function add(Identifier $identifier, $state)
+    public function add(Identifier $identifier, $state, $message = null)
     {
         if ($this->isPersisted($identifier)) {
             return false;
         }
-        $this->insertState($identifier, $state);
+        $this->insertState($identifier, $state, $message);
         return true;
     }
     
@@ -267,10 +268,7 @@ class PDO extends Adapter implements Loader {
             $message->line = $e->getLine();
             $state = $this->getState($identifier);
             $message->state = $state;
-            // convert to json for storage (text field with json can be searched
-            // via sql)
-            $json = json_encode($message);
-            $this->addHistory($identifier, $state, $json, true);
+            $this->addHistory($identifier, $state, $message, true);
         }
     }
     
@@ -358,11 +356,11 @@ class PDO extends Adapter implements Loader {
      * @param Identifier $identifier            
      * @param string $state            
      */
-    public function insertState(Identifier $identifier, $state)
+    public function insertState(Identifier $identifier, $state, $message = null)
     {
         
         // add a history record
-        $this->addHistory($identifier, $state);
+        $this->addHistory($identifier, $state, $message);
         
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
@@ -432,10 +430,10 @@ class PDO extends Adapter implements Loader {
      * @param string $state            
      * @throws Exception
      */
-    public function updateState(Identifier $identifier, $state)
+    public function updateState(Identifier $identifier, $state, $message = null)
     {
         // add a history record
-        $this->addHistory($identifier, $state);
+        $this->addHistory($identifier, $state, $message);
         
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
@@ -485,6 +483,15 @@ class PDO extends Adapter implements Loader {
             $statement->bindParam(":machine", $identifier->getMachine());
             $statement->bindParam(":entity_id", $identifier->getEntityId());
             $statement->bindParam(":state", $state);
+            if($message) {
+                if(is_string($message)) {
+                    $info = new \stdClass();
+                    $info->message = $message;
+                    $message = $info;
+                }
+                //always json encode it so we can pass objects as the message and store it
+                $message = json_encode($message);
+            }
             $statement->bindParam(":message", $message);
             $statement->bindParam(":timestamp", $this->getTimestampForDriver());
             $statement->bindParam(":exception", $this->getBooleanForDriver($is_exception));

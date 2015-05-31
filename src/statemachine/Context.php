@@ -160,15 +160,17 @@ class Context {
     /**
      * Sets the state
      *
-     * @param string $state            
+     * @param string $state 
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.            
      * @return boolan true if there was never any state persisted for this
      *         machine before (just added for the
      *         first time), false otherwise
      */
-    public function setState($state)
+    public function setState($state, $message = null)
     {
         // set the state by delegating to a specific writer
-        return $this->getPersistenceAdapter()->setState($this->getIdentifier(), $state);
+        return $this->getPersistenceAdapter()->setState($this->getIdentifier(), $state, $message);
     }
 
     /**
@@ -177,12 +179,14 @@ class Context {
      * point in time. subsequent calls to 'add' will not have any effect if it
      * has already been persisted.
      *
-     * @param string $state            
+     * @param string $state
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.            
      * @return boolean true if it was added, false if it was already there
      */
-    public function add($state)
+    public function add($state, $message = null)
     {
-        return $this->getPersistenceAdapter()->add($this->getIdentifier(), $state);
+        return $this->getPersistenceAdapter()->add($this->getIdentifier(), $state, $message);
     }
 
     /**
@@ -242,12 +246,6 @@ class Context {
     public function getMachine()
     {
         return $this->getIdentifier()->getMachine();
-    }
-
-    public static function get($identifier, $entity_builder = null, $persistence_adapter = null)
-    {
-        // return a new instance of this (sub)class
-        return new static($identifier, $entity_builder, $persistence_adapter);
     }
 
     /**

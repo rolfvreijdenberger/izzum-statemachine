@@ -54,7 +54,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         $object = new Identifier(-1, 'order');
         $io = new Memory();
-        $result = $io->setState($object, "test");
+        $result = $io->setState($object, "test", "this is an informational message about why we set this state: for a unittest");
         $this->assertTrue($result, 'default writer returns true when not present');
         
         $result = $io->setState($object, "test");
@@ -190,7 +190,7 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
      */
     public function shouldThrowExceptions()
     {
-        $context = Context::get(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $context = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
         $identifier = $context->getIdentifier();
         $io = new MemoryException(true);
         
@@ -271,16 +271,18 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $ids = $adapter->getEntityIds($machine, 'bogus');
         $this->assertCount(0, $ids);
         
-        
         //diverse tests for the persistance of a non existing fully random id
         $random_id = rand(1,999999999) . "-" . microtime();
         $identifier = new Identifier($random_id, $machine);
         $context = new Context($identifier, null, $adapter);
         $this->assertEquals(State::STATE_UNKNOWN, $context->getState());
         $this->assertFalse($adapter->isPersisted($identifier), 'not persisted yet');
+        
+        
         $count = count($adapter->getEntityIds($machine, 'new'));
         
-        $this->assertTrue($context->setState(State::STATE_NEW), 'first time');
+        $message = 'setting the state for the first time: this is a message to explain in the transition history that we are doing this from a unittest';
+        $this->assertTrue($context->setState(State::STATE_NEW, $message), 'first time');
         
         $this->assertCount($count + 1, $adapter->getEntityIds($machine, 'new'), '1 extra in state new');
         $this->assertFalse($context->setState(State::STATE_UNKNOWN), 'already persisted');
@@ -416,9 +418,9 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         
         $machine = new StateMachine(new Context(new Identifier('test-addition' . microtime() . rand(1,99999), 'izzum'), null, $adapter));
         $adapter->load($machine);
-        $this->assertTrue($machine->getContext()->add($machine->getInitialState()));
+        $this->assertTrue($machine->getContext()->add($machine->getInitialState(), 'another info message for addition to persistence layer' ));
         $this->assertFalse($machine->getContext()->add($machine->getInitialState()));
-        $machine->runToCompletion();
+        $machine->runToCompletion('running this machine to completion from ' . __METHOD__);
         $this->assertTrue($machine->getCurrentState()->isFinal());
         
     }

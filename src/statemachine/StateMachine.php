@@ -238,16 +238,18 @@ class StateMachine {
      *
      * @param string $transition_name
      *            convention: <state-from>_to_<state-to>
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition. 
      * @return boolean true if the transition was made
      * @throws Exception in case something went disastrously wrong or if the
      *         transition does not exist. An exception will lead to a (partially
      *         or fully) failed transition.
      * @link https://en.wikipedia.org/wiki/Moore_machine
      */
-    public function transition($transition_name)
+    public function transition($transition_name, $message = null)
     {
         $transition = $this->getTransitionWithNullCheck($transition_name);
-        return $this->performTransition($transition);
+        return $this->performTransition($transition, null, $message);
     }
 
     /**
@@ -268,6 +270,8 @@ class StateMachine {
      *            (mealy machine)
      *            this will also match on the transition name
      *            (<state_to>_to_<state_from>)
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.  
      * @return bool true in case a transition was triggered by the event, false
      *         otherwise
      * @throws Exception in case something went horribly wrong
@@ -275,12 +279,12 @@ class StateMachine {
      * @link http://martinfowler.com/books/dsl.html for event handling
      *       statemachines
      */
-    public function handle($event)
+    public function handle($event, $message = null)
     {
         $transitioned = false;
         $transitions = $this->getCurrentState()->getTransitionsTriggeredByEvent($event);
         foreach ($transitions as $transition) {
-            $transitioned = $this->performTransition($transition, $event);
+            $transitioned = $this->performTransition($transition, $event, $message);
             if ($transitioned)
                 break;
         }
@@ -304,17 +308,19 @@ class StateMachine {
      * transition instead of relying on the configuration and guard logic (which
      * *might* not be correctly implemented, leading to transitions that would
      * normally not be executed).
-     *
+     * 
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition. 
      * @return boolean true if a transition was applied.
      * @throws Exception in case something went awfully wrong.
      *        
      */
-    public function run()
+    public function run($message = null)
     {
         try {
             $transitions = $this->getCurrentState()->getTransitions();
             foreach ($transitions as $transition) {
-                $transitioned = $this->performTransition($transition);
+                $transitioned = $this->performTransition($transition, null, $message);
                 if ($transitioned) {
                     return true;
                 }
@@ -333,18 +339,19 @@ class StateMachine {
      *
      * when using cyclic graphs, you could get into an infinite loop between
      * states. design your machine correctly.
-     *
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition. 
      * @return int the number of sucessful transitions made.
      * @throws Exception in case something went badly wrong.
      */
-    public function runToCompletion()
+    public function runToCompletion($message = null)
     {
         $transitions = 0;
         try {
             $run = true;
             while ( $run ) {
                 // run the first transition possible
-                $run = $this->run();
+                $run = $this->run($message);
                 if ($run) {
                     $transitions++;
                 }
@@ -413,11 +420,13 @@ class StateMachine {
      * @param Transition $transition            
      * @param string $event
      *            optional in case the transition was triggered by an event string (mealy machine)
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.  
      * @return boolean true if the transition was succesful
      * @throws Exception in case something went horribly wrong
      * @link https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    private function performTransition(Transition $transition, $event = null)
+    private function performTransition(Transition $transition, $event = null, $message = null)
     {
         // every method in this core routine has hook methods, event handlers and
         // callbacks it can call during the execution phase of the
@@ -432,7 +441,7 @@ class StateMachine {
             // state exit action: performed when exiting the state
             $this->doExitState($transition, $event);
             // the transition is performed, with the associated logic
-            $this->doTransition($transition, $event);
+            $this->doTransition($transition, $event, $message);
             // state entry action: performed when entering the state
             $this->doEnterState($transition, $event);
         } catch(Exception $e) {
@@ -502,9 +511,11 @@ class StateMachine {
      * the transition action method
      *
      * @param Transition $transition            
-     * @param string $event            
+     * @param string $event  
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.          
      */
-    private function doTransition(Transition $transition, $event = null)
+    private function doTransition(Transition $transition, $event = null, $message = null)
     {
         // hook for subclasses to implement
         $this->_onTransition($transition, $event);
@@ -521,7 +532,7 @@ class StateMachine {
         $transition->process($this->getContext(), $event);
         
         // this actually sets the state so we are now in the new state
-        $this->setState($transition->getStateTo());
+        $this->setState($transition->getStateTo(), $message);
     }
 
     /**
@@ -578,12 +589,12 @@ class StateMachine {
      * reachable via other states.
      *
      * @param State $state 
-     * @return boolean true if the state was not know to the machine, false otherwise.           
+     * @return boolean true if the state was not know to the machine or wasn't added, false otherwise.           
      */
     public function addState(State $state)
-    { 
+    {
         //no regex states
-        if($state->isRegex()) {
+        if ($state->isRegex()) {
             return false;
         }
         //check for duplicates
@@ -605,15 +616,25 @@ class StateMachine {
      * This method allows you to bypass the transition guards and the transition
      * logic. no exit/entry/transition logic will be performed
      *
-     * @param State $state            
+     * @param State $state 
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.  
+     * @throws Exception in case the state is not valid/known for this machine          
      */
-    public function setState(State $state)
+    public function setState(State $state, $message = null)
     {
-        $this->getContext()->setState($state->getName());
+        
+        if($this->getState($state->getName()) === null) {
+            throw new Exception(sprintf("%s state '%s' not known to this machine", $this->toString(), $state->getName()), Exception::SM_UNKNOWN_STATE);
+        }
+        //get the state known to this machine so we are sure we have the correct reference
+        //even if the client provides another instance of State with the same name
+        $state = $this->getState($state->getName());
+        $this->getContext()->setState($state->getName(), $message);
         $this->state = $state;
     }
-    
-     /**
+
+    /**
      * add state information to the persistence layer if it is not there.
      * 
      * Used to mark the initial construction of a statemachine at a certain
@@ -626,11 +647,14 @@ class StateMachine {
      * Make sure that the transitions and states are loaded before you call this method.
      * in other words: the machine should be ready to go.
      * 
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to provide extra information in the history of the machine transitions,
+     *          in this case, about the first adding of this machine to the persistence layer. 
      * @return boolean true if not persisted before, false otherwise
      */
-    public function add()
+    public function add($message = null)
     {
-        return $this->getContext()->add($this->getInitialState()->getName());
+        return $this->getContext()->add($this->getInitialState()->getName(), $message);
     }
 
     /**
@@ -793,7 +817,7 @@ class StateMachine {
         if ($transition->getStateFrom()->isFinal()) {
             return false;
         }
-            
+        
         // add the transition only if it already exists (no overwrites)
         if ($this->getTransition($transition->getName()) !== null) {
             return false;
@@ -929,13 +953,16 @@ class StateMachine {
      * since transition event names default to the transition name, it is
      * possible to execute this kind of code (if the state names contain allowed
      * characters):
-     * $statemachine-><state_from>_to_<state_to>(); $statemachine->eventName();
+     * $statemachine-><state_from>_to_<state_to>(); 
+     * $statemachine->eventName();
+     * $statemachine->eventName('this is an informational message about why we do this transition');
      *
      *
      * @param string $name
      *            the name of the unknown method called
      * @param array $arguments
-     *            an array of arguments (if any)
+     *            an array of arguments (if any).
+     *            an argument could be $message (informational message for the transition)
      * @return bool true in case a transition was triggered by the event, false
      *         otherwise
      * @throws Exception in case the transition is not possible via the guard
@@ -944,7 +971,9 @@ class StateMachine {
      */
     public function __call($name, $arguments)
     {
-        return $this->handle($name);
+        //prepend the $name (event/trigger) to other arguments and call the 'handle' method
+        array_unshift($arguments, $name);
+        return call_user_func_array(array($this, 'handle'), $arguments);
     }
 
     /**
@@ -998,12 +1027,12 @@ class StateMachine {
     public function toString($elaborate = false)
     {
         $output = get_class($this) . ": [" . $this->getContext()->getId(true) . "]";
-        if(!$elaborate) {
+        if (!$elaborate) {
             return $output;
         } else {
             $output . ' transitions: ' . count($this->getTransitions()) . ', states: ' . count($this->getStates()) . '.';
-            $output .= '[transitions]: ' . implode(",", $this->getTransitions()); 
-            $output .= '. [states]: ' . implode(",", $this->getStates()) . '.'; 
+            $output .= '[transitions]: ' . implode(",", $this->getTransitions());
+            $output .= '. [states]: ' . implode(",", $this->getStates()) . '.';
             return $output;
         }
     }

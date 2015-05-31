@@ -22,7 +22,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $identifier = new Identifier($entity_id, $machine);
         
         // only mandatory parameters
-        $o = Context::get($identifier);
+        $o = new Context($identifier);
         $this->assertNotNull($o->toString());
         $this->assertContains($entity_id, $o->getId());
         $this->assertContains($machine, $o->getId());
@@ -124,7 +124,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         $io = new Memory();
         
         // all parameters
-        $o = Context::get($identifier, $builder, $io);
+        $o = new Context($identifier, $builder, $io);
         $this->assertEquals($entity_id, $o->getEntityId());
         $this->assertEquals($machine, $o->getMachine());
         $this->assertNull($o->getStateMachine());
@@ -140,7 +140,7 @@ class ContextTest extends \PHPUnit_Framework_TestCase {
         
         // even though we have a valid reader, the state machine does not exist.
         $this->assertEquals(State::STATE_UNKNOWN, $o->getState());
-        $this->assertTrue($o->setState(State::STATE_NEW), 'added');
+        $this->assertTrue($o->setState(State::STATE_NEW, 'this is an informational message about why we set this state: we set this state to new for a unittest'), 'added');
         $this->assertFalse($o->setState(State::STATE_NEW), 'already there');
         
         // for coverage.

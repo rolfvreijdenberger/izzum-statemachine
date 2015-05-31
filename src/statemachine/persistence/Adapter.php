@@ -103,10 +103,12 @@ abstract class Adapter {
      *            created.
      *            this can also be retrieved via a loaded statemachine:
      *            $machine->getInitialState()->getName()
-     *            @boolean true if it was added, false if it was already there.
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.
+     * @return boolean true if it was added, false if it was already there.
      * @throws Exception
      */
-    abstract public function add(Identifier $identifier, $state);
+    abstract public function add(Identifier $identifier, $state, $message = null);
 
     /**
      * Get the current state for an Identifier
@@ -136,16 +138,18 @@ abstract class Adapter {
      *            (old state can be retrieved via the identifier and this class)
      * @param string $state
      *            this is the new state
+     * @param string $message optional message. this can be used by the persistence adapter
+     *          to be part of the transition history to provide extra information about the transition.
      * @return boolan false if already stored before, true if just added
      * @throws Exception
      */
-    public final function setState(Identifier $identifier, $state)
+    public final function setState(Identifier $identifier, $state, $message = null)
     {
         try {
             // a subclass could map a state to
             // something else that is used internally in legacy
             // systems (eg: order.order_status)
-            return $this->processSetState($identifier, $state);
+            return $this->processSetState($identifier, $state, $message);
         } catch(\Exception $e) {
             // a possible lowlevel nonstatemachine exception, wrap it and throw
             $e = Utils::wrapToStateMachineException($e, Exception::IO_FAILURE_SET);

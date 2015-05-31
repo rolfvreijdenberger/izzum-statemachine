@@ -17,7 +17,7 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shouldWorkAsExpected()
+    public function shouldWorkAsExpectedAndDoCorrectBiDirectionalAssociation()
     {
         $name = 'a';
         $type = State::TYPE_INITIAL;
@@ -64,16 +64,19 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($state->isInitial());
         $this->assertFalse($state->isFinal());
         $this->assertFalse($state->isNormal());
+        $this->assertFalse($state->isRegex());
         
         $state = new State($name, State::TYPE_NORMAL);
         $this->assertFalse($state->isInitial());
         $this->assertFalse($state->isFinal());
         $this->assertTrue($state->isNormal());
+        $this->assertFalse($state->isRegex());
         
         $state = new State($name, State::TYPE_FINAL);
         $this->assertFalse($state->isInitial());
         $this->assertTrue($state->isFinal());
         $this->assertFalse($state->isNormal());
+        $this->assertFalse($state->isRegex());
     }
 
     /**

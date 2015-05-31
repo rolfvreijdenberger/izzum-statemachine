@@ -64,7 +64,7 @@ class Session extends Adapter {
         return $state;
     }
 
-    public function processSetState(Identifier $identifier, $state)
+    public function processSetState(Identifier $identifier, $state, $message = null)
     {
         $already_stored = true;
         // session key is a unique string from the Identifier
@@ -73,18 +73,18 @@ class Session extends Adapter {
             $already_stored = false;
         }
         // set object on the session
-        $data = new StorageData($identifier, $state);
+        $data = new StorageData($identifier, $state, $message);
         $_SESSION [$this->namespace] [$key] = $data;
         return !$already_stored;
     }
 
-    public function add(Identifier $identifier, $state)
+    public function add(Identifier $identifier, $state, $message = null)
     {
         $key = $identifier->getId();
         if (isset($_SESSION [$this->namespace] [$key])) {
             return false;
         }
-        $data = new StorageData($identifier, $state);
+        $data = new StorageData($identifier, $state, $message);
         $_SESSION [$this->namespace] [$key] = $data;
         return true;
     }
