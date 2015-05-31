@@ -552,6 +552,14 @@ class Redis extends Adapter implements Loader {
             $message->message = $e->getMessage();
             $message->file = $e->getFile();
             $message->line = $e->getLine();
+            /*
+            a transition can fail even after a state has been set in the transition process, making the transition partly failed.
+            the history will then show a succesful transition to the new state first,
+            and here we will then add the failure of the transition with the current state (which is the 'to' state of the transition)
+            and with the failure message.
+            In case that the transition failed before the state has been set, then this will be the only record in the 
+            history of transitions with the 'from' state as the current state.
+            */
             $state = $this->getState($identifier);
             $message->state = $state;
             $this->addHistory($identifier, $state, $message, true);

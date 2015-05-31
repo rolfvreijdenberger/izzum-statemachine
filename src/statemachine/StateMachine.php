@@ -901,7 +901,7 @@ class StateMachine {
 
     /**
      * called whenever an exception occurs from inside 'performTransition()'
-     * can be used for logging etc.
+     * can be used for logging etc. in some sort of history structure in the persistence layer
      *
      * @param Transition $transition            
      * @param Exception $e            
