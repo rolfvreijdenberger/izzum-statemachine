@@ -102,7 +102,7 @@ $machine->transition('action_to_done');
 ```
 
 ### performing transitions anonymously/generically
-Transitions can be opportunistically performed by trying to run the first transition that is allowed from the current state a statemachine is in. Transitions can be allowed or dissalowed by using 'guards': specific pieces of code for that transition that can check business rules (explained later)
+Transitions can be opportunistically performed by trying to run the first transition that is allowed from the current state a statemachine is in. Transitions can be allowed or disallowed by using 'guards': specific pieces of code for that transition that can check business rules (explained later)
 ```php
 echo $machine->run();//perform the first transition from the current state that can run
 >>> true

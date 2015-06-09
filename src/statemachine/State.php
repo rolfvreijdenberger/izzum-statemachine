@@ -209,6 +209,7 @@ class State {
     public function setEntryCallable($callable)
     {
         $this->callable_entry = $callable;
+        return $this;
     }
 
     /**
@@ -218,6 +219,7 @@ class State {
     public function getExitCallable()
     {
         return $this->callable_exit;
+        
     }
 
     /**
@@ -227,6 +229,7 @@ class State {
     public function setExitCallable($callable)
     {
         $this->callable_exit = $callable;
+        return $this;
     }
 
     /**
@@ -326,6 +329,7 @@ class State {
             $type = self::TYPE_REGEX;
         }
         $this->type = trim($type);
+        return $this;
     }
 
     /**
@@ -380,6 +384,7 @@ class State {
     protected function setName($name)
     {
         $this->name = trim($name);
+        return $this;
     }
 
     /**
@@ -535,6 +540,7 @@ class State {
     public function setExitCommandName($name)
     {
         $this->command_exit_name = trim($name);
+        return $this;
     }
 
     /**
@@ -544,6 +550,7 @@ class State {
     public function setEntryCommandName($name)
     {
         $this->command_entry_name = trim($name);
+        return $this;
     }
 
     /**
@@ -554,6 +561,7 @@ class State {
     public function setDescription($description)
     {
         $this->description = $description;
+        return $this;
     }
 
     /**

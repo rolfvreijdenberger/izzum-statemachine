@@ -145,6 +145,7 @@ class Transition {
      */
     public function setTransitionCallable($callable) {
         $this->callable_transition = $callable;
+        return $this;
     }
     
     /**
@@ -162,6 +163,7 @@ class Transition {
      */
     public function setGuardCallable($callable) {
         $this->callable_guard = $callable;
+        return $this;
     }
     
     /**
@@ -388,6 +390,7 @@ class Transition {
     public function setCommandName($command)
     {
         $this->command = trim($command);
+        return $this;
     }
 
     public function getRuleName()
@@ -398,6 +401,7 @@ class Transition {
     public function setRuleName($rule)
     {
         $this->rule = trim($rule);
+        return $this;
     }
 
     /**
@@ -408,6 +412,7 @@ class Transition {
     public function setDescription($description)
     {
         $this->description = $description;
+        return $this;
     }
 
     /**
@@ -433,6 +438,7 @@ class Transition {
             $event = $this->getName();
         }
         $this->event = $event;
+        return $this;
     }
 
     /**
