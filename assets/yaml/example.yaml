@@ -1,0 +1,98 @@
+---
+  comment: an example with 2 minimally configured machines. also used for the unittests. this example exactly mirrors the example.json configuration file.
+  machines: 
+    - name: non-used-machine
+      factory: \fully\qualified\FactoryName
+      description: this machine is not used in the unittests.
+      states: 
+        - name: a
+          type: initial
+          entry_command: 
+          exit_command: null
+          entry_callable: null
+          exit_callable: null
+          description: description for state a
+        - name: b
+          type: normal
+          entry_command: \izzum\command\Null
+          exit_command: \izzum\command\Null
+          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
+          exit_callable: \izzum\statemachine\loader\MyStatic::exitMethod
+          description: description for state b
+        - name: done
+          type: final
+          entry_command: \izzum\command\Null
+          exit_command: 
+          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
+          exit_callable: null
+          description: description for state done
+      transitions: 
+        - state_from: a
+          state_to: b
+          event: ab
+          rule: \izzum\rules\True
+          command: \izzum\command\Null
+          guard_callable: \izzum\statemachine\loader\MyStatic::guardMethod
+          transition_callable: \izzum\statemachine\loader\MyStatic::transitionMethod
+          description: my description for a_to_b
+        - state_from: b
+          state_to: done
+          event: bdone
+          rule: 
+          command: null
+          guard_callable: null
+          transition_callable: null
+          description: my description for b_to_done
+    - name: test-machine
+      factory: \fully\qualified\FactoryName
+      description: my test-machine description
+      states: 
+        - name: a
+          type: initial
+          entry_command: 
+          exit_command: null
+          entry_callable: null
+          exit_callable: null
+          description: description for state a
+        - name: b
+          type: normal
+          entry_command: \izzum\command\Null
+          exit_command: \izzum\command\Null
+          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
+          exit_callable: \izzum\statemachine\loader\MyStatic::exitMethod
+          description: description for state b
+        - name: c
+          type: normal
+          description: state c in the test should not be reachable by transitions
+        - name: "regex:/.*/"
+          type: regex
+          description: used for the transitions of a and b to c. (done is a final state and will not be used by the regex)
+        - name: done
+          type: final
+          entry_command: \izzum\command\Null
+          exit_command: 
+          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
+          exit_callable: null
+          description: description for state done
+      transitions: 
+        - state_from: a
+          state_to: b
+          event: ab
+          rule: \izzum\rules\True
+          command: \izzum\command\Null
+          guard_callable: izzum\statemachine\loader\MyStatic::guardMethod
+          transition_callable: izzum\statemachine\loader\MyStatic::transitionMethod
+          description: my description for a_to_b
+        - state_from: b
+          state_to: done
+          event: bdone
+          rule: 
+          command: null
+          guard_callable: null
+          transition_callable: null
+          description: my description for b_to_done
+        - state_from: "regex:/.*/"
+          state_to: c
+          event: goToC
+          rule: \izzum\rules\ExceptionRule
+          description: transitions from a and b to c will throw an exception. used in the unittests. (done is a final state and will not be used by the regex)

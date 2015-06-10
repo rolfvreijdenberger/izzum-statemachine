@@ -112,7 +112,7 @@ class PDO extends Adapter implements Loader {
      * @return \PDO
      * @throws Exception
      */
-    protected function getConnection()
+    public function getConnection()
     {
         try {
             if ($this->connection === null) {

@@ -3,7 +3,7 @@
   "machines": [
     {
       "name": "non-used-machine",
-      "factory": "fully\\qualified\\FactoryName",
+      "factory": "\\fully\\qualified\\FactoryName",
       "description": "this machine is not used in the unittests.",
       "states": [
         {
@@ -18,18 +18,18 @@
         {
           "name": "b",
           "type": "normal",
-          "entry_command": "izzum\\command\\Null",
-          "exit_command": "izzum\\command\\Null",
-          "entry_callable": "izzum\\statemachine\\loader\\MyStatic::entryMethod",
-          "exit_callable": "izzum\\statemachine\\loader\\MyStatic::exitMethod",
+          "entry_command": "\\izzum\\command\\Null",
+          "exit_command": "\\izzum\\command\\Null",
+          "entry_callable": "\\izzum\\statemachine\\loader\\MyStatic::entryMethod",
+          "exit_callable": "\\izzum\\statemachine\\loader\\MyStatic::exitMethod",
           "description": "description for state b"
         },
         {
           "name": "done",
           "type": "final",
-          "entry_command": "izzum\\command\\Null",
+          "entry_command": "\\izzum\\command\\Null",
           "exit_command": "",
-          "entry_callable": "izzum\\statemachine\\loader\\MyStatic::entryMethod",
+          "entry_callable": "\\izzum\\statemachine\\loader\\MyStatic::entryMethod",
           "exit_callable": null,
           "description": "description for state done"
         }
@@ -39,10 +39,10 @@
           "state_from": "a",
           "state_to": "b",
           "event": "ab",
-          "rule": "izzum\\rules\\True",
-          "command": "izzum\\command\\Null",
-          "guard_callable": "izzum\\statemachine\\loader\\MyStatic::guardMethod",
-          "transition_callable": "izzum\\statemachine\\loader\\MyStatic::transitionMethod",
+          "rule": "\\izzum\\rules\\True",
+          "command": "\\izzum\\command\\Null",
+          "guard_callable": "\\izzum\\statemachine\\loader\\MyStatic::guardMethod",
+          "transition_callable": "\\izzum\\statemachine\\loader\\MyStatic::transitionMethod",
           "description": "my description for a_to_b"
         },
         {
@@ -59,7 +59,7 @@
     },
     {
       "name": "test-machine",
-      "factory": "fully\\qualified\\FactoryName",
+      "factory": "\\fully\\qualified\\FactoryName",
       "description": "my test-machine description",
       "states": [
         {
@@ -74,10 +74,10 @@
         {
           "name": "b",
           "type": "normal",
-          "entry_command": "izzum\\command\\Null",
-          "exit_command": "izzum\\command\\Null",
-          "entry_callable": "izzum\\statemachine\\loader\\MyStatic::entryMethod",
-          "exit_callable": "izzum\\statemachine\\loader\\MyStatic::exitMethod",
+          "entry_command": "\\izzum\\command\\Null",
+          "exit_command": "\\izzum\\command\\Null",
+          "entry_callable": "\\izzum\\statemachine\\loader\\MyStatic::entryMethod",
+          "exit_callable": "\\izzum\\statemachine\\loader\\MyStatic::exitMethod",
           "description": "description for state b"
         },
         {
@@ -93,9 +93,9 @@
         {
           "name": "done",
           "type": "final",
-          "entry_command": "izzum\\command\\Null",
+          "entry_command": "\\izzum\\command\\Null",
           "exit_command": "",
-          "entry_callable": "izzum\\statemachine\\loader\\MyStatic::entryMethod",
+          "entry_callable": "\\izzum\\statemachine\\loader\\MyStatic::entryMethod",
           "exit_callable": null,
           "description": "description for state done"
         }
@@ -105,10 +105,10 @@
           "state_from": "a",
           "state_to": "b",
           "event": "ab",
-          "rule": "izzum\\rules\\True",
-          "command": "izzum\\command\\Null",
-          "guard_callable": "izzum\\statemachine\\loader\\MyStatic::guardMethod",
-          "transition_callable": "izzum\\statemachine\\loader\\MyStatic::transitionMethod",
+          "rule": "\\izzum\\rules\\True",
+          "command": "\\izzum\\command\\Null",
+          "guard_callable": "\\izzum\\statemachine\\loader\\MyStatic::guardMethod",
+          "transition_callable": "\\izzum\\statemachine\\loader\\MyStatic::transitionMethod",
           "description": "my description for a_to_b"
         },
         {

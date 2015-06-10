@@ -239,7 +239,7 @@ class Redis extends Adapter implements Loader {
      * @throws Exception
      * @return \Redis
      */
-    public function getConnection() {
+    public function getRedis() {
         //lazy loaded connection
         try {
             if($this->redis === null) {
@@ -299,7 +299,7 @@ class Redis extends Adapter implements Loader {
      * @param string $state
      */
     public function processGetState(Identifier $identifier) {
-        $redis = $this->getConnection();
+        $redis = $this->getRedis();
         try {
             //get state from key
             $key = sprintf(self::KEY_ENTITY_STATE, $identifier->getMachine(), $identifier->getEntityId());
@@ -355,7 +355,7 @@ class Redis extends Adapter implements Loader {
      */
     public function isPersisted(Identifier $identifier) {
         try {
-            $redis = $this->getConnection();
+            $redis = $this->getRedis();
             //get key from known entity ids set
             $key = sprintf(self::KEY_ENTITYIDS, $identifier->getMachine());
             return $redis->sismember($key, $identifier->getEntityId());
@@ -375,7 +375,7 @@ class Redis extends Adapter implements Loader {
      */
     public function insertState(Identifier $identifier, $state, $message = null)
     {
-        $redis = $this->getConnection();
+        $redis = $this->getRedis();
         try {
             //add a history record
             $this->addHistory($identifier, $state, $message);
@@ -411,7 +411,7 @@ class Redis extends Adapter implements Loader {
     public function updateState(Identifier $identifier, $state, $message = null)
     {
 
-        $redis = $this->getConnection();
+        $redis = $this->getRedis();
         try {
             //add a history record
             $this->addHistory($identifier, $state, $message);
@@ -453,7 +453,7 @@ class Redis extends Adapter implements Loader {
      */
     public function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {
-        $redis = $this->getConnection();
+        $redis = $this->getRedis();
         try {
             $machine = $identifier->getMachine();
             $entity_id = $identifier->getEntityId();
@@ -575,7 +575,7 @@ class Redis extends Adapter implements Loader {
      */
     public function getEntityIds($machine, $state = null) {
         try {
-            $redis = $this->getConnection();
+            $redis = $this->getRedis();
             if($state) {
                 //get from set of entities per state
                 $key = sprintf(self::KEY_CURRENT_STATES, $machine, $state);
@@ -596,6 +596,11 @@ class Redis extends Adapter implements Loader {
      * Load the statemachine with data from a JSON string.
      * the JSON string is stored at the redis key <prefix:>configuration by default.
      * you can alter the configuration key by using Redis::setPrefix() and Redis::setConfigurationKey()
+     * 
+     * This method can be overriden in a subclass to use another loader when 
+     * the data is stored in redis in YAML or XML form for example.
+     * You could use the ReaderWriterDelegator to use another source to load the configuration from.
+     * 
      * @param StateMachine $statemachine
      */
     public function load(StateMachine $statemachine) {
@@ -637,7 +642,7 @@ class Redis extends Adapter implements Loader {
     public function __call($name, $arguments)
     {
         //call the method with $name on the \Redis instance
-        return call_user_func_array(array($this->getConnection(), $name), $arguments);
+        return call_user_func_array(array($this->getRedis(), $name), $arguments);
     }
     
     public function toString()

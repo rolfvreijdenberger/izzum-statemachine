@@ -1,0 +1,4 @@
+example.yaml contains a valid example for the configuration of two statemachines
+
+At the moment there is no YAML loader but it should be easy to create one with the help of the Symfony YAML parser.
+Because the izzum library does not depend on any libraries, I decided not to introduce a dependency of this project on the YAML parser
