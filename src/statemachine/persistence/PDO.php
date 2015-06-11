@@ -215,70 +215,8 @@ class PDO extends Adapter implements Loader {
         return $row ['state'];
     }
 
-    /**
-     * implementation of the hook in the Adapter::setState() template method
-     * 
-     * @param Identifier $identifier            
-     * @param string $state            
-     * @return boolean true if not already present, false if stored before
-     */
-    public function processSetState(Identifier $identifier, $state, $message = null)
-    {
-        if ($this->isPersisted($identifier)) {
-            $this->updateState($identifier, $state, $message);
-            return false;
-        } else {
-            $this->insertState($identifier, $state, $message);
-            return true;
-        }
-    }
 
-    /**
-     * adds state info to the persistance layer.
-     * Thereby marking the time when the object was created.
-     * 
-     * @param Identifier $identifier            
-     * @return boolean
-     */
-    public function add(Identifier $identifier, $state, $message = null)
-    {
-        if ($this->isPersisted($identifier)) {
-            return false;
-        }
-        $this->insertState($identifier, $state, $message);
-        return true;
-    }
     
-    /**
-     * Stores a failed transition in the storage facility.
-     *
-     * @param Identifier $identifier
-     * @param Transition $transition
-     * @param \Exception $e
-     */
-    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
-    {
-        // check if it is persisted, otherwise we cannot get the current state
-        if ($this->isPersisted($identifier)) {
-            $message = new \stdClass();
-            $message->code = $e->getCode();
-            $message->transition = $transition->getName();
-            $message->message = $e->getMessage();
-            $message->file = $e->getFile();
-            $message->line = $e->getLine();
-            /*
-            a transition can fail even after a state has been set in the transition process, making the transition partly failed.
-            the history will then show a succesful transition to the new state first,
-            and here we will then add the failure of the transition with the current state (which is the 'to' state of the transition)
-            and with the failure message.
-            In case that the transition failed before the state has been set, then this will be the only record in the 
-            history of transitions with the 'from' state as the current state.
-            */
-            $state = $this->getState($identifier);
-            $message->state = $state;
-            $this->addHistory($identifier, $state, $message, true);
-        }
-    }
     
     /**
      *
@@ -358,17 +296,13 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * insert state for context into persistance layer.
-     * This method is public for testing purposes
+     * insert state for identifier into persistance layer.
      * 
      * @param Identifier $identifier            
      * @param string $state            
      */
     public function insertState(Identifier $identifier, $state, $message = null)
     {
-        
-        // add a history record
-        $this->addHistory($identifier, $state, $message);
         
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();
@@ -440,8 +374,6 @@ class PDO extends Adapter implements Loader {
      */
     public function updateState(Identifier $identifier, $state, $message = null)
     {
-        // add a history record
-        $this->addHistory($identifier, $state, $message);
         
         $connection = $this->getConnection();
         $prefix = $this->getPrefix();

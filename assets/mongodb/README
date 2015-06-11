@@ -1,0 +1,8 @@
+when using mongodb, be sure to create indexes on the dataset.
+configuration of the data can be imported.
+
+http://docs.mongodb.org/manual/core/index-creation/
+
+mongoimport --db izzum --collection configuration --drop --file /Users/rolf/Documents/projects/izzum/vendor/rolfvreijdenberger/izzum-statemachine/assets/json/example.json
+
+//TODO

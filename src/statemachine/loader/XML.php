@@ -8,6 +8,9 @@ use izzum\statemachine\Exception;
 
 /**
  * XML loader. accepts an xml string and loads a machine from it.
+ * The xml string can contain one or more machine definitions. 
+ * The correct machine will be found from the xml structure.
+ * 
  * This class also provides a way to load xml from a file.
  * The format of the data to be loaded is specified via an xml schema definition. see getXSD
  * 

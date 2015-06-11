@@ -62,6 +62,11 @@ class Redis extends Adapter implements Loader {
      * default key for configuration of machines
      */
     const KEY_CONFIGURATION = 'configuration';
+    
+    /**
+     * configuration:<machine-name>
+     */
+    const KEY_CONFIGURATION_SPECIFIC = '%s:%s';
     /**
      * set of entities in a machine:  <machine>
      */
@@ -317,35 +322,6 @@ class Redis extends Adapter implements Loader {
         return $state;
     }
 
-    /**
-     * implementation of the hook in the Adapter::setState() template method
-     * @param Identifier $identifier
-     * @param string $state
-     * @return boolean true if not already present, false if stored before
-     */
-    public function processSetState(Identifier $identifier, $state, $message = null) {
-        if($this->isPersisted($identifier)) {
-            $this->updateState($identifier, $state, $message);
-            return false;
-        } else {
-            $this->insertState($identifier, $state, $message);
-            return true;
-        }
-    }
-
-    /**
-     * adds Context info to the persistance layer.
-     * Thereby marking the time when the object was created.
-     * @param Identifier $identifier
-     * @return boolean
-     */
-    public function add(Identifier $identifier, $state, $message = null) {
-        if($this->isPersisted($identifier)) {
-            return false;
-        }
-        $this->insertState($identifier, $state, $message);
-        return true;
-    }
 
     /**
      * is the state already persisted?
@@ -369,7 +345,7 @@ class Redis extends Adapter implements Loader {
 
     /**
      * insert state for statemachine/entity into persistance layer.
-     * This method is public for testing purposes
+     * 
      * @param Context $context
      * @param string $state
      */
@@ -377,8 +353,6 @@ class Redis extends Adapter implements Loader {
     {
         $redis = $this->getRedis();
         try {
-            //add a history record
-            $this->addHistory($identifier, $state, $message);
             $redis->multi(\Redis::MULTI);
             //add to set of known id's
             $key = sprintf(self::KEY_ENTITYIDS, $identifier->getMachine());
@@ -403,7 +377,6 @@ class Redis extends Adapter implements Loader {
 
     /**
      * update state for statemachine/entity into persistance layer
-     * This method is public for testing purposes
      * @param Identifier $identifier
      * @param string $state
      * @throws Exception
@@ -413,9 +386,6 @@ class Redis extends Adapter implements Loader {
 
         $redis = $this->getRedis();
         try {
-            //add a history record
-            $this->addHistory($identifier, $state, $message);
-            
             //first, get the current state
             $key = sprintf(self::KEY_ENTITY_STATE, $identifier->getMachine(), $identifier->getEntityId());
             $current = $redis->get($key);
@@ -533,39 +503,6 @@ class Redis extends Adapter implements Loader {
         }
     }
 
-
-    
-    /**
-     * Stores a failed transition in the storage facility.
-     *
-     * @param Identifier $identifier
-     * @param Transition $transition
-     * @param \Exception $e
-     */
-    public function setFailedTransition(Identifier $identifier, Transition $transition, \Exception $e)
-    {
-        // check if it is persisted, otherwise we cannot get the current state
-        if ($this->isPersisted($identifier)) {
-            $message = new \stdClass();
-            $message->code = $e->getCode();
-            $message->transition = $transition->getName();
-            $message->message = $e->getMessage();
-            $message->file = $e->getFile();
-            $message->line = $e->getLine();
-            /*
-            a transition can fail even after a state has been set in the transition process, making the transition partly failed.
-            the history will then show a succesful transition to the new state first,
-            and here we will then add the failure of the transition with the current state (which is the 'to' state of the transition)
-            and with the failure message.
-            In case that the transition failed before the state has been set, then this will be the only record in the 
-            history of transitions with the 'from' state as the current state.
-            */
-            $state = $this->getState($identifier);
-            $message->state = $state;
-            $this->addHistory($identifier, $state, $message, true);
-        }
-    }
-
     /**
      *
      * @param string $machine the machine to get the names for
@@ -594,8 +531,12 @@ class Redis extends Adapter implements Loader {
 
     /**
      * Load the statemachine with data from a JSON string.
-     * the JSON string is stored at the redis key <prefix:>configuration by default.
+     * the JSON string is stored at the redis key '<prefix:>configuration' by default.
      * you can alter the configuration key by using Redis::setPrefix() and Redis::setConfigurationKey()
+     * 
+     * First, the key '<prefix>:configuration:<machine-name>' is checked for existence.
+     * If it exists, take the configuration from that key, else take the configuration form
+     * the '<prefix>:configuration' key.
      * 
      * This method can be overriden in a subclass to use another loader when 
      * the data is stored in redis in YAML or XML form for example.
@@ -606,7 +547,12 @@ class Redis extends Adapter implements Loader {
     public function load(StateMachine $statemachine) {
         //use the JSON loader to load the configuration (see the json schema we expect in JSON::getJSONSchema)
         $key = $this->getConfigurationKey();
-        $loader = new JSON($this->redis->get($key));
+        $redis = $this->getRedis();
+        $specific_key = sprintf(self::KEY_CONFIGURATION_SPECIFIC, $key, $statemachine->getContext()->getMachine());
+        if($redis->exists($specific_key)){
+            $key = $specific_key;
+        }
+        $loader = new JSON($this->getRedis()->get($key));
         $count = $loader->load($statemachine);
         return $count;
     }

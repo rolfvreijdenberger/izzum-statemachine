@@ -8,6 +8,8 @@ use izzum\statemachine\Exception;
 
 /**
  * JSON loader. accepts a json string and loads a machine from it.
+ * The json string can contain one or more machine definitions. 
+ * The correct machine will be found from the json structure.
  * 
  * This class provides a way to load json from a file on your file system (fast access)
  * and is also used by the Redis adapter to load a json string from a redis server.

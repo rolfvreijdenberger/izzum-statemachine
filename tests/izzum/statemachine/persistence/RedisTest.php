@@ -53,6 +53,32 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
      * @test
      * @group not-on-production
      */
+    public function shouldBeAbleToLoadConfigurationFromSpecificConfigurationKey()
+    {
+        $redis = new Redis();
+        $redis->setDatabase(15);
+        //clear the redis database for testing
+        $redis->flushdb();
+        $machine = new StateMachine(new Context(new Identifier(1, 'test-machine'), null, $redis));
+        //create the loader
+        //get the configuration from the json file
+        $configuration = file_get_contents(__DIR__ .'/../loader/fixture-example.json');
+        //set it. normally, this would be done by a seperate process that has already loaded the configuration
+        $redis->set(sprintf(Redis::KEY_CONFIGURATION_SPECIFIC, $redis->getConfigurationKey(), 'test-machine'), $configuration);
+        //load the machine
+        $count = $redis->load($machine);
+        $this->assertEquals(4, $count, 'expect 4 transitions to be loaded');
+        $this->assertCount(4, $machine->getTransitions(), 'there is a regex transition that adds 2 transitions (a-c and b-c)');
+        $this->assertCount(4, $machine->getStates());
+        $this->assertNotNull($redis->toString());
+        $this->assertNotNull($redis . '');
+    
+    }
+    
+    /**
+     * @test
+     * @group not-on-production
+     */
     public function shouldBeAbleToStoreAndRetrieveData()
     {
         $redis = new Redis();
@@ -119,7 +145,7 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
         $ids = $redis->getEntityIds('another-machine', 'leave');
         $this->assertEquals(array('3'), $ids, 'only 3 was run to completion and in state leave');
         
-        $redis->hmset("key" , array("name1" => "value1", "name2" => "value2"));
+        //$redis->hmset("key" , array("name1" => "value1", "name2" => "value2"));
         
         $this->markTestIncomplete('should check the actual redis database for contents. instead, I did this manually. see the png file in assets/redis');
         

@@ -33,6 +33,12 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
         // add a record
         $document = array( "title" => "Calvin and Hobbes", "author" => "Bill Watterson" );
         $collection->insert($document);
+        $cursor = $m->izzum->configuration->find();
+        //var_dump( json_encode($m->izzum->configuration->findOne()));
+        //echo "JO";
+        foreach($cursor as $document) {
+            //var_dump($document);
+        }
     }
     
     /**

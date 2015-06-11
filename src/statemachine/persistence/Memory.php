@@ -29,23 +29,35 @@ class Memory extends Adapter {
         return $this->getStateFromRegistry($identifier);
     }
 
-    public function processSetState(Identifier $identifier, $state, $message = null)
+    protected function insertState(Identifier $identifier, $state, $message = null)
     {
-        return $this->setStateInRegistry($identifier, $state, $message);
+        $this->setStateInRegistry($identifier, $state, $message);
     }
-
-    public function add(Identifier $identifier, $state, $message = null)
+    
+    protected function updateState(Identifier $identifier, $state, $message = null)
     {
-        // var_dump (debug_backtrace()[2]);
-        $added = true;
+        $this->setStateInRegistry($identifier, $state, $message);
+    }
+    
+    /**
+     *
+     * @param Identifier $identifier
+     * @param string $state
+     */
+    protected function setStateInRegistry(Identifier $identifier, $state, $message = null)
+    {
+        $data = new StorageData($identifier, $state, $message);
+        $this->writeRegistry($identifier->getId(), $data);
+    }
+    
+    public function isPersisted(Identifier $identifier)
+    {
+        $persisted = false;
         $storage = $this->getStorageFromRegistry($identifier);
         if ($storage != null) {
-            $added = false;
-        } else {
-            $data = new StorageData($identifier, $state, $message);
-            $this->writeRegistry($identifier->getId(), $data);
+            $persisted = true;
         }
-        return $added;
+        return $persisted;
     }
 
     public function getEntityIds($machine, $state = null)
@@ -65,7 +77,7 @@ class Memory extends Adapter {
         return $ids;
     }
 
-    protected final function getStateFromRegistry(Identifier $identifier)
+    protected function getStateFromRegistry(Identifier $identifier)
     {
         $storage = $this->getStorageFromRegistry($identifier);
         if (!$storage) {
@@ -75,24 +87,11 @@ class Memory extends Adapter {
         }
         return $state;
     }
-
-    /**
-     *
-     * @param Identifier $identifier            
-     * @param string $state            
-     * @return boolan false if already stored and overwritten, true if not
-     *         stored before
-     */
-    protected final function setStateInRegistry(Identifier $identifier, $state, $message = null)
+    
+    protected function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {
-        $already_stored = true;
-        $storage = $this->getStorageFromRegistry($identifier);
-        if (!$storage) {
-            $already_stored = false;
-        }
-        $data = new StorageData($identifier, $state, $message);
-        $this->writeRegistry($identifier->getId(), $data);
-        return !$already_stored;
+        //don't store history in memory, this is a simple adapter and we don't want a memory increase
+        //for a long running process
     }
 
     /**
@@ -100,7 +99,7 @@ class Memory extends Adapter {
      * @param string $key            
      * @param StorageData $value            
      */
-    protected final function writeRegistry($key, $value)
+    protected function writeRegistry($key, $value)
     {
         self::$registry [$key] = $value;
     }
@@ -109,12 +108,12 @@ class Memory extends Adapter {
      *
      * @return StorageData[]
      */
-    protected final function getRegistry()
+    protected function getRegistry()
     {
         return self::$registry;
     }
 
-    public final function getStorageFromRegistry(Identifier $identifier)
+    public function getStorageFromRegistry(Identifier $identifier)
     {
         $registry = $this->getRegistry();
         if (!isset($registry [$identifier->getId()])) {

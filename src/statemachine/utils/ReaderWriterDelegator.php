@@ -77,6 +77,10 @@ class ReaderWriterDelegator extends Adapter implements Loader {
     {
         return $this->writer->getEntityIds($machine, $state);
     }
+    public function isPersisted(Identifier $identifier)
+    {
+        return $this->writer->isPersisted();
+    }
 
     public function processSetState(Identifier $identifier, $state, $message = null)
     {
@@ -97,7 +101,7 @@ class ReaderWriterDelegator extends Adapter implements Loader {
     {
         $this->writer->setFailedTransition($identifier, $transition, $e);
     }
-
+    
     public function toString()
     {
         return parent::toString() . " [reader] " . $this->reader->toString() .  " [writer] " . $this->writer->toString();
