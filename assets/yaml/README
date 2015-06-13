@@ -1,4 +1,22 @@
+https://en.wikipedia.org/wiki/YAML
+
 example.yaml contains a valid example for the configuration of two statemachines
 
-At the moment there is no YAML loader but it should be easy to create one with the help of the Symfony YAML parser.
-Because the izzum library does not depend on any libraries, I decided not to introduce a dependency of this project on the YAML parser
+The YAML loader uses the php module (a php basic extension) http://pecl.php.net/package/yaml version 1.2 for 
+which the documentation about installation and configuration can be found at https://php.net/manual/en/book.yaml.php. 
+The module needs to be installed to be able to work with the YAML loader.
+
+
+Because the izzum library does not depend on any other php libraries, I decided not to introduce a 
+dependency of this project on the YAML parser by Symfony but it should be easy to create one with 
+the help of the Symfony YAML parser or any other php parser you'd want to use.
+
+
+When using a yaml file to read configuration data from, you still would want
+to use a persistence adapter to store/write the state and transition history data.
+
+That can be achieved with one of adapters (like PDO, Session, Memory, Redis, MongDB) in 
+combination with the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
+and an adapter (writer) to delegate to.
+Alternatively, you could subclass one of the persistence adapters and override the 'load' method to
+delegate the loading to the YAML loader.

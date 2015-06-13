@@ -1,0 +1,3 @@
+---
+  comment: an example with 2 minimally configured machines. also used for the unittests. this example exactly mirrors the example.json configuration file.
+  machines: 

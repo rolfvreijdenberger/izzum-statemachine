@@ -10,9 +10,14 @@ use izzum\statemachine\Transition;
  * this test makes use of an active redis instance on the localhost listening
  * on port 6379 (the defaults) and database 15 (which will be flused on each test)
  * 
+ * this test used the redis module for php. therefore it can only be run on 
+ * a system that has been setup properly with that module and with an instance of 
+ * the redis server running
+ * 
  * @group persistence
  * @group loader
  * @group redis
+ * @group not-on-production
  * @author rolf
  *
  */
@@ -20,7 +25,6 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
     
     /**
      * @test
-     * @group not-on-production
      */
     public function shouldBeAbleToLoadConfigurationAndTestSomeGettersAndSetters()
     {
@@ -51,7 +55,6 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
     
     /**
      * @test
-     * @group not-on-production
      */
     public function shouldBeAbleToLoadConfigurationFromSpecificConfigurationKey()
     {
@@ -77,7 +80,6 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
     
     /**
      * @test
-     * @group not-on-production
      */
     public function shouldBeAbleToStoreAndRetrieveData()
     {

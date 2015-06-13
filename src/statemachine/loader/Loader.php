@@ -3,8 +3,11 @@ namespace izzum\statemachine\loader;
 use izzum\statemachine\StateMachine;
 
 /**
+ * Loader is an interface for all classes that are able to get configuration data
+ * and load the statemachine with that configuration data.
+ * 
  * Loader is a marker interface for our package, so it always expects a Loader
- * implementation.
+ * implementation. 
  *
  * An implementation of Loader might use subclasses of Transition and State to
  * provide alternative behaviour eg: an application performance optimized
