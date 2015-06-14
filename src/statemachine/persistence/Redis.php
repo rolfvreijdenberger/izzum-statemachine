@@ -299,9 +299,7 @@ class Redis extends Adapter implements Loader {
     }
 
     /**
-     * implementation of the hook in the Adapter::getState() template method
-     * @param Identifier $identifier
-     * @param string $state
+     * {@inheritDoc}
      */
     public function processGetState(Identifier $identifier) {
         $redis = $this->getRedis();
@@ -324,10 +322,7 @@ class Redis extends Adapter implements Loader {
 
 
     /**
-     * is the state already persisted?
-     * @param Identifier $identifier
-     * @return boolean
-     * @throws Exception
+     * {@inheritDoc}
      */
     public function isPersisted(Identifier $identifier) {
         try {
@@ -344,10 +339,7 @@ class Redis extends Adapter implements Loader {
 
 
     /**
-     * insert state for statemachine/entity into persistance layer.
-     * 
-     * @param Context $context
-     * @param string $state
+     * {@inheritDoc}
      */
     public function insertState(Identifier $identifier, $state, $message = null)
     {
@@ -376,10 +368,7 @@ class Redis extends Adapter implements Loader {
 
 
     /**
-     * update state for statemachine/entity into persistance layer
-     * @param Identifier $identifier
-     * @param string $state
-     * @throws Exception
+     * {@inheritDoc}
      */
     public function updateState(Identifier $identifier, $state, $message = null)
     {
@@ -414,12 +403,7 @@ class Redis extends Adapter implements Loader {
     }
 
     /**
-     * Adds a history record for a transition
-     * @param Identifier $identifier
-     * @param string $state
-     * @param mixed $message an optional message. 
-     * @param boolean $is_exception indicates if the transition is an exception
-     * @throws Exception
+     * {@inheritDoc}
      */
     public function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {
@@ -504,23 +488,20 @@ class Redis extends Adapter implements Loader {
     }
 
     /**
-     *
-     * @param string $machine the machine to get the names for
-     * @param string $state
-     * @return string[] an array of entity ids
-     * @throws Exception
+     * {@inheritDoc}
      */
     public function getEntityIds($machine, $state = null) {
+        $output = array();
         try {
             $redis = $this->getRedis();
             if($state) {
                 //get from set of entities per state
                 $key = sprintf(self::KEY_CURRENT_STATES, $machine, $state);
-                return $redis->smembers($key);
+                $output = $redis->smembers($key);
             } else {
                 //get state directly
                 $key = sprintf(self::KEY_ENTITYIDS, $machine);
-                return $redis->smembers($key);
+                $output = $redis->smembers($key);
             }
         } catch (\Exception $e) {
             throw new Exception($e->getMessage(),
@@ -530,6 +511,7 @@ class Redis extends Adapter implements Loader {
     }
 
     /**
+     * {@inheritDoc}
      * Load the statemachine with data from a JSON string.
      * the JSON string is stored at the redis key '<prefix:>configuration' by default.
      * you can alter the configuration key by using Redis::setPrefix() and Redis::setConfigurationKey()
@@ -541,8 +523,6 @@ class Redis extends Adapter implements Loader {
      * This method can be overriden in a subclass to use another loader when 
      * the data is stored in redis in YAML or XML form for example.
      * You could use the ReaderWriterDelegator to use another source to load the configuration from.
-     * 
-     * @param StateMachine $statemachine
      */
     public function load(StateMachine $statemachine) {
         //use the JSON loader to load the configuration (see the json schema we expect in JSON::getJSONSchema)
@@ -593,7 +573,7 @@ class Redis extends Adapter implements Loader {
     
     public function toString()
     {
-        return get_class($this) . 'redis://'. $this->host . ':' . $this->port . '/' . $this->database;
+        return get_class($this) . ' redis://'. $this->host . ':' . $this->port . '/' . $this->database;
     }
     
     public function __toString()

@@ -24,16 +24,25 @@ class Memory extends Adapter {
      */
     private static $registry = array();
 
+    /**
+     * {@inheritDoc}
+     */
     public function processGetState(Identifier $identifier)
     {
         return $this->getStateFromRegistry($identifier);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     protected function insertState(Identifier $identifier, $state, $message = null)
     {
         $this->setStateInRegistry($identifier, $state, $message);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     protected function updateState(Identifier $identifier, $state, $message = null)
     {
         $this->setStateInRegistry($identifier, $state, $message);
@@ -50,6 +59,9 @@ class Memory extends Adapter {
         $this->writeRegistry($identifier->getId(), $data);
     }
     
+    /**
+     * {@inheritDoc}
+     */
     public function isPersisted(Identifier $identifier)
     {
         $persisted = false;
@@ -60,6 +72,9 @@ class Memory extends Adapter {
         return $persisted;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getEntityIds($machine, $state = null)
     {
         $ids = array();
@@ -88,6 +103,9 @@ class Memory extends Adapter {
         return $state;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     protected function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {
         //don't store history in memory, this is a simple adapter and we don't want a memory increase

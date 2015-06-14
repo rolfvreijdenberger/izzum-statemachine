@@ -1,8 +1,18 @@
-when using mongodb, be sure to create indexes on the dataset.
-configuration of the data can be imported.
+MongoDB is an open-source document database (nosql)
 
-http://docs.mongodb.org/manual/core/index-creation/
+The MongoDB persistence adapter can be used and configured for your mongo instances.
+It uses a php basis extension (module). 
 
-mongoimport --db izzum --collection configuration --drop --file /Users/rolf/Documents/projects/izzum/vendor/rolfvreijdenberger/izzum-statemachine/assets/json/example.json
+the MongoDB implementation for a backend persistence adapter is in izzum\statemachine\persistence\MongoDB
+See that file's comments for more information on how to use it and where to find more information.
+a screenshot is present in this directory that contains a view on the data stored.
 
-//TODO
+
+to import a statemachine configuration, use a JSON string according to the JSON schema in 'assets/json'
+and import it using the mongoimport tool:
+mongoimport --db izzum --collection configuration --drop --file <path-to>/izzum/vendor/rolfvreijdenberger/izzum-statemachine/assets/json/example.json
+
+More information can be found in the MongoDB adapters' comments.
+- about the installation of the module
+- documentation
+- useful links to websites

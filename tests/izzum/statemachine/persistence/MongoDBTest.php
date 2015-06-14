@@ -26,32 +26,56 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shouldBeAbleToLoadConfigurationAndTestSomeGettersAndSetters()
-    {
-
-        // connect
-        $m = new \MongoClient();
-        $db = $m->izzum;
-        // select a collection (analogous to a relational database's table)
-        $collection = $db->cartoons;
-        // add a record
-        $document = array( "title" => "Calvin and Hobbes", "author" => "Bill Watterson" );
-        $collection->insert($document);
-        $cursor = $m->izzum->configuration->find();
-        //var_dump( json_encode($m->izzum->configuration->findOne()));
-        //echo "JO";
-        foreach($cursor as $document) {
-            //var_dump($document);
-        }
-    }
-    
-    /**
-     * @test
-     */
     public function shouldBeAbleToStoreAndRetrieveData()
     {
         
+        $adapter = new MongoDB("mongodb://localhost:27017");
+        
+        //fixture
+        $adapter->getClient()->izzum->states->drop();
+        $adapter->getClient()->izzum->configuration->drop();
+        $adapter->getClient()->izzum->history->drop();
+        $configuration = file_get_contents(__DIR__ .'/../loader/fixture-example.json');
+        //via the mongo shell, you could directly enter the json.
+        //via php, we first need to decode the json to input it via the php mongo driver as an array
+        $configuration = json_decode($configuration, true);
+        //var_dump( $configuration);
+        $adapter->getClient()->izzum->configuration->insert($configuration);
+        //end fixture
+        
+        $machine = new StateMachine(new Context(new Identifier('mongo', 'test-machine'), null, $adapter));
+        $adapter->load($machine);
+        $machine->add("adding for " . __FUNCTION__);
+        $machine->runToCompletion("testing 213");
+        $this->assertEquals(array("mongo"), $adapter->getEntityIds('test-machine'));
+        $this->assertEquals(array("mongo"), $adapter->getEntityIds('test-machine', 'done'));
+        $this->assertEquals(array(), $adapter->getEntityIds('test-machine', 'a'));
+        $this->assertEquals(array(), $adapter->getEntityIds('test-machine', 'b'));
+        $this->assertEquals(array(), $adapter->getEntityIds('test-machine', 'c'));
         
         
+        $machine = new StateMachine(new Context(new Identifier('another-mongo', 'test-machine'), null, $adapter));
+        $adapter->load($machine);
+        $machine->add("adding for " . __FUNCTION__);
+        $machine->runToCompletion("testing 213");
+        
+        $machine = new StateMachine(new Context(new Identifier('foobar', 'non-used-machine'), null, $adapter));
+        $adapter->load($machine);
+        $machine->add("adding for " . __FUNCTION__);
+        $machine->runToCompletion("testing 213");
+        
+        $index = array("entity_id" => 1, "machine" => 1);
+        $options = array ("background" => true);
+        $adapter->getClient()->izzum->history->createIndex($index, $options);
+        //getting the state for an entity_id/machine should be fast
+        //db.states.createIndex({entity_id: 1, machine: 1}, {background: true});
+        $index = array("entity_id" => 1, "machine" => 1);
+        $options = array ("background" => true);
+        $adapter->getClient()->izzum->states->createIndex($index, $options);
+        
+        
+        
+        
+        $this->markTestIncomplete("needs more tests to check the database and some scenarios");
     }
 }

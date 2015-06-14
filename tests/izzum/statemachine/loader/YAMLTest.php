@@ -39,6 +39,7 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         $count = $loader->load($machine);
         $this->assertCount(4, $machine->getTransitions(),'there is a regex transition that adds 2 transitions (a-c and b-c)');
         $this->assertEquals(4, $count);
+        //echo $machine->toString(true);
     }
     
     /**
@@ -148,6 +149,10 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
     
     protected function getYAML()
     {
+        //the string below is a json string.
+        //since yaml 1.2, json is a valid subset o yaml.
+        //most yaml parsers should parse json just fine.
+        
         //heredoc syntax
         $yaml = '{
   "machines": [

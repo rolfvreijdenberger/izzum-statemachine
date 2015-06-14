@@ -93,7 +93,7 @@ abstract class Adapter {
      *
      * @param Identifier $identifier
      * @param string $state
-     * @param mixed $message
+     * @param mixed $message string or array/object with relevant fields.
      *            an optional message (which might be exception data or not).
      * @param boolean $is_exception
      *            an optional value, specifying if there was something
@@ -152,7 +152,7 @@ abstract class Adapter {
     abstract public function isPersisted(Identifier $identifier);
 
     /**
-     * A template method method that adds state information to the persistence layer so
+     * Adds state information to the persistence layer so
      * it can be manipulated by the statemachine package.
      * It adds a record to the underlying implementation about when the stateful
      * object was first generated/manipulated.
@@ -160,7 +160,7 @@ abstract class Adapter {
      * This method can safely be called multiple times. It will only add data
      * when there is no state information already present.
      *
-     * This method creates a record in the underlying statemachine tables where
+     * This template method creates a record in the underlying persistence layer where
      * it's initial state is set.
      * It can then be manipulated via other methods via this Adapter or via
      * the statemachine itself eg: via 'getEntityIds' etc.
@@ -188,17 +188,21 @@ abstract class Adapter {
     }
 
     /**
-     * A template method to get the current state for an Identifier
+     * Get the current state for an Identifier (machine/id)
+     * 
+     * A template method.
      *
      * @param Identifier $identifier            
      * @return string the state
+     * @throw Exception
      */
     public function getState(Identifier $identifier)
     {
         try {
             // execute a hook that should be implemented in a subclass.
             // the subclass could return STATE_UNKNOWN if it is not already
-            // added to the storage backend.
+            // added to the storage backend or it might throw an exception warning the 
+            //end user that he should 'StateMachine::add' to the backend first
             $state = $this->processGetState($identifier);
             return $state;
         } catch(\Exception $e) {
@@ -208,8 +212,9 @@ abstract class Adapter {
     }
 
     /**
-     * A template method that sets the new state for an Identifier in the storage facility.
+     * Sets the new state for an Identifier in the storage facility.
      * Will only be called by the statemachine.
+     * A template method.
      *
      * @param Identifier $identifier
      *            (old state can be retrieved via the identifier and this class)

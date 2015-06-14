@@ -7,9 +7,7 @@ use izzum\statemachine\Exception;
 use izzum\statemachine\utils\Utils;
 
 /**
- * StateMachine class.
- *
- * The statemachine is used to execute transitions from certain states to other
+ * A statemachine is used to execute transitions from certain states to other
  * states, for an entity that represents a domain object, by applying guard logic 
  * to see if a transition is allowed and transition logic to process the transition.
  *
@@ -27,14 +25,14 @@ use izzum\statemachine\utils\Utils;
  * using the diverse ways of interacting with the statemachine: callables can be injected,
  * commands can be injected, event handlers can be defined and hooks can be overriden.
  *
- * We have provided a fully functional, normalized and indexed set of tables
- * for the postgresql relational database to function as a backend to store all
- * relevant information for a statemachine. Memory and session backend adapters
- * can be used to temporarily store the state information.
- * 
- * The implementation details of this machine make it that it can act both as
- * a mealy machine and as a moore machine. the concepts can be mixed and
- * matched.
+ * We have provided multiple persistance backends to function as a data store to store all
+ * relevant information for a statemachine including configuration, transition history and current states.
+ * - relational databases: postgresql, mysql, sqlite
+ * - nosql key/value: redis
+ * - nosql document based: mongodb 
+ * Memory and session backend adapters can be used to temporarily store the state information.
+ * yaml, json and xml loaders can be used to load configuration data from files containing those
+ * data formats.
  * 
  * Examples are provided in the 'examples' folder and serve to highlight some of the
  * features and the way to work with the package. The unittests can serve as examples too, 
@@ -172,6 +170,12 @@ use izzum\statemachine\utils\Utils;
  * - A good naming convention for events (transition trigger names) is to use
  * lowercase-underscore-seperated names (or singe words) so your able to call
  * $machine->start() or $machine->event_name() or $machine->handle('event_name') 
+ * 
+ * 
+ * MISC
+ * The implementation details of this machine make it that it can act both as
+ * a mealy machine and as a moore machine. the concepts can be mixed and
+ * matched.
  * 
  *
  * @author Rolf Vreijdenberger
@@ -524,7 +528,7 @@ class StateMachine {
             // an event handler that is possibly defined on the domain model: onEvent
             $this->callEventHandler($entity, 'onEvent', $transition, $event);
             // possibly defined on the domain model: on<$event>
-            $this->callEventHandler($entity, $this->_toValidMethodName('on' . $event), $transition, $event);
+            $this->callEventHandler($entity, 'on' . $this->_toValidMethodName($event), $transition, $event);
         }
         // an event handler that is possibly defined on the domain model: onTransition
         $this->callEventHandler($entity, 'onTransition', $transition, $event);
