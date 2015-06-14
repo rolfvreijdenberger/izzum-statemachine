@@ -23,7 +23,7 @@ use izzum\statemachine\Exception;
  * @link http://jsonschemalint.com/draft4/ for validating according to a json-schema (useful for building your own)
  * @link https://php.net/manual/en/function.json-decode.php
  * @link https://php.net/manual/en/function.file-get-contents.php
- * @author rolf
+ * @author Rolf Vreijdenberger
  *
  */
 class JSON implements Loader {
@@ -75,6 +75,9 @@ class JSON implements Loader {
         return $schema;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function load(StateMachine $stateMachine)
     {
         //decode the json in a php object structure

@@ -7,7 +7,7 @@ use izzum\command\ICommand;
  * MacroCommand.
  * It extends ICommand and therefore functions as a command(with execute())
  * 
- * @author Rolf Vreijdenberger vreijdenberger
+ * @author Rolf Vreijdenberger
  */
 interface IComposite extends ICommand {
 

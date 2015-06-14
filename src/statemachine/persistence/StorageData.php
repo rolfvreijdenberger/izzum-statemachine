@@ -7,7 +7,7 @@ use izzum\statemachine\Identifier;
  * It does not have to be used by subclasses of Adapter, but it is used for
  * both the Session and Memory adapter classes.
  *
- * @author rolf
+ * @author Rolf Vreijdenberger
  */
 class StorageData {
     

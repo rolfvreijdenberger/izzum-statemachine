@@ -31,8 +31,7 @@ use izzum\statemachine\State;
  * the reading of configuration and the persisting of state and transition data.
  * 
  *
- * This is not a highly optimized adapter, but serves as something you can use
- * out of the box. If you need an adapter more specialized to your
+ * If you need an adapter more specialized to your
  * needs/framework/system you can easily write one yourself.
  *
  * More functionality related to a backend can be implemented on this class eg:
@@ -42,7 +41,7 @@ use izzum\statemachine\State;
  * @link http://php.net/manual/en/pdo.drivers.php
  * @link http://php.net/manual/en/book.pdo.php
  *      
- * @author rolf
+ * @author Rolf Vreijdenberger
  */
 class PDO extends Adapter implements Loader {
     
@@ -124,6 +123,16 @@ class PDO extends Adapter implements Loader {
             throw new Exception(sprintf("error creating PDO [%s], message: [%s]", $this->dsn, $e->getMessage()), Exception::PERSISTENCE_FAILED_TO_CONNECT);
         }
     }
+    
+    /**
+     * set the PDO connection explicitely, useful if you want to share the
+     * PDO instance when it is created outside this class. 
+     * @param \PDO $connection
+     */
+    public function setConnection(\PDO $connection) 
+    {
+        $this->connection = $connection;
+    }
 
     protected function setupConnection(\PDO $connection)
     {
@@ -170,12 +179,10 @@ class PDO extends Adapter implements Loader {
     }
     
     /**
-     * Load the statemachine with data.
+     * {@inheritDoc}
      * This is an implemented method from the Loader interface.
      * All other methods are actually implemented methods from the Adapter
      * class.
-     *
-     * @param StateMachine $statemachine
      */
     public function load(StateMachine $statemachine)
     {
@@ -186,10 +193,7 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * implementation of the hook in the Adapter::getState() template method
-     * 
-     * @param Identifier $identifier            
-     * @param string $state            
+     * {@inheritDoc}            
      */
     public function processGetState(Identifier $identifier)
     {
@@ -209,8 +213,8 @@ class PDO extends Adapter implements Loader {
         }
         $row = $statement->fetch();
         if ($row === false) {
+            throw new Exception(sprintf('no state found for [%s]. Did you "$machine->add()" it to the persistence layer?', $identifier->toString()), Exception::PERSISTENCE_LAYER_EXCEPTION);
             return State::STATE_UNKNOWN;
-            throw new Exception(sprintf('no state found for [%s]. ' . 'Did you add it to the persistence layer?', $identifier->toString()), Exception::PERSISTENCE_LAYER_EXCEPTION);
         }
         return $row ['state'];
     }
@@ -219,12 +223,7 @@ class PDO extends Adapter implements Loader {
     
     
     /**
-     *
-     * @param string $machine
-     *            the machine to get the names for
-     * @param string $state
-     * @return string[] an array of entity ids
-     * @throws Exception
+     * {@inheritDoc}
      */
     public function getEntityIds($machine, $state = null)
     {
@@ -264,11 +263,7 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * is the state information already persisted?
-     * 
-     * @param Identifier $identifier            
-     * @return boolean
-     * @throws Exception
+     * {@inheritDoc}
      */
     public function isPersisted(Identifier $identifier)
     {
@@ -296,12 +291,9 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * insert state for identifier into persistance layer.
-     * 
-     * @param Identifier $identifier            
-     * @param string $state            
+     * {@inheritDoc}           
      */
-    public function insertState(Identifier $identifier, $state, $message = null)
+    protected function insertState(Identifier $identifier, $state, $message = null)
     {
         
         $connection = $this->getConnection();
@@ -325,6 +317,11 @@ class PDO extends Adapter implements Loader {
         }
     }
 
+    /**
+     * collects error information ready to be used as output.
+     * @param \PDOStatement $statement
+     * @return string
+     */
     protected function getErrorInfo(\PDOStatement $statement)
     {
         $info = $statement->errorInfo();
@@ -365,14 +362,9 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * update state for statemachine/entity into persistance layer
-     * This method is public for testing purposes
-     * 
-     * @param Identifier $identifier            
-     * @param string $state            
-     * @throws Exception
+     * {@inheritDoc}
      */
-    public function updateState(Identifier $identifier, $state, $message = null)
+    protected function updateState(Identifier $identifier, $state, $message = null)
     {
         
         $connection = $this->getConnection();
@@ -396,19 +388,7 @@ class PDO extends Adapter implements Loader {
     }
 
     /**
-     * Adds a history record for a transition
-     * 
-     * @param Identifier $identifier            
-     * @param string $state            
-     * @param string $message
-     *            an optional message (which might be exception data or not).
-     * @param boolean $is_exception
-     *            an optional value, specifying if there was something
-     *            exceptional or not.
-     *            this can be used to signify an exception for storage in the
-     *            backend so we can analyze the history
-     *            for regular transitions and failed transitions
-     * @throws Exception
+     *{@inheritDoc}
      */
     public function addHistory(Identifier $identifier, $state, $message = null, $is_exception = false)
     {

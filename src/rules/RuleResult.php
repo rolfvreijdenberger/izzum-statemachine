@@ -7,11 +7,10 @@ namespace izzum\rules;
  *
  * This could be when there are multiple steps or paths in rule execution and
  * the client wants to know which one of those were executed after a
- * rule->applies()
- * call has been made.
+ * rule->applies() call has been made.
  *
  * This will most probably happen in a rule where multipe business rules are
- * combined.
+ * combined or where there are multiple conditional paths.
  *
  * @author Rolf Vreijdenberger
  * @author Richard Ruiter

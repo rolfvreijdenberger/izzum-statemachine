@@ -50,7 +50,7 @@ use izzum\statemachine\loader\JSON;
  * @link https://stackoverflow.com/questions/10155398/getting-multiple-key-values-from-redis methods of retrieval of data in redis
  * @link https://github.com/antirez/lamernews redis implementation with interesting datastructures (by the redis author)
  *
- * @author rolf
+ * @author Rolf Vreijdenberger
  *
  */
 class Redis extends Adapter implements Loader {
@@ -313,7 +313,7 @@ class Redis extends Adapter implements Loader {
         }
         if(!$state) {
             throw new Exception(sprintf('no state found for [%s]. '
-                    . 'Did you $machine->add() it to the persistence layer?',
+                    . 'Did you "$machine->add()" it to the persistence layer?',
                     $identifier->getId(true)),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
         }

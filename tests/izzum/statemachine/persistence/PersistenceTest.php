@@ -275,7 +275,12 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $random_id = rand(1,999999999) . "-" . microtime();
         $identifier = new Identifier($random_id, $machine);
         $context = new Context($identifier, null, $adapter);
-        $this->assertEquals(State::STATE_UNKNOWN, $context->getState());
+        try {
+            $this->assertEquals(State::STATE_UNKNOWN, $context->getState());
+            $this->fail('should not come here');
+        }catch (\Exception $e) {
+            $this->assertEquals(Exception::PERSISTENCE_LAYER_EXCEPTION, $e->getCode());
+        }
         $this->assertFalse($adapter->isPersisted($identifier), 'not persisted yet');
         
         
@@ -334,9 +339,10 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(9, $sm->getTransitions());
         $this->assertCount(6, $sm->getStates());
         $this->assertFalse($adapter->isPersisted($identifier));
+        $sm->add("adding it to the backend");
         
         
-        //run via 'bad' path, priority 2, this will also 'add' it to the backend
+        //run via 'bad' path, priority 2
         $sm->canTransition('new_to_bad');
         $sm->transition('new_to_bad');
         
@@ -361,6 +367,8 @@ class PersistenceTest extends \PHPUnit_Framework_TestCase {
         $identifier = new Identifier($random_id, $machine);
         $other_context = new Context($identifier, null, $adapter);
         $sm->setContext($other_context);
+        $this->assertFalse($adapter->isPersisted($identifier));
+        $sm->add("adding it to the backend");
         
         $this->assertTrue($sm->canTransition('new_to_bad'));
         $this->assertTrue($sm->canTransition('new_to_ok'));

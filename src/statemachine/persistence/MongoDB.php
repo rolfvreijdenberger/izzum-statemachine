@@ -30,15 +30,34 @@ use izzum\statemachine\State;
  */
 class MongoDB extends Adapter implements Loader {
     
+    /**
+     * the data source name for a mongo connection
+     * @var string
+     */
     protected $dns;
+    /**
+     * connection options
+     * @var array
+     */
     protected $options;
+    /**
+     * the php driver specific options
+     * @var array
+     */
     protected $driver_options;
     
     /**
-     * constructor
-     * @param string $dns the data source name. mongodb://[username:password@]host1[:port1][,host2[:port2:],...]/db
-     * @param array $options server options
-     * @param array $driver_options driver options
+     * the (settable) mongo client
+     * @var \MongoClient
+     */
+    private $client;
+    
+    /**
+     * constructor. a connection to mongodb via the mongoclient will be lazily created. 
+     * an existing mongoclient can also be set on this class (reuse a client accross your application)
+     * @param string $dns the data source name. mongodb://[username:password@]host1[:port1][,host2[:port2:],...]
+     * @param array $options server options (usable for authentication, replicasets etc)
+     * @param array $driver_options php specifif driver options
      * @link https://php.net/manual/en/mongoclient.construct.php
      */
     public function __construct($dns = 'mongodb://localhost:27017', $options = array("connect" => true), $driver_options = array()) {
@@ -72,6 +91,13 @@ class MongoDB extends Adapter implements Loader {
         return $this->client;
     }
     
+    /**
+     * since we do not want to burden a client of this code with the responsiblity of
+     * creating indexes, we take a statistical approach to check if we need to 
+     * create an index in the background. This will only be done once.
+     * @param number $check_index_once_in check for index creation. on average, every <x> times
+     *      the index should be created if it is not there already
+     */
     protected function checkAndCreateIndexesIfNecessary($check_index_once_in = 500)
     {
         //statistical approach to building the index on average once every x times
@@ -81,6 +107,10 @@ class MongoDB extends Adapter implements Loader {
         }
     }
     
+    /**
+     * create indexes in the background for the collections used. this will only be done by 
+     * mongo if they do not exist already.
+     */
     protected function createIndexes()
     {
         //http://docs.mongodb.org/manual/tutorial/create-a-compound-index/
@@ -100,6 +130,11 @@ class MongoDB extends Adapter implements Loader {
         //db.system.indexes.find()
     }
     
+    /**
+     * sets a mongoclient. this can be useful if your application already has 
+     * a mongoclient instantiated and you want to reuse it.
+     * @param \MongoClient $client
+     */
     public function setClient(\MongoClient $client)
     {
         $this->client = $client;
@@ -211,8 +246,7 @@ class MongoDB extends Adapter implements Loader {
                      $e->getMessage()), Exception::PERSISTENCE_LAYER_EXCEPTION);
          }
          if(!$state) {
-            throw new Exception(sprintf('no state found for [%s]. '
-                    . 'Did you $machine->add() it to the persistence layer?',
+            throw new Exception(sprintf('no state found for [%s]. Did you "$machine->add()" it to the persistence layer?',
                     $identifier->getId(true)),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
         }

@@ -9,21 +9,24 @@ use izzum\statemachine\utils\Utils;
 /**
  * The abstract class Adapter is responsible for adapting any code written to access
  * different persistence backends to the targeted php extensions and vendor databases. 
+ * In essence subclasses will be data access objects (https://en.wikipedia.org/wiki/Data_access_object)
  * 
  * This class serves as a base class for access to different type of persistence
  * layers we might want to use to store the states for stateful entities.
  * for example: relational (postgres/mysql) databases, nosql databases, php
- * sessions, files, memcache, redis etc..
+ * sessions, files, memory, mongodb, redis etc..
  *
  * It also acts as a central place to store logic related to this persistance
  * layer, which might be useful when you want to get statistics from the
- * persistence layer.
+ * persistence layer and make it available to your application code.
  *
- * all access logic could be centralized in a subclass.
+ * all data access logic should be centralized in a subclass of adapter
  * logic such as:
  * - history of all transitions (when did an entity for a statemachine
  * transition?)
  * - the retrieval of the definition of transitions
+ * - the retrieval of data (like state, rules and commands) to be able to check/execute them
+ *      via a form (with input of machine and entity_id). see the persistence/Tooling interface.
  *
  * A specific type of persistence adapter can be coupled (via the
  * AbstractFactory) to a specific implementation of a statemachine.
@@ -39,7 +42,9 @@ use izzum\statemachine\utils\Utils;
  * This class is a helper class for Context. Context delegates reading and
  * writing states to this class and it's subclasses.
  * 
- * @author rolf
+ * @link https://en.wikipedia.org/wiki/Data_access_object
+ * 
+ * @author Rolf Vreijdenberger
  */
 abstract class Adapter {
 

@@ -15,7 +15,7 @@ use izzum\statemachine\Exception;
  * The format of the data to be loaded is specified via an xml schema definition. see getXSD
  * 
  * @link https://en.wikipedia.org/wiki/XML
- * @author rolf
+ * @author Rolf Vreijdenberger
  *
  */
 class XML implements Loader {
@@ -68,6 +68,9 @@ class XML implements Loader {
         return $schema;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function load(StateMachine $stateMachine)
     {
         //load the xml in a php object structure. suppres warning with @ operator since we explicitely check the return value

@@ -68,10 +68,7 @@ class LoaderArray implements Loader {
     }
 
     /**
-     * Load a statemachine with transition data
-     *
-     * @param StateMachine $stateMachine   
-     * @return int the number of transitions actually added         
+     * {@inheritDoc}
      */
     public function load(StateMachine $stateMachine)
     {

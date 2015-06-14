@@ -12,7 +12,7 @@ use izzum\statemachine\State;
  * one (1) php process. Therefore, it is best used in a runtime environment such
  * as a php daemon program or an interactive command line php script.
  *
- * @author rolf vreijdenberger
+ * @author Rolf Vreijdenberger
  */
 class Memory extends Adapter {
     

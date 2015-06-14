@@ -31,7 +31,7 @@ use izzum\statemachine\Identifier;
  *
  * @link https://en.wikipedia.org/wiki/Object_composition
  *      
- * @author rolf vreijdenberger
+ * @author Rolf Vreijdenberger
  *        
  */
 class ModelBuilder extends EntityBuilder {
@@ -53,9 +53,7 @@ class ModelBuilder extends EntityBuilder {
     }
 
     /**
-     * (non-PHPdoc)
-     * 
-     * @see \izzum\statemachine\EntityBuilder::build()
+     * {@inheritDoc}
      */
     protected function build(Identifier $identifier)
     {

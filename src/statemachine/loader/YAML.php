@@ -19,7 +19,7 @@ use izzum\statemachine\Exception;
  * @link https://en.wikipedia.org/wiki/YAML
  * @link https://php.net/manual/en/intro.yaml.php
  * @link http://pecl.php.net/package/yaml the needed yaml library
- * @author rolf vreijdenberger
+ * @author Rolf Vreijdenberger
  *
  */
 class YAML implements Loader {
@@ -62,6 +62,9 @@ class YAML implements Loader {
     }
 
 
+    /**
+     * {@inheritDoc}
+     */
     public function load(StateMachine $stateMachine)
     {
         //decode the json in a php object structure

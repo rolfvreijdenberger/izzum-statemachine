@@ -123,8 +123,7 @@ class EntityBuilder {
 
     /**
      * the actual building function.
-     * Override this method to return a different
-     * application specific domain model.
+     * Override this method to return an application specific domain model.
      *
      * In an overriden function it is possible to use the state of the concrete
      * builder itself, which can be passed in via dependency injection at
@@ -138,8 +137,7 @@ class EntityBuilder {
     {
         // the default implementation returns an Identifier, which holds an id
         // that can be used in your rules and commands to build your domain
-        // logic or build
-        // your domain object. specialized builders return a domain
+        // logic or build your domain object. specialized builders return a domain
         // model that will be accepted by your specialized rules/commands for
         // your application.
         return $identifier;
