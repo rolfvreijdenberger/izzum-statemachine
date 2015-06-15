@@ -71,7 +71,7 @@ foreach($machine->getStates() as $state) {
 >>> new, action, done
 ```
 ### adding regular expression states that expand to multiple transitions
-Regular expression states take a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) as their state name. When using a regex state in a transition, it will expand to transitions for all states that match the regex. This allows you to quickly setup a lot of transitions. It can be used for both the 'from' state as well as the 'to' state. Regex state names shall be prefixed with either 'regex:' or with 'not-regex' for a negated regular expression.
+Regular expression states take a [regular expression](https://en.wikipedia.org/wiki/Regular_expression) as their state name. When using a regex state in a transition, it will expand to transitions for all states that match the regex. This allows you to quickly setup a lot of transitions. It can be used for both the 'from' state as well as the 'to' state. Regex state names shall be prefixed with either 'regex:' or with 'not-regex:' for a negated regular expression.
 ```php
 //action, or any state ending with 'ew'
 $regex = new State('regex:/action|.*ew$/', State::TYPE_REGEX);
@@ -97,7 +97,7 @@ echo $machine->getCurrentState()->hasTransition('new_to_action');//check the sta
 foreach ($machine->getTransitions() as $transition) {
     echo $transition->getName() . ":" . $transition->getEvent(); 
 }
->>> new_to_action:go, action_to_done:finish
+>>> new_to_action:go, action_to_done:finish, new_to_pause:pause, action_to_pause:pause
 ```
 
 
@@ -116,7 +116,7 @@ $machine->transition('action_to_done');
 ```
 
 ### performing transitions anonymously/generically
-Transitions can be opportunistically performed by trying to run the first transition that is allowed from the current state a statemachine is in. Transitions can be allowed or disallowed by using 'guards': specific pieces of code for that transition that can check business rules (explained later)
+Transitions can be opportunistically performed by trying to run the first transition that is allowed from the current state a statemachine is in. Transitions are tried in the order that they were added to the machine. Transitions can be allowed or disallowed by using 'guards': specific pieces of code for that transition that can check business rules (explained later)
 ```php
 echo $machine->run();//perform the first transition from the current state that can run
 >>> true
@@ -196,7 +196,7 @@ TO DESCRIBE
 TO DESCRIBE
 ### persistance 3. storing transition history and state data in sql backends
 TO DESCRIBE
-### persistance 4. storing transition history and state data in redis
+### persistance 4. storing transition history and state data in redis or mongodb
 TO DESCRIBE
 ### loading statemachine configuration
 TO DESCRIBE
