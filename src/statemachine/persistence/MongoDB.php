@@ -215,7 +215,9 @@ class MongoDB extends Adapter implements Loader {
                 //https://php.net/manual/en/mongocollection.save.php
                 $client->izzum->states->save($data);
             } else {
-             
+                throw new Exception(sprintf('no state found for [%s]. Did you "$machine->add()" it to the persistence layer?',
+                        $identifier->getId(true)),
+                        Exception::PERSISTENCE_LAYER_EXCEPTION);
             }
          } catch (\Exception $e) {
              throw new Exception(sprintf('updating state failed: [%s]',

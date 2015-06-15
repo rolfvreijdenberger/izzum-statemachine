@@ -74,6 +74,12 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
         $adapter->getClient()->izzum->states->createIndex($index, $options);
         
         
+        //recreate the existing statemachine
+        $machine = new StateMachine(new Context(new Identifier('another-mongo', 'test-machine'), null, $adapter));
+        $adapter->load($machine);
+        $this->assertFalse($machine->add(), 'already added');
+        $this->assertEquals('done', $machine->getCurrentState()->getName(), 'state persisted');
+        $this->assertEquals(0, $machine->runToCompletion(), 'alread in a final state, no transitions');
         
         
         $this->markTestIncomplete("needs more tests to check the database and some scenarios");
