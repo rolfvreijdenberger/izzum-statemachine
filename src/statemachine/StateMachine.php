@@ -92,21 +92,21 @@ use izzum\statemachine\utils\Utils;
  *
  * DESCRIPTION OF FULL TRANSITION ALGORITHM (and the usage modes where they apply)
  * 1. guard: _onCheckCanTransition($transition, $event) //hook: inheritance.
- * 2. guard: $entity->onCheckCanTransition($transition, $event) // event handler: delegation, composition, inheritance
+ * 2. guard: $entity->onCheckCanTransition($identifier, $transition, $event) // event handler: delegation, composition, inheritance
  * 3. guard: $transition->can($context) // check Rule: delegation, composition, inheritance, standalone
  * 4. guard: $transition->can($context) // callable: standalone, delegation, composition, inheritance
  * !!!  If all (existing) guards return true, then the transition is allowed. return true/false to allow/disallow transition.
  * 5. logic: _onExitState($transition, $event) //hook: inheritance
- * 6. logic: $entity->onExitState($transition, $event) //event handler: delegation, composition, inheritance
+ * 6. logic: $entity->onExitState($identifier, $transition, $event) //event handler: delegation, composition, inheritance
  * 7. logic: $state_from->exitAction($event) //execute Command: delegation, composition, inheritance, standalone
  * 8. logic: state exit: $callable($entity, $event) // callable: standalone, delegation, composition, inheritance
  * 9. logic: _onTransition($transition, $event) //hook: inheritance
- * 10. logic: $entity->onEvent($transition, $event) //event handler: delegation, composition, inheritance, only if transition was event driven
- * 11. logic: $entity->on<$event>($transition, $event) //event handler: delegation, composition, inheritance, only if transition was event driven
- * 12. logic: $entity->onTransition($transition, $event) //event handler: delegation, composition, inheritance
+ * 10. logic: $entity->onEvent($identifier, $transition, $event) //event handler: delegation, composition, inheritance, only if transition was event driven
+ * 11. logic: $entity->on<$event>($identifier, $transition, $event) //event handler: delegation, composition, inheritance, only if transition was event driven
+ * 12. logic: $entity->onTransition($identifier, $transition, $event) //event handler: delegation, composition, inheritance
  * 13. logic: $transition->process(event) //execute Command: delegation, composition, inheritance, standalone
  * 14. logic: $transition->process(event) // callable: standalone, delegation, composition, inheritance
- * 15. logic: $entity->onEnterState($transition, $event) //event handler: delegation, composition, inheritance
+ * 15. logic: $entity->onEnterState($identifier, $transition, $event) //event handler: delegation, composition, inheritance
  * 16. logic: $state_to->entryAction($event) //execute Command: delegation, composition, inheritance, standalone
  * 17. logic: state entry: $callable($entity, $event) // callable: standalone, delegation, composition, inheritance
  * 18. logic: _onEnterState($transition, $event) //hook: inheritance
@@ -480,7 +480,7 @@ class StateMachine {
                 return false;
             }
             // an event handler that is possibly defined on the domain model: onCheckCanTransition
-            if (!$this->callEventHandler($this->getContext()->getEntity(), 'onCheckCanTransition', $transition, $event)) {
+            if (!$this->callEventHandler($this->getContext()->getEntity(), 'onCheckCanTransition', $this->getContext()->getIdentifier(), $transition, $event)) {
                 return false;
             }
             
@@ -506,7 +506,7 @@ class StateMachine {
         // hook for subclasses to implement
         $this->_onExitState($transition, $event);
         // an event handler that is possibly defined on the domain model: onExitState
-        $this->callEventHandler($this->getContext()->getEntity(), 'onExitState', $transition, $event);
+        $this->callEventHandler($this->getContext()->getEntity(), 'onExitState', $this->getContext()->getIdentifier(), $transition, $event);
         // executes the command and callable associated with the state object
         $transition->getStateFrom()->exitAction($this->getContext(), $event);
     }
@@ -524,14 +524,15 @@ class StateMachine {
         // hook for subclasses to implement
         $this->_onTransition($transition, $event);
         $entity = $this->getContext()->getEntity();
+        $identifier = $this->getContext()->getIdentifier();
         if ($event) {
             // an event handler that is possibly defined on the domain model: onEvent
-            $this->callEventHandler($entity, 'onEvent', $transition, $event);
+            $this->callEventHandler($entity, 'onEvent', $identifier, $transition, $event);
             // possibly defined on the domain model: on<$event>
-            $this->callEventHandler($entity, 'on' . $this->_toValidMethodName($event), $transition, $event);
+            $this->callEventHandler($entity, 'on' . $this->_toValidMethodName($event), $identifier, $transition, $event);
         }
         // an event handler that is possibly defined on the domain model: onTransition
-        $this->callEventHandler($entity, 'onTransition', $transition, $event);
+        $this->callEventHandler($entity, 'onTransition', $identifier, $transition, $event);
         // executes the command and callable associated with the transition object
         $transition->process($this->getContext(), $event);
         
@@ -548,7 +549,7 @@ class StateMachine {
     private function doEnterState(Transition $transition, $event = null)
     {
         // an event handler that is possibly defined on the domain model: onEnterState
-        $this->callEventHandler($this->getContext()->getEntity(), 'onEnterState', $transition, $event);
+        $this->callEventHandler($this->getContext()->getEntity(), 'onEnterState', $this->getContext()->getIdentifier(), $transition, $event);
         
         // executes the command and callable associated with the state object
         $transition->getStateTo()->entryAction($this->getContext(), $event);

@@ -1029,7 +1029,7 @@ class CallableHandler {
         $this->allow = $allow;
     }
 
-    public function onExitState($transition, $event)
+    public function onExitState($identifier, $transition, $event)
     {
         $this->onexitstate = array(
                 $transition,
@@ -1037,7 +1037,7 @@ class CallableHandler {
         );
     }
 
-    public function onCheckCanTransition($transition, $event)
+    public function onCheckCanTransition($identifier, $transition, $event)
     {
         $this->oncheckcantransition = array(
                 $transition,
@@ -1046,7 +1046,7 @@ class CallableHandler {
         return $this->allow;
     }
 
-    public function onTransition($transition, $event)
+    public function onTransition($identifier, $transition, $event)
     {
         $this->ontransition = array(
                 $transition,
@@ -1054,7 +1054,7 @@ class CallableHandler {
         );
     }
 
-    public function onEnterState($transition, $event)
+    public function onEnterState($identifier, $transition, $event)
     {
         $this->onenterstate = array(
                 $transition,
