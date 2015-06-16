@@ -153,6 +153,7 @@ There are multiple ways to set guard conditions on transitions:
 * **rules**: business rules that are fully qualified classnames of instances of izzum/rules/Rule that shall accept a domain model (via the EntityBuilder) in their constructor and an implemented `Rule::applies()` method that returns a boolean. This is the most formal and most powerful guard to use because it operates on domain models in a noninvasive, loosely coupled way. Furthermore, the code (possibly expensive to run, eg: when accessing databases or network services) is only instantiated and used when needed, in contrast to all other methods for which the code should  should always be fully available at runtime when the transitions are defined.
 * **event handlers**: called on a specified domain object (via the EntityBuilder) in the Context. This is flexible and convenient since you define the event handlers on your domain model that is accessible by the statemachine.
 * **hooks**: used by overriding a specific method `StateMachine::__onCheckCanTransition()` when subclassing the statemachine itself. This is then tailored to your application domain and offers less flexibility than the other methods since you will need to 'switch' on the transition to take a specific action.
+* **hooks as event emitters**: by subclassing the statemachine you can implement your own event handling/emitting library of choice.
 
 ### guard conditions 1. using callables: closures, static methods, instance methods
 A [callable comes in multiple forms in php](https://php.net/manual/en/language.types.callable.php). In the next example, a [closure, or anonymous function](https://php.net/manual/en/functions.anonymous.php), is used to evaluate the boolean expression by operating on any context variables it has in it's scope and by using the automatically provided arguments of $entity and $event. $entity is the domain model returned by the Context of the statemachine (via the EntityBuilder). The event is only set when the transition was initiated by an event. The guard can operate on the $entity (query if for data) to calculate the boolean result.
@@ -231,14 +232,22 @@ The drawback of event handlers as guards is that there is a tighter coupling bet
 
 ### guard conditions 4. using a hook/overriden method
 By subclassing the statemachine you can implement a hook that is called as a guard: `protected function _onCheckCanTransition(Transition $transition, $event = null):boolean`. See `examples/inheritance` for an example of using a subclass of a statemachine with hooks/overriden methods. The advantage is that you won't need an EntityBuilder and can easily override the methods needed. a Disadvantage is that your model that needs state (domain model) is now tightly coupled via inheritance to your statemachine.
+A big Advantage of subclassing is that it allows you to use the hooks to add your own logic to satisfy your needs. If you want to add eventlisteners to your statemachine, then just add an event emitter in the subclass and you can respond to the statemachines actions in any way you would want (eg: using transition data to send out a specific event).
+### guard conditions 5. using a hook with an event dispatcher
+A big Advantage of subclassing is that it allows you to use the hooks to add your own logic to satisfy your needs. If you want to add eventlisteners to your statemachine, then just add an event emitter in the subclass and you can respond to the statemachines actions in any way you would want (eg: using transition data to send out a specific event).
+Add a public method to the statemachine to add event listeners and dispatch your events from the subclass's hooks.
+A good event dispatcher to use would be the [Symfony EventDispatcher component](http://symfony.com/doc/current/components/event_dispatcher/introduction.html) which you can use to return the boolean evaluation parameter for the guard to allow or disallow the transition.
+
+
+
 ### state entry action, state exit actions and transition actions
 There are 4 distinct phases when trying to perform a transition:
-1. check the guard if the transition is allowed and if true:
-1. perform state exit logic: associated with the 'from' state, independent of the state the transition is going.
-1. perform transition logic: asoociated with the transition itself which has a specific 'from' and 'to' state and enters the new state.
-1. perform state entry logic: associated with the 'to' state, independent from the state the transition came from.
+* check the guard if the transition is allowed and if true:
+* perform state exit logic: associated with the 'from' state, independent of the state the transition is going.
+* perform transition logic: asoociated with the transition itself which has a specific 'from' and 'to' state and enters the new state.
+* perform state entry logic: associated with the 'to' state, independent from the state the transition came from.
 
-Comparable to the logic of using guards, the exit~ transition~ and exit logic can be performed by `callables`, `commands`, `event handlers` and `hooks`.
+Comparable to the logic of using guards, the exit~ transition~ and exit logic can be performed by `callables`, `commands` [see the Command design pattern](https://en.wikipedia.org/wiki/Command_pattern), `event handlers` and `hooks`.
 ### actions 1. callables, commands, events, hooks
 TO DESCRIBE
 ### using a persistance adapter to store state
