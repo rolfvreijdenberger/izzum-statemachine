@@ -201,7 +201,7 @@ class IsAllowedToShip extends Rule {
 ```
 The configuration of a Transition with a rule should be done by providing a fully qualified classname.
 The php application must be able to find the class via autoloading (which is a wrapper around including files)
-```
+```php
 $rule = '\izzum\rules\IsAllowedToShip';
 $transition = new Transition($action, new State('shipping'), 'ship', $rule);
 ```
@@ -209,7 +209,7 @@ The advantage of using Rules as guards is that there is no coupling between your
 ### guard conditions 3. using event handlers
 The class returned by the EntityBuilder subclass can implement event handlers: callbacks that are triggered when a transition takes place. This can be done both for guards and for transition logic. Note that that class can be a subclass of a statemachine, a client class of the statemachine or an existing domain model.
 The class could implement the predefined event handler `public function onCheckCanTransition($identifier, $transition, $event):boolean` which gets an Identifier and Transition object and an optional event (if the transition was triggered by an event via $statemachine->handle('event')). It must return a boolean value. The transition object can then be used to take a certain action depending on the transition name or 'from' and 'to' state. The method must return a boolean value.
-```
+```php
 class MyEventHandlingClass {
   public function onCheckCanTransition($identifier, $transition, $event) { 
     echo "checking transition (" . $identifier->getEntityId() . ") " . $transition->getName() ' for event: ' . $event;
@@ -220,7 +220,7 @@ class MyEventHandlingClass {
 ```
 There is a special subclass of EntityBuilder: `ModelBuilder` that always returns the model injected in the constructor.
 this is useful if you are implementing event handlers and want to use the event handling clas in the statemachine.
-```
+```php
 $builder = new ModelBuilder(new MyEventHandlingClass());
 $context = new Context($identifier, $builder);
 $statemachine = new StateMachine($context);
