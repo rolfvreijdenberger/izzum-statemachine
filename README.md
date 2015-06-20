@@ -13,7 +13,7 @@ A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "fini
 A proven enterprise ready, MIT licensed, fully unittested and high quality statemachine. It has the ability to be used with different backends (postgres, redis, sqlite, mongodb, mysql, session or memory) for storing state data and transition history, and for configuring the statemachine with states, transitions and the logic for those transitions (in yaml, json, xml, sql, redis or mongodb).
 It will work seamlessly with existing domain models (like 'Order', 'Customer' etc) by operating on those models instead of having to create new domain models with statemachine logic in them (which is also possible). The examples, extensive (inline) documentation and unittests will make it easy to setup and get going. 
 
-Bitcoin donations are more than welcome on `[19zygBRwc8daPdQJQzFqxCBghg867grWKL](https://blockchain.info/address/19zygBRwc8daPdQJQzFqxCBghg867grWKL)`.
+Bitcoin donations are more than welcome on *[19zygBRwc8daPdQJQzFqxCBghg867grWKL](https://blockchain.info/address/19zygBRwc8daPdQJQzFqxCBghg867grWKL)*.
  
 ### Example walkthrough
 The following code examples will guide you through using the statemachine and will familiarize you with the different ways to interact with the statemachine. 
