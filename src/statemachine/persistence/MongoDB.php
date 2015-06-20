@@ -98,11 +98,11 @@ class MongoDB extends Adapter implements Loader {
      * @param number $check_index_once_in check for index creation. on average, every <x> times
      *      the index should be created if it is not there already
      */
-    protected function checkAndCreateIndexesIfNecessary($check_index_once_in = 500)
+    protected function checkAndCreateIndexesIfNecessary($check_index_once_in = 1000)
     {
         //statistical approach to building the index on average once every x times
-        $check_index_once_in = min(998, $check_index_once_in);
-        if(rand(0,999) % $check_index_once_in === 1) {
+        $check_index_once_in = min(1000, $check_index_once_in);
+        if(rand(1, $check_index_once_in) % $check_index_once_in === 0) {
             $this->createIndexes();
         }
     }

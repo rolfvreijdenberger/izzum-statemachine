@@ -13,7 +13,7 @@ A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "fini
 A proven enterprise ready, MIT licensed, fully unittested and high quality statemachine. It has the ability to be used with different backends (postgres, redis, sqlite, mongodb, mysql, session or memory) for storing state data and transition history, and for configuring the statemachine with states, transitions and the logic for those transitions (in yaml, json, xml, sql, redis or mongodb).
 It will work seamlessly with existing domain models (like 'Order', 'Customer' etc) by operating on those models instead of having to create new domain models with statemachine logic in them (which is also possible). The examples, extensive (inline) documentation and unittests will make it easy to setup and get going. 
 
-Bitcoin donations are more than welcome on [19zygBRwc8daPdQJQzFqxCBghg867grWKL](bitcoin: 19zygBRwc8daPdQJQzFqxCBghg867grWKL?message=donation+for+the+izzum+statemachine)
+Bitcoin donations are more than welcome on `[19zygBRwc8daPdQJQzFqxCBghg867grWKL](https://blockchain.info/address/19zygBRwc8daPdQJQzFqxCBghg867grWKL)`.
  
 ### Example walkthrough
 The following code examples will guide you through using the statemachine and will familiarize you with the different ways to interact with the statemachine. 
@@ -275,32 +275,48 @@ All persistence adapters provided do double duty to act as a Loader from which y
 
 Custom adapters for different backends can easily be written for your specific application domain. You would need to create the right datastructures in your backend to support your needs and to write some custom code by subclassing Adapter and to read and write the data to that backend. The provided adapters can guide you through the process of writing your own.
 
-```php
-$identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
-$adapter = new PDO('pgsql:host=localhost;port=5432;dbname=izzum');
-//or
-$adapter = new Redis('127.0.0.1', 6379);
-//or
-$adapter = new MongoDB('mongodb://localhost:27017');
-$context = new Context($identifier, $builder, $adapter);
-$statemachine = new StateMachine($context);
-$adapter->load($statemachine);//the adapter can also act as a loader
-$statemachine->add('creation of machine...');
-```
 ### persistance 1. storing state data in memory
 The Memory persistence adapter is the default one used by the context if you do not provide another Adapter explicitly.
 It is only useful in 1 single php process, since the state is only persisted in memory and therefore lost when the process stops.
 Good examples for where to use it are in a php daemon or an interactive php process with a limited lifetime. It's also very useful to run the unittests. See `examples/interactive` and `examples\trafficlight` for an implementation of a statemachine in memory.
 ### persistance 2. storing state data in a session
 Pph sessions can be used to store data in. They are also limited in lifetime but persist between page refreshes as long as the session is valid. Therefore they are good for shopping carts, wizard like forms and other html based frontends with page refreshes. See `examples/session` for an example that switches page colors (of the rainbow, defined as states in the statemachine) for page refreshes. The data is lost when the php session expires.
+```php
+$adapter = new Session();
+$machine = new StateMachine(new Context(new Identifier('session', 'rainbow-machine'), null, $adapter));
+$machine->run();
+
+```
 ### persistance 3. storing transition history and state data in sql backends
 SQL based backends are abundantly available in most applications. the PDO adapter provides access to all backends made available via the PDO driver. There are full sql schemas in `assets/sql` for postgresql, mysql and sqlite available with full documentation about the design in `assets/sql/postgresql.sql`. Once you create those tables you and provide the right credentials to the PDO adapter you are ready to start storing your state in your database and you can also fully define your machines including states and transitions with their associated actions in the tables.
 The data is permanently stored, providing you with the history of all your machines and a way to keep track of all states without storing state in the tables for your domain objects.
+```php
+$identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
+$adapter = new PDO('pgsql:host=localhost;port=5432;dbname=izzum');
+//or for mysql
+$adapter = new PDO('mysql:host=localhost;dbname=izzum');
+//or for sqlite
+$adapter = new PDO('"sqlite:izzum.db"');
+$context = new Context($identifier, $builder, $adapter);
+$statemachine = new StateMachine($context);
+$adapter->load($statemachine);//the adapter can also act as a loader
+$statemachine->add('creation of machine...');
+```
+
 ### persistance 4. storing transition history and state data in redis or mongodb
-Redis is a great nosql key/value database and MongoDB is a great nosql document based database.
-Both
-They are schemaless and as such need no configuration to start storing state and transition history.
-Both the redis and the mongodb provid the possibility to store full statemachine configurations in JSON format (see `assets\json` for the json-schema that they expect).
+Redis is a nosql key/value database and MongoDB is a nosql document based database.
+Both are schemaless and as such need no configuration to start storing state and transition history.
+Both the redis and the mongodb provid the possibility to store full statemachine configurations in JSON format (see the Loader examples for more info).
+```php
+$identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
+$adapter = new Redis('127.0.0.1', 6379);
+//or use mongodb
+$adapter = new MongoDB('mongodb://localhost:27017');
+$context = new Context($identifier, $builder, $adapter);
+$statemachine = new StateMachine($context);
+$adapter->load($statemachine);//the adapter can also act as a loader
+$statemachine->add('creation of machine...');
+```
 
 ### loading statemachine configurations
 By using one of the provided Loader classes you are able to load (multiple) statemachine definitions from [JSON](https://en.wikipedia.org/wiki/JSON), [XML](https://en.wikipedia.org/wiki/XML) or [YAML](https://en.wikipedia.org/wiki/YAML). They all can load data from a file and from a string). Loading data can also be done by using one of the provided persistence adapters (redis and mongodb use the JSON format but can be subclassed to load any other format).
