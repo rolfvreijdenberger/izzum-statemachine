@@ -3,7 +3,6 @@ namespace izzum\statemachine\utils;
 use izzum\statemachine\utils\EntityNull;
 use izzum\command\ExceptionCommand;
 use izzum\command\Command;
-use izzum\command\Null;
 use izzum\statemachine\builder\ModelBuilder;
 use izzum\statemachine\Transition;
 use izzum\statemachine\State;

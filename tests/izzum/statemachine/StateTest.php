@@ -3,7 +3,6 @@ namespace izzum\statemachine;
 use izzum\statemachine\utils\EntityNull;
 use izzum\command\ExceptionCommand;
 use izzum\command\Command;
-use izzum\command\Null;
 
 /**
  * @group statemachine
