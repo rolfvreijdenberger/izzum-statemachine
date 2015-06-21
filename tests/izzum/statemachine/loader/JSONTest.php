@@ -69,6 +69,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      * @group not-on-production
+     * @group filepermissions
      * this has been tested locally with a file with permissions of 220 (no read permissions) and it passes.
      * github/travis builds do not play well with this so if you want to run this, create the file with those permissions
      */
