@@ -82,12 +82,12 @@ class SuperHero extends StateMachine {
 	    echo $output;
 	}
 	
-	protected function _onExitState(Transition $transition, $event) {
-		//echo '_onExitState: ' . $transition . ', event: ' . $event . PHP_EOL;
+	protected function _onExitState(Transition $transition) {
+		//echo '_onExitState: ' . $transition . PHP_EOL;
 	}
 	
-	protected function _onTransition(Transition $transition, $event) {
-		//echo '_onTransition: ' . $transition . ', event: ' . $event . PHP_EOL;
+	protected function _onTransition(Transition $transition) {
+		//echo '_onTransition: ' . $transition . PHP_EOL;
 		
 	}
 	
@@ -98,8 +98,8 @@ class SuperHero extends StateMachine {
 	    $this->statistics[$state] = $this->statistics[$state] + 1;
 	}
 	
-	protected function _onEnterState(Transition $transition, $event) {
-		//echo '_onEnterState: ' . $transition . ', event: ' . $event . PHP_EOL;
+	protected function _onEnterState(Transition $transition) {
+		//echo '_onEnterState: ' . $transition . PHP_EOL;
 		$state = $transition->getStateTo()->getName();
 		switch($state) {
 		    case "posing":
@@ -115,8 +115,8 @@ class SuperHero extends StateMachine {
 		}
 	}
 	
-	protected function _onCheckCanTransition(Transition $transition, $event) {
-		//echo '_onCheckCanTransition: ' . $transition . ', event: ' . $event . PHP_EOL;
+	protected function _onCheckCanTransition(Transition $transition) {
+		//echo '_onCheckCanTransition: ' . $transition . PHP_EOL;
 		return true;
 	}
 	
