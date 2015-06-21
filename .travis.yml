@@ -11,7 +11,7 @@ before_script:
   - composer selfupdate
   - composer update --prefer-source --no-interaction 
   - sudo apt-get update -qq
-  - pecl install yaml 1.2.0
+  - printf "\n" | pecl install yaml 1.2.0
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
