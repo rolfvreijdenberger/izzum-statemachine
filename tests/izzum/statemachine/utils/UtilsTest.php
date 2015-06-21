@@ -36,38 +36,14 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     	$context = new Context(new Identifier('1','test'), new ModelBuilder($entity));
     	$event = null;
     	
-    	$command = Utils::getCommand($command_name, $context, $event);
+    	$command = Utils::getCommand($command_name, $context);
     	$this->assertTrue(is_a($command, 'izzum\command\Composite'));
     	$this->assertContains('IncreaseId', $command->toString());
     	$this->assertEquals(0, $entity->id);
-    	$this->assertEquals(null, $entity->event);
     	$command->execute();
     	$this->assertEquals(1, $entity->id);
-    	$this->assertEquals(null, $entity->event);
     }
     
-    /**
-     * @test
-     */
-    public function shouldGetCommandWithEntityAndEvent(){
-    
-    	$command_name = 'izzum\statemachine\utils\IncreaseId';
-    	$entity = new \stdClass();
-    	$entity->id = 0;
-    	$entity->event = null;
-    	//modelbuilder always returns the model we give it in the constructor
-    	$context = new Context(new Identifier('1','test'), new ModelBuilder($entity));
-    	$event = 'event';
-    	 
-    	$command = Utils::getCommand($command_name, $context, $event);
-    	$this->assertTrue(is_a($command, 'izzum\command\Composite'));
-    	$this->assertContains('IncreaseId', $command->toString());
-    	$this->assertEquals(0, $entity->id);
-    	$this->assertEquals(null, $entity->event);
-    	$command->execute();
-    	$this->assertEquals(1, $entity->id);
-    	$this->assertEquals($event, $entity->event);
-    }
     
     /**
      * @test
@@ -83,17 +59,14 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     	$context = new Context(new Identifier('1','test'), new ModelBuilder($entity));
     	$event = 'event';
     
-    	$command = Utils::getCommand($command_name, $context, $event);
+    	$command = Utils::getCommand($command_name, $context);
     	$this->assertTrue(is_a($command, 'izzum\command\Composite'));
     	$this->assertContains('IncreaseId', $command->toString());
     	$this->assertEquals(0, $entity->id);
-    	$this->assertEquals(null, $entity->event);
     	$command->execute();
     	$this->assertEquals(3, $entity->id);
-    	$this->assertEquals($event, $entity->event);
     	$command->execute();
     	$this->assertEquals(6, $entity->id);
-    	$this->assertEquals($event, $entity->event);
     }
     
     /**
@@ -103,16 +76,14 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     
     	$command_name = '';
     	$context = new Context(new Identifier('1','test'));
-    	$event = '';
     	 
-    	$command = Utils::getCommand($command_name, $context, $event);
+    	$command = Utils::getCommand($command_name, $context);
     	$this->assertTrue(is_a($command, 'izzum\command\Null'));
     	
     	$command_name = null;
     	$context = new Context(new Identifier('1','test'));
-    	$event = 'event';
     	
-    	$command = Utils::getCommand($command_name, $context, $event);
+    	$command = Utils::getCommand($command_name, $context);
     	$this->assertTrue(is_a($command, 'izzum\command\Null'));
     	 
     }
@@ -123,10 +94,9 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     public function shouldGetExceptionForInvalidCommand(){
     	$command_name = 'izzum\statemachine\utils\CannotCreate';
     	$context = new Context(new Identifier('1','test'));
-    	$event = '';
     	
     	try {
-    		$command = Utils::getCommand($command_name, $context, $event);
+    		$command = Utils::getCommand($command_name, $context);
     		$this->fail('should not come here, command should throw exception on failure');
     	} catch (Exception $e) {
     		$this->assertEquals(Exception::COMMAND_CREATION_FAILURE, $e->getCode());
@@ -143,10 +113,9 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     
     	$command_name = 'bogus';
     	$context = new Context(new Identifier('1','test'));
-    	$event = '';
     
     	try {
-    		$command = Utils::getCommand($command_name, $context, $event);
+    		$command = Utils::getCommand($command_name, $context);
     		$this->fail('should not come here, command does not exist');
     	} catch (Exception $e) {
     		$this->assertEquals(Exception::COMMAND_CREATION_FAILURE, $e->getCode());
@@ -258,21 +227,16 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
 //helper class, increases the id on an entity when executed.
 class IncreaseId extends Command {
 	private $entity;
-	private $event;
 	public function __construct($entity)
 	{
 		$this->entity = $entity;
 	}
-	public function setEvent($event)
-	{
-		$this->event = $event;
-	}
+
 	
 	protected function _execute()
 	{
-		//proof that we can manipulate the entity and that 'setEvent' was called.
+		//proof that we can manipulate the entity
 		$this->entity->id += 1;
-		$this->entity->event = $this->event;
 	}
 }
 

@@ -205,48 +205,17 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shouldSetEventOnEntryCommand()
-    {
-        $context = new Context(new Identifier('1', 'test'));
-        $a = new State('a');
-        $b = new State('b');
-        $command = new EventCommand();
-        
-        // entry actions
-        $this->assertEquals(0, count($command->getEvents()));
-        $a->setEntryCommandName('izzum\statemachine\EventCommand');
-        $this->assertEquals(0, count($command->getEvents()));
-        $this->assertEquals('izzum\statemachine\EventCommand', $a->getEntryCommandName());
-        $this->assertEquals(State::COMMAND_EMPTY, $a->getExitCommandName());
-        $a->exitAction($context, null);
-        $this->assertEquals(0, count($command->getEvents()));
-        $a->entryAction($context, '1');
-        $this->assertEquals(1, count($command->getEvents()));
-        $a->entryAction($context, '2');
-        $this->assertEquals(2, count($command->getEvents()));
-        $this->assertEquals(array(
-                1,
-                2
-        ), $command->getEvents());
-        
-        $command->reset();
-        $this->assertEquals(0, count($command->getEvents()));
-    }
-    
-    /**
-     * @test
-     */
     public function shouldExitWithCallable()
     {
         $state = new State('a');
         $context = new Context(new Identifier('123','foo-machine'));
         $event = 'foo';
-        $callable = function($entity, $event) {$entity->setEntityId('234');};
+        $callable = function($entity) {$entity->setEntityId('234');};
         $state->setExitCallable($callable);
         $this->assertEquals('123', $context->getEntityId());
-        $state->entryAction($context, $event);
+        $state->entryAction($context);
         $this->assertEquals('123', $context->getEntityId());
-        $state->exitAction($context, $event);
+        $state->exitAction($context);
         $this->assertEquals('234', $context->getEntityId());
     }
     
@@ -258,14 +227,14 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $context = new Context(new Identifier('123','foo-machine'));
         $event = 'foo';
         //increase the id every time the callable is called
-        $callable = function($entity, $event) {$entity->setEntityId(($entity->getEntityId()+1));};
+        $callable = function($entity) {$entity->setEntityId(($entity->getEntityId()+1));};
         
         //scenario 1: use constructor
         $state = new State('a', State::TYPE_NORMAL, null, null, $callable, $callable);
         $this->assertEquals('123', $context->getEntityId());
-        $state->entryAction($context, $event);
+        $state->entryAction($context);
         $this->assertEquals('124', $context->getEntityId());
-        $state->exitAction($context, $event);
+        $state->exitAction($context);
         $this->assertEquals('125', $context->getEntityId());
         
         //scenario 2: use setters
@@ -273,9 +242,9 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $state->setEntryCallable($callable);
         $state->setExitCallable($callable);
         $this->assertEquals('125', $context->getEntityId());
-        $state->entryAction($context, $event);
+        $state->entryAction($context);
         $this->assertEquals('126', $context->getEntityId());
-        $state->exitAction($context, $event);
+        $state->exitAction($context);
         $this->assertEquals('127', $context->getEntityId());
     }
     
@@ -287,12 +256,12 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $state = new State('a');
         $context = new Context(new Identifier('123','foo-machine'));
         $event = 'foo';
-        $callable = function($entity, $event) {$entity->setEntityId('234');};
+        $callable = function($entity) {$entity->setEntityId('234');};
         $state->setEntryCallable($callable);
         $this->assertEquals('123', $context->getEntityId());
-        $state->exitAction($context, $event);
+        $state->exitAction($context);
         $this->assertEquals('123', $context->getEntityId());
-        $state->entryAction($context, $event);
+        $state->entryAction($context);
         $this->assertEquals('234', $context->getEntityId());
     }
     
@@ -331,55 +300,5 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     }
     
     
-    /**
-     * @test
-     */
-    public function shouldSetEventOnExitCommand()
-    {
-        $context = new Context(new Identifier('1', 'test'));
-        $a = new State('a');
-        $b = new State('b');
-        $command = new EventCommand();
-        
-        // entry actions
-        $this->assertEquals(0, count($command->getEvents()));
-        $a->setExitCommandName('izzum\statemachine\EventCommand');
-        $this->assertEquals(0, count($command->getEvents()));
-        $this->assertEquals('izzum\statemachine\EventCommand', $a->getExitCommandName());
-        $this->assertEquals(State::COMMAND_EMPTY, $a->getEntryCommandName());
-        $a->entryAction($context, null);
-        $this->assertEquals(0, count($command->getEvents()));
-        $a->exitAction($context, '1');
-        $this->assertEquals(1, count($command->getEvents()));
-        $a->exitAction($context, '2');
-        $this->assertEquals(2, count($command->getEvents()));
-        $this->assertEquals(array(
-                1,
-                2
-        ), $command->getEvents());
-        
-        $command->reset();
-        $this->assertEquals(0, count($command->getEvents()));
-    }
-}
-
-// helper class
-class EventCommand extends Null {
-    static $event = array();
-
-    public function setEvent($event)
-    {
-        self::$event [] = $event;
-    }
-
-    public function getEvents()
-    {
-        return self::$event;
-    }
-
-    public function reset()
-    {
-        self::$event = array();
-    }
 }
 

@@ -45,13 +45,10 @@ class Utils {
      *            composite command will be returned.
      * @param Context $context
      *            to be able to get the entity
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @return ICommand
      * @throws Exception
      */
-    public static function getCommand($command_name, Context $context, $event = null)
+    public static function getCommand($command_name, Context $context)
     {
         // it's oke to have no command, as there might be 'marker' states, where
         // we just need to transition something to a next state (according to a
@@ -80,8 +77,6 @@ class Utils {
             
             try {
                 $command = new $single_command($entity);
-                self::tryToSetEventOnCommand($command, $event);
-                // add it to the composite
                 $output->add($command);
             } catch(\Exception $e) {
                 $e = new Exception(sprintf("command (%s) objects to construction for Context (%s). message: '%s'", $single_command, $context->toString(), $e->getMessage()), Exception::COMMAND_CREATION_FAILURE);
@@ -89,23 +84,6 @@ class Utils {
             }
         }
         return $output;
-    }
-
-    /**
-     * tries to set an event on a command if the method 'setEvent' exists
-     *
-     * @param ICommand $command            
-     * @param string $event            
-     */
-    private static function tryToSetEventOnCommand(ICommand $command, $event)
-    {
-        // a mealy machine might want to use the event/trigger in it's
-        // transition logic.
-        // therefore, see if the command expects an event/trigger to be set that
-        // it can use in it's 'execute' method.
-        if (method_exists($command, 'setEvent')) {
-            $command->setEvent($event);
-        }
     }
 
     /**

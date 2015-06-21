@@ -419,26 +419,24 @@ class State {
      * An entry action will not be executed for an 'initial' state.
      *
      * @param Context $context            
-     * @param string $event optional in case the transition was triggered by an event code (mealy machine)
      * @throws Exception
      */
-    public function entryAction(Context $context, $event = null)
+    public function entryAction(Context $context)
     {
-        $command = $this->getCommand($this->getEntryCommandName(), $context, $event);
+        $command = $this->getCommand($this->getEntryCommandName(), $context);
         $this->execute($command);
-        $this->callCallable($this->getEntryCallable(), $context, $event);
+        $this->callCallable($this->getEntryCallable(), $context);
     }
 
     /**
-     * calls a $callable if it exists, with the arguments $context->getEntity() and $event
+     * calls a $callable if it exists, with the arguments $context->getEntity()
      * @param $callable $callable
      * @param Context $context
-     * @param string $event
      */
-    protected function callCallable($callable, Context $context, $event = null)
+    protected function callCallable($callable, Context $context)
     {
         if ($callable != self::CALLABLE_NULL && is_callable($callable)) {
-            call_user_func($callable, $context->getEntity(), $event);
+            call_user_func($callable, $context->getEntity());
         }
     }
 
@@ -448,16 +446,13 @@ class State {
      * will not leave a 'final' state.
      *
      * @param Context $context            
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @throws Exception
      */
-    public function exitAction(Context $context, $event = null)
+    public function exitAction(Context $context)
     {
-        $command = $this->getCommand($this->getExitCommandName(), $context, $event);
+        $command = $this->getCommand($this->getExitCommandName(), $context);
         $this->execute($command);
-        $this->callCallable($this->getExitCallable(), $context, $event);
+        $this->callCallable($this->getExitCallable(), $context);
     }
 
     /**
@@ -484,15 +479,12 @@ class State {
      * @param string $command_name
      *            entry or exit command name
      * @param Context $context            
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @return ICommand
      * @throws Exception
      */
-    protected function getCommand($command_name, Context $context, $event = null)
+    protected function getCommand($command_name, Context $context)
     {
-        return Utils::getCommand($command_name, $context, $event);
+        return Utils::getCommand($command_name, $context);
     }
 
     /**

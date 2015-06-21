@@ -1005,8 +1005,7 @@ class StateMachineTest extends \PHPUnit_Framework_TestCase {
         
         // we expect the transition and the event name to be passed as arguments
         $expected = array(
-                $machine->getTransition('new_to_a'),
-                'newAAH'
+                $machine->getTransition('new_to_a')
         );
         $this->assertEquals($expected, $model->oncheckcantransition);
         $this->assertEquals($expected, $model->onexitstate);
@@ -1029,36 +1028,32 @@ class CallableHandler {
         $this->allow = $allow;
     }
 
-    public function onExitState($identifier, $transition, $event)
+    public function onExitState($identifier, $transition)
     {
         $this->onexitstate = array(
-                $transition,
-                $event
+                $transition
         );
     }
 
-    public function onCheckCanTransition($identifier, $transition, $event)
+    public function onCheckCanTransition($identifier, $transition)
     {
         $this->oncheckcantransition = array(
-                $transition,
-                $event
+                $transition
         );
         return $this->allow;
     }
 
-    public function onTransition($identifier, $transition, $event)
+    public function onTransition($identifier, $transition)
     {
         $this->ontransition = array(
-                $transition,
-                $event
+                $transition
         );
     }
 
-    public function onEnterState($identifier, $transition, $event)
+    public function onEnterState($identifier, $transition)
     {
         $this->onenterstate = array(
-                $transition,
-                $event
+                $transition
         );
     }
 }
@@ -1070,13 +1065,13 @@ namespace izzum\statemachine;
  *
  */
 class SubClassedStateMachine extends StateMachine {
-    protected function _onCheckCanTransition(Transition $transition, $event = null) {
+    protected function _onCheckCanTransition(Transition $transition) {
         //only block a specific transition
         if($transition->getName() == 'b_to_c') return false;
         return true;
     }
     
-    protected function _onExitState(Transition $transition, $event = null) {}
-    protected function _onTransition(Transition $transition, $event = null) {}
-    protected function _onEnterState(Transition $transition, $event = null) {}
+    protected function _onExitState(Transition $transition) {}
+    protected function _onTransition(Transition $transition) {}
+    protected function _onEnterState(Transition $transition) {}
 }

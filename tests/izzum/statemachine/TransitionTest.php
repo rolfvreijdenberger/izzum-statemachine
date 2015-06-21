@@ -339,25 +339,25 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $event = 'foo';
         $a = new State('a');
         $b = new State('b');
-        $guard_callable = function($entity, $event) {return false;};
+        $guard_callable = function($entity) {return false;};
         
         //scenario 1. inject in constructor
         $t = new Transition($a, $b, $event, null, null, $guard_callable);
-        $this->assertFalse($t->can($context, $event));
+        $this->assertFalse($t->can($context));
         $t->setGuardCallable(Transition::CALLABLE_NULL);
-        $this->assertTrue($t->can($context, $event));
+        $this->assertTrue($t->can($context));
         
         //scenario 2. do not inject in constructor
         $t = new Transition($a, $b, $event);
-        $this->assertTrue($t->can($context, $event));
+        $this->assertTrue($t->can($context));
         $t->setGuardCallable($guard_callable);
-        $this->assertFalse($t->can($context, $event));
+        $this->assertFalse($t->can($context));
         
         
         //scenario 3. callable does not return a boolean
-        $guard_callable = function($entity, $event) {};
+        $guard_callable = function($entity) {};
         $t = new Transition($a, $b, $event, null, null, $guard_callable);
-        $this->assertFalse($t->can($context, $event));
+        $this->assertFalse($t->can($context));
     }
     
     /**
@@ -370,34 +370,11 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $a = new State('a');
         $b = new State('b');
         $x = 0;
-        $transition_callable = function($entity, $event)  {$entity->setEntityId('234');};
+        $transition_callable = function($entity)  {$entity->setEntityId('234');};
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
         $this->assertEquals('123', $context->getEntityId());
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals('234', $context->getEntityId());
-    }
-    
-    /**
-     * @test
-     */
-    public function shouldSetEventOnRuleAndCommand()
-    {
-        $context = new Context(new Identifier('123','foo-machine'));
-        $event = 'block';
-        $a = new State('a');
-        $b = new State('b');
-        $x = 0;
-        $t = new Transition($a, $b, $event, 'izzum\rules\AcceptsEventRule', 'izzum\command\AcceptsEventCommand');
-        $this->assertTrue($t->can($context));
-        $this->assertFalse($t->can($context, $event));
-        
-        $this->assertNull($t->process($context, $event));
-        try {
-            $t->process($context);//without the 'block' event, this command throws an exception
-            $this->fail('should not come here');
-        }catch (\Exception $e) {
-            $this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
-        }
     }
     
     /**
@@ -418,26 +395,26 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         
         
         //scenario 1: Closure without variables from the parent scope
-        $transition_callable = function($entity, $event)  {$entity->setEntityId('234');};
+        $transition_callable = function($entity)  {$entity->setEntityId('234');};
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
         $this->assertEquals('123', $context->getEntityId());
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals('234', $context->getEntityId());
         
         
         //scenario 2: Closure with Inheriting variables from the parent scope
         $x = 4;
-        $transition_callable = function($entity, $event) use (&$x) { $x+=1;};
+        $transition_callable = function($entity) use (&$x) { $x+=1;};
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
         $this->assertEquals(4, $x);
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals(5, $x);
         
         //scenario 3: Anonymous function / literal
         $context->getIdentifier()->setEntityId('123');
-        $t = new Transition($a, $b, $event, null, null, null, function($entity, $event)  {$entity->setEntityId('234');});
+        $t = new Transition($a, $b, $event, null, null, null, function($entity)  {$entity->setEntityId('234');});
         $this->assertEquals('123', $context->getEntityId());
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals('234', $context->getEntityId());
         
         //scenario 4: instance method invocation (method as string)
@@ -445,9 +422,9 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $transition_callable = array($helper, 'increaseInstanceId');
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
         $this->assertEquals(0, $helper->instance_id);
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals(1, $helper->instance_id);
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals(2, $helper->instance_id);
         
         //scenario 5: static method invocation in array (use fully qualified name)
@@ -455,7 +432,7 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $transition_callable = array('izzum\statemachine\CallableHelper', 'increaseId');
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
         $this->assertEquals(0, CallableHelper::$id);
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals(1, CallableHelper::$id);
         
         //scenario 6: static method invocation in string (use fully qualified name)
@@ -464,18 +441,18 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
         $transition_callable = 'izzum\statemachine\CallableHelper::increaseId';
         $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
         $this->assertEquals(1, CallableHelper::$id);
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals(2, CallableHelper::$id);
         
         //scenario 7: wrap an existing method in a closure (this is THE way to reuse an existing method)
-        function jo($entity, $event) {
+        function jo($entity) {
             $entity->setEntityId(($entity->getEntityId() +1));
         }
-        $callable = function($context, $event) { jo($context, $event); };
+        $callable = function($context) { jo($context); };
         $context->getIdentifier()->setEntityId('123');
         $t = new Transition($a, $b, $event, null, null, null, $callable);
         $this->assertEquals('123', $context->getEntityId());
-        $t->process($context, $event);
+        $t->process($context);
         $this->assertEquals('124', $context->getEntityId());
         
     }
@@ -525,11 +502,11 @@ class CallableHelper {
     //used to check that callables using static/instance method invocation work
     public static $id = 0;
     public $instance_id = 0;
-    public static function increaseId($entity, $event) {
+    public static function increaseId($entity) {
         self::$id++;
     }
     
-    public function increaseInstanceId($entity, $event) {
+    public function increaseInstanceId($entity) {
         $this->instance_id++;
     }
 }
@@ -572,33 +549,6 @@ class ExceptionOnConstructionRule extends \izzum\rules\Rule {
     }
 }
 
-namespace izzum\rules;
-
-class AcceptsEventRule extends \izzum\rules\Rule {
-    private $event;
-    protected function _applies()
-    {
-        return $this->event !== 'block';
-    }
-    public function setEvent($event) {
-        $this->event = $event;
-    }
-}
-
-namespace izzum\command;
-
-class AcceptsEventCommand extends \izzum\command\Command {
-    private $event;
-    protected function _execute()
-    {
-        if($this->event !== 'block') {
-            throw new Exception('event is not "block" but ' . $this->event, 111);
-        }
-    }
-    public function setEvent($event) {
-        $this->event = $event;
-    }
-}
 
 
 

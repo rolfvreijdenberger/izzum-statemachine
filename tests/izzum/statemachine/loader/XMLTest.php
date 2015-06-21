@@ -134,23 +134,23 @@ class MyStatic {
     public static $entry = 0;
     public static $exit = 0;
 
-    public static function guardMethod($entity, $event)
+    public static function guardMethod($entity)
     {
         self::$guard += 1;
         return true;
     }
 
-    public static function transitionMethod($entity, $event)
+    public static function transitionMethod($entity)
     {
         self::$transition += 1;
     }
 
-    public static function entryMethod($entity, $event)
+    public static function entryMethod($entity)
     {
         self::$entry += 1;
     }
 
-    public static function exitMethod($entity, $event)
+    public static function exitMethod($entity)
     {
         self::$exit += 1;
     }

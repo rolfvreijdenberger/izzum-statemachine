@@ -192,18 +192,15 @@ class Transition {
      * injected.
      *
      * @param Context $context            
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @return boolean
      */
-    public function can(Context $context, $event = null)
+    public function can(Context $context)
     {
         try {
-            if(!$this->getRule($context, $event)->applies()) {
+            if(!$this->getRule($context)->applies()) {
                 return false;
             }
-            return $this->callCallable($this->getGuardCallable(), $context, $event);
+            return $this->callCallable($this->getGuardCallable(), $context);
         } catch(\Exception $e) {
             $e = new Exception($this->toString() . ' '. $e->getMessage(), Exception::RULE_APPLY_FAILURE, $e);
             throw $e;
@@ -220,13 +217,13 @@ class Transition {
      *            (mealy machine)
      * @return void
      */
-    public function process(Context $context, $event = null)
+    public function process(Context $context)
     {
         // execute, we do not need to check if we 'can' since this is done
         // by the statemachine itself
         try {
-            $this->getCommand($context, $event)->execute();
-            $this->callCallable($this->getTransitionCallable(), $context, $event);
+            $this->getCommand($context)->execute();
+            $this->callCallable($this->getTransitionCallable(), $context);
         } catch(\Exception $e) {
             // command failure
             $e = new Exception($e->getMessage(), Exception::COMMAND_EXECUTION_FAILURE, $e);
@@ -240,10 +237,10 @@ class Transition {
      * @param Context $context
      * @param string $event
      */
-    protected function callCallable($callable, Context $context, $event = null) {
+    protected function callCallable($callable, Context $context) {
         //in case it is a guard callable we need to return true/false
         if($callable != self::CALLABLE_NULL && is_callable($callable)){
-            return (boolean) call_user_func($callable, $context->getEntity(), $event);
+            return (boolean) call_user_func($callable, $context->getEntity());
         }
         return true;
     }
@@ -254,14 +251,11 @@ class Transition {
      *
      * @param Context $context
      *            the associated Context for a our statemachine
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @return IRule a Rule or chained AndRule if the rule input was a ','
      *         seperated string of rules.
      * @throws Exception
      */
-    public function getRule(Context $context, $event = null)
+    public function getRule(Context $context)
     {
         // if no rule is defined, just allow the transition by default
         if ($this->rule === '' || $this->rule === null) {
@@ -283,7 +277,6 @@ class Transition {
             
             try {
                 $and_rule = new $single_rule($entity);
-                $this->tryToSetEventOnRule($and_rule, $event);
                 // create a chain of rules that need to be true
                 $rule = new AndRule($rule, $and_rule);
             } catch(\Exception $e) {
@@ -294,23 +287,6 @@ class Transition {
         return $rule;
     }
 
-    /**
-     * Try to set an event string on a rule instance, if the method 'setEvent'
-     * exists.
-     *
-     * @param IRule $rule            
-     * @param string $event            
-     */
-    private function tryToSetEventOnRule(IRule $rule, $event)
-    {
-        // a mealy machine might still want to check the event to see if it is
-        // the expected event.
-        // therefore, see if the rule expects an event to be set that it can use
-        // in it's 'applies' method.
-        if (method_exists($rule, 'setEvent')) {
-            $rule->setEvent($event);
-        }
-    }
 
     /**
      * returns the associated Command for this Transition.
@@ -320,15 +296,12 @@ class Transition {
      * method will return a Composite command.
      *
      * @param Context $context            
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @return izzum\command\ICommand
      * @throws Exception
      */
-    public function getCommand(Context $context, $event = null)
+    public function getCommand(Context $context)
     {
-        return Utils::getCommand($this->command, $context, $event);
+        return Utils::getCommand($this->command, $context);
     }
 
     /**
