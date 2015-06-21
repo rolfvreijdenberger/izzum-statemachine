@@ -205,6 +205,8 @@ The `False` rule is provided as an example. you should write your own specifcall
 A rule should never have side effects and should only return a boolean. 
 
 Multiple rules can be chained together (using [logical conjunction](https://en.wikipedia.org/wiki/Logical_conjunction): and) by specifying multiple fully qualified rule class names seperated by a `,` comma.
+
+Testing is facilitated because you can inject [test doubles](https://en.wikipedia.org/wiki/Test_double) (mocks/stubs) in your Rule.
 ```php
 $forbidden = new State('forbidden');
 $rule = '\izzum\rules\False';
@@ -327,7 +329,18 @@ The configuration of a Transitions or States with a Command should be done by pr
 In contrast to Rules, commands will most probably have side effects as they will have behaviour that affects your program.
 
 The advantage of using Commands for transition logic is that there is no coupling between your domain model and the statemachine, making your application code much cleaner and testable.
+Testing is facilitated because you can inject [test doubles](https://en.wikipedia.org/wiki/Test_double) (mocks/stubs) in your command.
 
+```php
+Class OrderDelivery extends Command {
+public function __construct(Order $order) { $this->order = $order;}
+  protected function _execute() { $this->order->deliver(); }
+}
+$command = '\izzum\command\OrderDelivery';
+//assume we are using the rule from the example
+$transition = new Transition($action, new State('shipping'), 'ship', $rule, $command);
+
+```
 ### using a persistance adapter to store state
 Persistence adapters provide an abstraction to write state data and transition history to a persistence backend of choice, so your statemachine can be used in multiple consecutive php processes because it remembers in which state it is. 
 
