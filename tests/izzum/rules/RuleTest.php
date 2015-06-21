@@ -4,8 +4,6 @@ use izzum\rules\NotRule;
 use izzum\rules\AndRule;
 use izzum\rules\OrRule;
 use izzum\rules\XorRule;
-use izzum\rules\False;
-use izzum\rules\True;
 use izzum\rules\Closure;
 use izzum\rules\ExceptionRule;
 use izzum\rules\Exception;
@@ -24,10 +22,10 @@ class RuleTest extends PHPUnit_Framework_TestCase
     
     public function testBooleanRule()
     {
-        $rule = new True();
+        $rule = new izzum\rules\True();
         $this->assertTrue($rule->applies());
         
-        $rule = new False();
+        $rule = new izzum\rules\False();
         $this->assertFalse($rule->applies());
         
         $this->assertContains('False', $rule . '', '__toString');
@@ -158,7 +156,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testAndChainingTrueTrue()
     {
-        $ruletrue = new True();
+        $ruletrue = new izzum\rules\True();
         $rule = $ruletrue->andRule($ruletrue);
         $this->assertTrue($rule->applies());
     }
@@ -168,8 +166,8 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testAndChainingTrueFalse()
     {
-        $ruletrue = new True();
-        $rulefalse = new False();
+        $ruletrue = new izzum\rules\True();
+        $rulefalse = new izzum\rules\False();
         $rule = $ruletrue->andRule($rulefalse);
         $this->assertFalse($rule->applies());
         $this->assertNotNull($rule->toString());
@@ -180,7 +178,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testAndChainingFalseFalse()
     {
-        $rulefalse = new False();
+        $rulefalse = new izzum\rules\False();
         $rule = $rulefalse->andRule($rulefalse);
         $this->assertFalse($rule->applies());
         $this->assertCount(0, $rule->getResults());
@@ -191,7 +189,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testOrChainingTrueTrue()
     {
-        $ruletrue = new True();
+        $ruletrue = new izzum\rules\True();
         $rule = $ruletrue->orRule($ruletrue);
         $this->assertTrue($rule->applies());
     }
@@ -201,8 +199,8 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testOrChainingTrueFalse()
     {
-        $ruletrue = new True();
-        $rulefalse = new False();
+        $ruletrue = new izzum\rules\True();
+        $rulefalse = new izzum\rules\False();
         $rule = $ruletrue->orRule($rulefalse);
         $this->assertTrue($rule->applies());
         $this->assertNotNull($rule->toString());
@@ -213,7 +211,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testOrChainingFalseFalse()
     {
-        $rulefalse = new False();
+        $rulefalse = new izzum\rules\False();
         $rule = $rulefalse->orRule($rulefalse);
         $this->assertFalse($rule->applies());
         $this->assertCount(0, $rule->getResults());
@@ -224,7 +222,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testXorChainingTrueTrue()
     {
-    	$ruletrue = new True();
+    	$ruletrue = new izzum\rules\True();
     	$rule = $ruletrue->xorRule($ruletrue);
     	$this->assertFalse($rule->applies());
         $this->assertNotNull($rule->toString());
@@ -235,8 +233,8 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testXorChainingTrueFalse()
     {
-    	$ruletrue = new True();
-    	$rulefalse = new False();
+    	$ruletrue = new izzum\rules\True();
+    	$rulefalse = new izzum\rules\False();
     	$rule = $ruletrue->xorRule($rulefalse);
     	$this->assertTrue($rule->applies());
     }
@@ -246,7 +244,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testXorChainingFalseFalse()
     {
-    	$rulefalse = new False();
+    	$rulefalse = new izzum\rules\False();
     	$rule = $rulefalse->xorRule($rulefalse);
     	$this->assertFalse($rule->applies());
         $this->assertCount(0, $rule->getResults());
@@ -258,7 +256,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testNotChainingTrueTrue()
     {
-        $rule = new True();
+        $rule = new izzum\rules\True();
         $rule = $rule->not();
         $this->assertFalse($rule->applies());
         $this->assertCount(0, $rule->getResults());
@@ -270,7 +268,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
      */
     public function testNotChainingTrueFalse()
     {
-        $rule = new False();
+        $rule = new izzum\rules\False();
         $rule = $rule->not();
         $this->assertTrue($rule->applies());
     }
@@ -330,12 +328,12 @@ class RuleTest extends PHPUnit_Framework_TestCase
     }
     
     public function testFalseRule(){
-        $rule = new False();
+        $rule = new izzum\rules\False();
         $this->assertFalse($rule->applies());
     }
     
     public function testTrueRule(){
-        $rule = new True();
+        $rule = new izzum\rules\True();
         $this->assertTrue($rule->applies());
     }
     
@@ -377,7 +375,7 @@ class RuleTest extends PHPUnit_Framework_TestCase
     
     public function testRuleResult()
     {
-        $rule = new True();
+        $rule = new izzum\rules\True();
         $result = 'rule failed';
         $r = new RuleResult($rule, $result);
         $this->assertEquals($rule, $r->getRule());
