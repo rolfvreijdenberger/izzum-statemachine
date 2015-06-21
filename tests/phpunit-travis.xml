@@ -7,9 +7,9 @@
            <!--
             <group>redis</group>
             <group>mongodb</group>
+            <group>yaml</group>
             -->
             <group>sqlite</group>
-            <group>yaml</group>
             <group>uses-sessions</group>
             <group>mysql</group>
             <group>postgresql</group>
