@@ -4,7 +4,6 @@ use izzum\command\Exception;
 use izzum\command\ExceptionCommand;
 use izzum\command\Composite;
 use izzum\command\Closure;
-use izzum\command\Null;
 use izzum\command\ICommand;
 use izzum\command\IComposite;
 /**
@@ -44,7 +43,7 @@ class CommandTest extends PHPUnit_Framework_TestCase {
     public function testNullCommand()
     {
         //test creation
-        $command = new Null();
+        $command = new izzum\command\Null();
         $command->execute();
     }
     
