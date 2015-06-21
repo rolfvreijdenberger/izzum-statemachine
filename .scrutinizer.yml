@@ -15,3 +15,7 @@ tools:
     php_cpd:
         enabled: true
         excluded_dirs: [vendor, tests, examples, assets]
+checks:
+    php:
+        code_rating: true
+        duplication: true
