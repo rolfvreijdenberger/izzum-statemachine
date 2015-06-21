@@ -118,7 +118,7 @@ foreach ($machine->getTransitions() as $transition) {
 }
 # new_to_action:go, action_to_done:finish, new_to_pause:pause, action_to_pause:pause
 ```
-
+![interactive example](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/interactive-example.png)
 
 ### performing specific transitions
 Specific transitions from the current state can be performed by calling `StateMachine::handle('<event>')` (to handle a transition by a defined event name), by calling `Statemachine::<event>()` (by using the event name as a method call) or by calling `StateMachine::transition('<name>')` (by calling the transition by name). All methods will return true if a succesful transition was made.
@@ -331,6 +331,10 @@ In contrast to Rules, commands will most probably have side effects as they will
 The advantage of using Commands for transition logic is that there is no coupling between your domain model and the statemachine, making your application code much cleaner and testable.
 Testing is facilitated because you can inject [test doubles](https://en.wikipedia.org/wiki/Test_double) (mocks/stubs) in your command.
 
+![traffic light example](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/traffic-light-output.png )
+
+![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml-traffic-light.png )
+
 ```php
 Class OrderDelivery extends Command {
 public function __construct(Order $order) { $this->order = $order;}
@@ -370,6 +374,8 @@ $machine = new StateMachine(new Context(new Identifier('session', 'rainbow-machi
 $machine->run();
 
 ```
+
+![session example](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/session-rainbow-example.png)
 
 ### persistance 3. storing transition history and state data in sql backends
 SQL based backends are abundantly available in most applications. the PDO adapter provides access to all backends made available via the PDO driver. There are full sql schemas in `assets/sql` for postgresql, mysql and sqlite available with full documentation about the design in `assets/sql/postgresql.sql`. Once you create those tables you and provide the right credentials to the PDO adapter you are ready to start storing your state in your database and you can also fully define your machines including states and transitions with their associated actions in the tables.
@@ -512,10 +518,7 @@ Not all tests are run by default, since the persistence layer tests depend on th
 phpunit -c phpunit-all.xml
 ```
 
-###generated state diagram for the traffic light machine (see examples)
-![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/state-diagram-plantuml-traffic-light.png )
 
-###output for the traffic light machine (see examples)
-![traffic light state diagram](https://raw.githubusercontent.com/rolfvreijdenberger/izzum-statemachine/master/assets/images/traffic-light-output.png )
+
 
 
