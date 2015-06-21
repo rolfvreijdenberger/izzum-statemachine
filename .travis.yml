@@ -11,7 +11,7 @@ before_script:
   - composer selfupdate
   - composer update --prefer-source --no-interaction 
   - sudo apt-get update -qq
-  - sudo apt-get install php5-redis
+  - sudo apt-get install -y php5-redis
   
 script: phpunit --configuration tests/phpunit-travis.xml --coverage-clover=coverage.clover
 
