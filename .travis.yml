@@ -18,9 +18,9 @@ before_script:
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - sudo chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.json
-  - sudo chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.xml
-  - sudo chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.yaml
+  - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.json
+  - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.xml
+  - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.yaml
   
 services:
   - mongodb
