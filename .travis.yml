@@ -17,7 +17,7 @@ before_script:
   - printf "\n" | pecl install yaml 1.2.0 
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-  - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+#  - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini # yaml is loaded by pecl install
   - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.json
   - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.xml
   - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.yaml
