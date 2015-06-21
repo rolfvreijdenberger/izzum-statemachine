@@ -7,14 +7,20 @@ php:
 install:
   - composer --no-interaction install
 
+# http://docs.travis-ci.com/user/languages/php/
+# http://docs.travis-ci.com/user/database-setup/
+# https://stackoverflow.com/questions/15995009/problems-with-php-yaml-within-travis-ci
 before_script:
   - composer selfupdate
   - composer update --prefer-source --no-interaction 
   - sudo apt-get update -qq
-  - printf "\n" | pecl install yaml 1.2.0
+  - printf "\n" | pecl install yaml 1.2.0 
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - sudo chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.json
+  - sudo chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.xml
+  - sudo chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.yaml
   
 services:
   - mongodb
