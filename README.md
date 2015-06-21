@@ -294,22 +294,22 @@ for general implementation details, see the section for guard conditions on call
 
 The general transition logic sequence is as follows
 * exit:
-* * hook: `_onExitState($transition)`
-* * event handler: `$entity->onExitState($identifier, $transition)`
-* * exit command execution
-* * callable: `$callable($entity)`
+    * hook: `_onExitState($transition)`
+    * event handler: `$entity->onExitState($identifier, $transition)`
+    * exit command execution
+    * callable: `$callable($entity)`
 * transition:
-* * hook: `_onTransition($transition)`
-* * event handler (only if transition was triggered by an event): `$entity->onEvent($identifier, $transition)`
-* * event handler (only if transition was triggered by an event): `$entity->on<$event>($identifier, $transition)`
-* * event handler: `$entity->onTransition($identifier, $transition)`
-* * transition command execution
-* * callable: `$callable($entity)`
+    * hook: `_onTransition($transition)`
+    * event handler (only if transition was triggered by an event): `$entity->onEvent($identifier, $transition)`
+    * event handler (only if transition was triggered by an event): `$entity->on<$event>($identifier, $transition)`
+    * event handler: `$entity->onTransition($identifier, $transition)`
+    * transition command execution
+    * callable: `$callable($entity)`
 * exit:
-* * event handler: `$entity->onEnterState($identifier, $transition)`
-* * entry command execution
-* * callable: `$callable($entity)`
-* * hook: `_onEnterState($transition)`
+    * event handler: `$entity->onEnterState($identifier, $transition)`
+    * entry command execution
+    * callable: `$callable($entity)`
+    * hook: `_onEnterState($transition)`
 
 
 ### logic actions 2. commands
