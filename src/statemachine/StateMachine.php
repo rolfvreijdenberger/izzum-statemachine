@@ -101,23 +101,18 @@ use izzum\statemachine\utils\Utils;
  * 7. logic: $state_from->exitAction($context) //execute Command: delegation, composition, inheritance, standalone
  * 8. logic: state exit: $callable($entity) // callable: standalone, delegation, composition, inheritance
  * 9. logic: _onTransition($transition) //hook: inheritance
- * 10. logic: $entity->onEvent($identifier, $transition) //event handler: delegation, composition, inheritance, only if transition was event driven
- * 11. logic: $entity->on<$event>($identifier, $transition) //event handler: delegation, composition, inheritance, only if transition was event driven
- * 12. logic: $entity->onTransition($identifier, $transition) //event handler: delegation, composition, inheritance
- * 13. logic: $transition->process($context) //execute Command: delegation, composition, inheritance, standalone
- * 14. logic: $transition->process($context) // callable: standalone, delegation, composition, inheritance
- * 15. logic: $entity->onEnterState($identifier, $transition) //event handler: delegation, composition, inheritance
- * 16. logic: $state_to->entryAction($context) //execute Command: delegation, composition, inheritance, standalone
- * 17. logic: state entry: $callable($entity) // callable: standalone, delegation, composition, inheritance
- * 18. logic: _onEnterState($transition) //hook: inheritance
+ * 10. logic: $entity->onTransition($identifier, $transition) //event handler: delegation, composition, inheritance
+ * 11. logic: $transition->process($context) //execute Command: delegation, composition, inheritance, standalone
+ * 12. logic: $transition->process($context) // callable: standalone, delegation, composition, inheritance
+ * 13. logic: $entity->onEnterState($identifier, $transition) //event handler: delegation, composition, inheritance
+ * 14. logic: $state_to->entryAction($context) //execute Command: delegation, composition, inheritance, standalone
+ * 15. logic: state entry: $callable($entity) // callable: standalone, delegation, composition, inheritance
+ * 16. logic: _onEnterState($transition) //hook: inheritance
  *
  * each hook can be overriden and implemented in a subclass, providing
  * functionality that is specific to your application. This allows you to use
  * the core mechanisms of the izzum package and extend it to your needs.
  *
- * each rule and command will be injected with the entity and if they implement
- * the method 'setEvent' the event will be set in case the transition was called
- * with the event.
  *
  * each event handler might be implemented on the entity/domain object and will be called, only if
  * available, with the $transition and $event arguments.
@@ -253,7 +248,7 @@ class StateMachine {
     public function transition($transition_name, $message = null)
     {
         $transition = $this->getTransitionWithNullCheck($transition_name);
-        return $this->performTransition($transition, null, $message);
+        return $this->performTransition($transition, $message);
     }
 
     /**
@@ -263,9 +258,6 @@ class StateMachine {
      * current state will be applied.
      * If there are multiple transitions possible for the event, the transitions
      * will be tried until one of them is possible.
-     *
-     * The event string itself will be set on the hooks, callables, rules and
-     * command (if they implement the 'setEvent($event)' method)
      *
      * This type of (event/trigger) handling is found in mealy machines.
      *
@@ -288,7 +280,7 @@ class StateMachine {
         $transitioned = false;
         $transitions = $this->getCurrentState()->getTransitionsTriggeredByEvent($event);
         foreach ($transitions as $transition) {
-            $transitioned = $this->performTransition($transition, $event, $message);
+            $transitioned = $this->performTransition($transition, $message);
             if ($transitioned)
                 break;
         }
@@ -324,7 +316,7 @@ class StateMachine {
         try {
             $transitions = $this->getCurrentState()->getTransitions();
             foreach ($transitions as $transition) {
-                $transitioned = $this->performTransition($transition, null, $message);
+                $transitioned = $this->performTransition($transition, $message);
                 if ($transitioned) {
                     return true;
                 }
@@ -422,15 +414,13 @@ class StateMachine {
      * that the transition is allowed to run.
      *
      * @param Transition $transition            
-     * @param string $event
-     *            optional in case the transition was triggered by an event string (mealy machine)
      * @param string $message optional message. this can be used by the persistence adapter
      *          to be part of the transition history to provide extra information about the transition.  
      * @return boolean true if the transition was succesful
      * @throws Exception in case something went horribly wrong
      * @link https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    private function performTransition(Transition $transition, $event = null, $message = null)
+    private function performTransition(Transition $transition, $message = null)
     {
         // every method in this core routine has hook methods, event handlers and
         // callbacks it can call during the execution phase of the
@@ -445,7 +435,7 @@ class StateMachine {
             // state exit action: performed when exiting the state
             $this->doExitState($transition);
             // the transition is performed, with the associated logic
-            $this->doTransition($transition, $event, $message);
+            $this->doTransition($transition, $message);
             // state entry action: performed when entering the state
             $this->doEnterState($transition);
         } catch(Exception $e) {
@@ -499,7 +489,7 @@ class StateMachine {
      * @param Transition $transition            
      * @param string $event            
      */
-    private function doExitState(Transition $transition, $event = null)
+    private function doExitState(Transition $transition)
     {
         // hook for subclasses to implement
         $this->_onExitState($transition);
@@ -513,22 +503,15 @@ class StateMachine {
      * the transition action method
      *
      * @param Transition $transition            
-     * @param string $event  
      * @param string $message optional message. this can be used by the persistence adapter
      *          to be part of the transition history to provide extra information about the transition.          
      */
-    private function doTransition(Transition $transition, $event = null, $message = null)
+    private function doTransition(Transition $transition, $message = null)
     {
         // hook for subclasses to implement
         $this->_onTransition($transition);
         $entity = $this->getContext()->getEntity();
         $identifier = $this->getContext()->getIdentifier();
-        if ($event) {
-            // an event handler that is possibly defined on the domain model: onEvent
-            $this->callEventHandler($entity, 'onEvent', $identifier, $transition);
-            // possibly defined on the domain model: on<$event>
-            $this->callEventHandler($entity, 'on' . $this->_toValidMethodName($event), $identifier, $transition);
-        }
         // an event handler that is possibly defined on the domain model: onTransition
         $this->callEventHandler($entity, 'onTransition', $identifier, $transition);
         // executes the command and callable associated with the transition object
@@ -542,9 +525,8 @@ class StateMachine {
      * the enter state action method
      *
      * @param Transition $transition            
-     * @param string $event            
      */
-    private function doEnterState(Transition $transition, $event = null)
+    private function doEnterState(Transition $transition)
     {
         // an event handler that is possibly defined on the domain model: onEnterState
         $this->callEventHandler($this->getContext()->getEntity(), 'onEnterState', $this->getContext()->getIdentifier(), $transition);
@@ -991,7 +973,7 @@ class StateMachine {
      *            the method to call on the object
      * @return boolean|mixed
      */
-    private function callEventHandler($object, $method)
+    protected function callEventHandler($object, $method)
     {
         // return true by default (because of transition guard callbacks that
         // might not exist)
@@ -1104,18 +1086,4 @@ class StateMachine {
      */
     protected function _onEnterState(Transition $transition)
     {}
-
-    /**
-     * process a string to a name that is a valid method name.
-     * This allows you to transform 'event' strings to strings that conform
-     * to a format you wish to use
-     *
-     * @param string $name            
-     * @return string
-     */
-    protected function _toValidMethodName($name)
-    {
-        // override to manipulate the return value
-        return ucfirst($name);
-    }
 }

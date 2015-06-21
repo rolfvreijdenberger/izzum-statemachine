@@ -171,7 +171,7 @@ Guard conditions are dynamically evaluated boolean expressions that either allow
 If a guard is not specified on a transition then the transition will be allowed by default. Guards can operate on a domain model returned by an EntityBuilder.
 
 There are multiple ways to set guard conditions on transitions:
-* **callables**: closures/anonymous methods, instance methods and static methods that return a boolean. This is easy to use and possibly decoupled from domain models. The drawback is that all code should always be defined and in memory when the transitions are defined.
+* **callables**: closures/anonymous methods, instance methods and static methods that return a boolean. This is easy to use and possibly decoupled from domain models. The drawback is that all code should always be defined and in memory.
 * **rules**: business rules that are fully qualified classnames of instances of izzum/rules/Rule that shall accept a domain model (via the EntityBuilder) in their constructor and shall have an implemented `Rule::applies()` method that returns a boolean *after potentially interacting with the domain model injected in the rule*. This is the most formal and most powerful guard to use because it operates on domain models in a noninvasive, loosely coupled way. Furthermore, the code (possibly expensive to run, eg: when accessing databases or network services) is only instantiated and used when needed, in contrast to all other methods for which the code should  should always be fully available in memory.
 * **event handlers**: called on a specified domain object (via the EntityBuilder) in the Context. This is flexible and convenient since you define the event handlers on your domain model that is accessible by the statemachine.
 * **hooks**: used by overriding a specific method `StateMachine::_onCheckCanTransition()` when subclassing the statemachine itself. This is then tailored to your application domain and offers less flexibility than the other methods since you will need to 'switch' on the transition to take a specific action.
@@ -179,8 +179,13 @@ There are multiple ways to set guard conditions on transitions:
 
 ### guard conditions 1. using callables: closures, static methods, instance methods
 A [callable comes in multiple forms in php](https://php.net/manual/en/language.types.callable.php). In the next example, a [closure, or anonymous function](https://php.net/manual/en/functions.anonymous.php), is used to evaluate the boolean expression by operating on any context variables it has in it's scope and by using the automatically provided arguments of $entity and $event. $entity is the domain model returned by the Context of the statemachine (via the EntityBuilder). The event is only set when the transition was initiated by an event. The guard can operate on the $entity (which defaults to the Identifier if no Builder is used) to calculate the boolean result.
+
 In general, all callables will be passed the 2 arguments $entity and $event and should have a method signature of `[static] public function <name>($entity, $event = null): boolean`. 
-Check the example in `examples\inheritance` for using instance methods as callables. see `tests/izzum/statemachine/TransitionTest::shouldAcceptMultipleCallableTypes` for all possible implementations of callables in the izzum statemachine.
+
+If you define your transitions in a php script you have more options than when defining your transitions via configuration that you load via a file or a persistance backend.
+When loading the transition configurations you can only use the form `\fully\qualified\Class::staticMethod` for callables since you cannot define closures as a string in your configuration.
+
+Check the example in `examples/inheritance` for using instance methods as callables. see `tests/izzum/statemachine/TransitionTest::shouldAcceptMultipleCallableTypes` for all possible implementations of callables in the izzum statemachine.
 ```php
 $forbidden = new State('forbidden');
 $closure = function($entity, $event){return false;};
@@ -198,7 +203,7 @@ echo $machine->getCurrentState();//still in the same state
 ```
 
 ### guard conditions 2. using business rules
-A business rule is used by creating a Rule class (an implemenation of `\izzum\rules\IRule`) and by setting the fully qualified class name as a string on the Transition. The Rule class is dynamically instantiated only when necessary for checking the transition and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Rule should have a `Rule::applies()` method that will return a boolean value that will be calculated by querying the domain model or any other data source (eg: services, apis, database etc).
+A business rule is used by creating a Rule class (a subclass of `\izzum\rules\Rule`) and by setting the fully qualified class name as a string on the Transition. The Rule class is dynamically instantiated only when necessary for checking the transition and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Rule should have a `Rule::applies()` method that will return a boolean value that will be calculated by querying the domain model or any other data source (eg: services, apis, database etc).
 
 The `False` rule is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using rules and a domain object with an EntityBuilder.
 
@@ -270,7 +275,7 @@ Add a public method to the statemachine to add event listeners and dispatch your
 A good event dispatcher to use would be the [Symfony EventDispatcher component](http://symfony.com/doc/current/components/event_dispatcher/introduction.html) which you can use to return the boolean evaluation parameter for the guard to allow or disallow the transition.
 
 
-### state entry actions, state exit actions and transition actions
+### logic actions: state entry actions, state exit actions and transition actions
 State exit logic, transition logic and state entry logic all provide ways to associate custom domain logic to that phase of the transition from the 'from' state to the 'to state.
 If the logic handlers are not specified on a transition of on the states then nothing will happen by default. The logic handlers can operate on a domain model returned by an EntityBuilder.
 
@@ -292,7 +297,7 @@ There are multiple ways to set logic handlers on transitions:
 
 
 ### logic actions 1. general transition flow (callables, events, hooks)
-for general implementation details, see the section for guard conditions on callables, events and hooks.
+for general implementation details for callables, events and hooks, see the example section for guard conditions.
 
 The general transition logic sequence is as follows
 * exit:
@@ -302,8 +307,6 @@ The general transition logic sequence is as follows
     * callable: `$callable($entity)`
 * transition:
     * hook: `_onTransition($transition)`
-    * event handler (only if transition was triggered by an event): `$entity->onEvent($identifier, $transition)`
-    * event handler (only if transition was triggered by an event): `$entity->on<$event>($identifier, $transition)`
     * event handler: `$entity->onTransition($identifier, $transition)`
     * transition command execution
     * callable: `$callable($entity)`
@@ -315,7 +318,7 @@ The general transition logic sequence is as follows
 
 
 ### logic actions 2. commands
-A [command](https://en.wikipedia.org/wiki/Command_pattern) is used by creating a seperate Command class (an implemenation of `\izzum\command\ICommand`) and by setting it's fully qualified class name as a string on the transition or states. 
+A [command](https://en.wikipedia.org/wiki/Command_pattern) is used by creating a seperate Command class (a subclass of `\izzum\command\Command`) and by setting it's fully qualified class name as a string on the transition or states. 
 
 The Command class is dynamically instantiated only when necessary for performing the logic and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Command should have a `Command::execute()` method that will perform the logic by *potentially operating on the domain model* or any other data source (eg: services, apis, database etc).
 The `Null` command is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using commands and a domain object with an EntityBuilder.

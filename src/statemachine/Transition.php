@@ -212,9 +212,6 @@ class Transition {
      * Command with the domain object injected.
      *
      * @param Context $context            
-     * @param string $event
-     *            optional in case the transition was triggered by an event code
-     *            (mealy machine)
      * @return void
      */
     public function process(Context $context)
@@ -235,7 +232,6 @@ class Transition {
      * calls the $callable as part of the transition
      * @param callable $callable
      * @param Context $context
-     * @param string $event
      */
     protected function callCallable($callable, Context $context) {
         //in case it is a guard callable we need to return true/false
