@@ -6,8 +6,8 @@
         <exclude>
            <!--
             <group>redis</group>
-            <group>mongodb</group>
             -->
+            <group>mongodb</group>
             <group>sqlite</group>
             <group>yaml</group>
             <group>uses-sessions</group>
