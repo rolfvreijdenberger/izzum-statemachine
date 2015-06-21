@@ -60,14 +60,14 @@ class SuperHero extends StateMachine {
 		$this->addTransition(new Transition(new State('not-regex:/start|normal/'), $fighting, 'fight'));
 	}
 	
-	public function changeIntoCostume(SuperHero $entity, $event) {
+	public function changeIntoCostume(SuperHero $entity) {
 	    echo $this->name . " is changing into ". $this->name ." superhero costume: enter " . $this->alias . PHP_EOL;
 	}
-	public function changeIntoNormalClothes(SuperHero $entity, $event) {
+	public function changeIntoNormalClothes(SuperHero $entity) {
 	    echo $this->name . " is changing into normal clothes. The human alter ego of ". $this->alias . PHP_EOL;
 	    $this->printMyAwesomeness(false);
 	}
-	public function stopBeingSuper(SuperHero $entity, $event) {
+	public function stopBeingSuper(SuperHero $entity) {
 	    $this->printMyAwesomeness(true);
 	}
 	

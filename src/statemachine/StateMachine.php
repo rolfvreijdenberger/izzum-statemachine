@@ -1057,12 +1057,10 @@ class StateMachine {
      * by returning false from this method.
      *
      * @param Transition $transition            
-     * @param string $event
-     *            an event name if the transition was triggered by an event.
      * @return boolean if false, the transition and it's associated logic will
      *         not take place
      */
-    protected function _onCheckCanTransition(Transition $transition, $event = null)
+    protected function _onCheckCanTransition(Transition $transition)
     {
         // eg: dispatch an event and see if it is rejected by a listener
         return true;
