@@ -14,7 +14,7 @@ A proven enterprise grade, fully unittested and high quality statemachine. It ha
 
 It will work seamlessly with existing domain models (like 'Order', 'Customer' etc) by operating on those models instead of having to create new domain models with statemachine logic in them (which is also possible). The examples, extensive (inline) documentation and unittests will make it easy to setup and get going. 
 
-Bitcoin donations are more than welcome on *[19zygBRwc8daPdQJQzFqxCBghg867grWKL](https://blockchain.info/address/19zygBRwc8daPdQJQzFqxCBghg867grWKL)*.
+Bitcoin donations are more than welcome on *[1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM](https://blockchain.info/address/1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM)*.
  
 ### Example walkthrough
 The following code examples will guide you through using the statemachine and will familiarize you with the different ways to interact with the statemachine. 
