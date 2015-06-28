@@ -30,7 +30,7 @@ class RuleResult {
 
     /**
      *
-     * @param \izzum\rules\Rule $rule            
+     * @param Rule $rule            
      * @param string $result            
      */
     public function __construct(Rule $rule, $result)

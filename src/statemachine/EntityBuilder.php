@@ -104,7 +104,7 @@ class EntityBuilder {
             // we cache the context so we can be sure to provide
             // a new reference to the entity when the builder is used on a new
             // Identifier.
-            if ($this->entity === null || $this->identifier !== $identifier || $create_fresh_entity == true) {
+            if ($this->entity === null || $this->identifier !== $identifier || $create_fresh_entity === true) {
                 // crate new entity and build cache
                 $this->entity = $this->build($identifier);
                 $this->identifier = $identifier;

@@ -73,6 +73,7 @@ class YAML implements Loader {
         //yaml decoding returns a php array.
         $name = $stateMachine->getContext()->getMachine();
         $found = false;
+        $data = null;
         if(is_array(@$decoded['machines'])) {
             foreach ($decoded['machines'] as $data) {
                 if ($data['name'] === $name) {

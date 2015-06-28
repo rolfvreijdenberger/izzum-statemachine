@@ -201,9 +201,11 @@ class PDO extends Adapter implements Loader {
         $prefix = $this->getPrefix();
         try {
             $query = 'SELECT state FROM ' . $prefix . 'statemachine_entities WHERE machine = ' . ':machine AND entity_id = :entity_id';
+            $machine = $identifier->getMachine();
+            $entity_id = $identifier->getEntityId();
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $identifier->getMachine());
-            $statement->bindParam(":entity_id", $identifier->getEntityId());
+            $statement->bindParam(":machine", $machine);
+            $statement->bindParam(":entity_id", $entity_id);
             $result = $statement->execute();
             if ($result === false) {
                 throw new Exception($this->getErrorInfo($statement));
@@ -272,8 +274,10 @@ class PDO extends Adapter implements Loader {
         try {
             $query = 'SELECT entity_id FROM ' . $prefix . 'statemachine_entities WHERE ' . 'machine = :machine AND entity_id = :entity_id';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $identifier->getMachine());
-            $statement->bindParam(":entity_id", $identifier->getEntityId());
+            $machine = $identifier->getMachine();
+            $entity_id = $identifier->getEntityId();
+            $statement->bindParam(":machine", $machine);
+            $statement->bindParam(":entity_id", $entity_id);
             $result = $statement->execute();
             if ($result === false) {
                 throw new Exception($this->getErrorInfo($statement));
@@ -304,10 +308,13 @@ class PDO extends Adapter implements Loader {
                     VALUES
                 (:machine, :entity_id, :state, :timestamp)';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $identifier->getMachine());
-            $statement->bindParam(":entity_id", $identifier->getEntityId());
+            $machine = $identifier->getMachine();
+            $entity_id = $identifier->getEntityId();
+            $timestamp =  $this->getTimestampForDriver();
+            $statement->bindParam(":machine", $machine);
+            $statement->bindParam(":entity_id", $entity_id);
             $statement->bindParam(":state", $state);
-            $statement->bindParam(":timestamp", $this->getTimestampForDriver());
+            $statement->bindParam(":timestamp", $timestamp);
             $result = $statement->execute();
             if ($result === false) {
                 throw new Exception($this->getErrorInfo($statement));
@@ -374,10 +381,13 @@ class PDO extends Adapter implements Loader {
                 changetime = :timestamp WHERE entity_id = :entity_id 
                 AND machine = :machine';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $identifier->getMachine());
-            $statement->bindParam(":entity_id", $identifier->getEntityId());
+            $machine = $identifier->getMachine();
+            $entity_id = $identifier->getEntityId();
+            $timestamp =  $this->getTimestampForDriver();
+            $statement->bindParam(":machine", $machine);
+            $statement->bindParam(":entity_id", $entity_id);
             $statement->bindParam(":state", $state);
-            $statement->bindParam(":timestamp", $this->getTimestampForDriver());
+            $statement->bindParam(":timestamp", $timestamp);
             $result = $statement->execute();
             if ($result === false) {
                 throw new Exception($this->getErrorInfo($statement));
@@ -400,8 +410,12 @@ class PDO extends Adapter implements Loader {
                         VALUES
                     (:machine, :entity_id, :state, :message, :timestamp, :exception)';
             $statement = $connection->prepare($query);
-            $statement->bindParam(":machine", $identifier->getMachine());
-            $statement->bindParam(":entity_id", $identifier->getEntityId());
+            $machine = $identifier->getMachine();
+            $entity_id = $identifier->getEntityId();
+            $timestamp =  $this->getTimestampForDriver();
+            $is_exception = $this->getBooleanForDriver($is_exception);
+            $statement->bindParam(":machine", $machine);
+            $statement->bindParam(":entity_id", $entity_id);
             $statement->bindParam(":state", $state);
             if($message) {
                 if(is_string($message)) {
@@ -413,8 +427,8 @@ class PDO extends Adapter implements Loader {
                 $message = json_encode($message);
             }
             $statement->bindParam(":message", $message);
-            $statement->bindParam(":timestamp", $this->getTimestampForDriver());
-            $statement->bindParam(":exception", $this->getBooleanForDriver($is_exception));
+            $statement->bindParam(":timestamp", $timestamp);
+            $statement->bindParam(":exception", $is_exception);
             $result = $statement->execute();
             if ($result === false) {
                 throw new Exception($this->getErrorInfo($statement));

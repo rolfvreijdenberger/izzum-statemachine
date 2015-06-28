@@ -39,7 +39,7 @@ class Session extends Adapter {
     public function __construct($namespace = 'izzum', $session_id = null)
     {
         if (session_status() === PHP_SESSION_NONE) {
-            if ($session_id) {
+            if ($session_id !== null) {
                 session_id($session_id);
             }
             session_start();

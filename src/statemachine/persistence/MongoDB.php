@@ -284,7 +284,7 @@ class MongoDB extends Adapter implements Loader {
         try {
             $client = $this->getClient();
             $query = array("machine" => $machine);
-            if($state) {
+            if($state !== null) {
                 $query["state"] = $state;
             }
             $projection = array("entity_id" => 1);

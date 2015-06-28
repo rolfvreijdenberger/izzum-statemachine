@@ -121,7 +121,7 @@ abstract class AbstractFactory {
      * and persistence adapter for a concrete statemachine type.
      *
      *
-     * @param Identifier $id            
+     * @param Identifier $identifier            
      * @return Context
      * @throws Exception
      * @link https://en.wikipedia.org/wiki/Abstract_factory_pattern

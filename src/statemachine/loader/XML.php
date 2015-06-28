@@ -81,6 +81,7 @@ class XML implements Loader {
         }
         $name = $stateMachine->getContext()->getMachine();
         $found = false;
+        $data = null;
         foreach ($xml->machine as $data) {
             if ((string) @$data->name === $name) {
                 $found = true;

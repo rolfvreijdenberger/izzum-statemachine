@@ -16,19 +16,19 @@ namespace izzum\rules;
 class OrRule extends Rule {
     /**
      *
-     * @var izzum\rules\Rule
+     * @var Rule
      */
     private $original;
     /**
      *
-     * @var izzum\rules\Rule
+     * @var Rule
      */
     private $other;
 
     /**
      *
-     * @param \izzum\rules\Rule $original            
-     * @param \izzum\rules\Rule $other            
+     * @param Rule $original            
+     * @param Rule $other            
      */
     public function __construct(Rule $original, Rule $other)
     {

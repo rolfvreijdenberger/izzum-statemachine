@@ -487,7 +487,6 @@ class StateMachine {
      * the exit state action method
      *
      * @param Transition $transition            
-     * @param string $event            
      */
     private function doExitState(Transition $transition)
     {

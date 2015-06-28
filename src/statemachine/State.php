@@ -141,16 +141,16 @@ class State {
     protected $command_exit_name;
     
     /**
-     *  the entry closure method
-     * @var \Closure
+     *  the entry callable method
+     * @var callable
      */
-    protected $closure_entry;
+    protected $callable_entry;
     
     /**
-     *  the exit closure method
-     * @var \Closure
+     *  the exit callable method
+     * @var callable
      */
-    protected $closure_exit;
+    protected $callable_exit;
     
     /**
      * a description for the state
@@ -268,8 +268,6 @@ class State {
      *      "regex:<regular-expression-here>"
      *      "not-regex:<regular-expression-here>"
      *
-     *
-     * @param State $state
      * @return boolean
      * @link https://php.net/manual/en/function.preg-match.php
      * @link http://regexr.com/ for trying out regular expressions
@@ -277,14 +275,13 @@ class State {
     public function isRegex()
     {
         //check the type (and check the state name for regex matches)
-        return $this->type === self::TYPE_REGEX || $this->isNormalRegex($this->getName()) || $this->isNegatedRegex($this->getName());
+        return $this->type === self::TYPE_REGEX || $this->isNormalRegex() || $this->isNegatedRegex();
     }
 
     /**
      * is this state a normal regex type of state?
      * "regex:<regular-expression-here>"
      *
-     * @param State $state
      * @return boolean
      */
     public function isNormalRegex()
@@ -296,7 +293,6 @@ class State {
      * is this state a negated regex type of state?
      * "not-regex:<regular-expression-here>"
      *
-     * @param State $state
      * @return boolean
      */
     public function isNegatedRegex()
