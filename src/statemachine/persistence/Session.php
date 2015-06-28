@@ -54,6 +54,9 @@ class Session extends Adapter {
     }
     
 
+    /**
+     * {@inheritDoc}
+     */
     public function processGetState(Identifier $identifier)
     {
         $key = $identifier->getId();
@@ -66,6 +69,9 @@ class Session extends Adapter {
     }
 
     
+    /**
+     * {@inheritDoc}
+     */
     protected function insertState(Identifier $identifier, $state, $message = null)
     {
         // set object on the session
@@ -74,6 +80,9 @@ class Session extends Adapter {
         $_SESSION [$this->namespace] [$key] = $data;
     }
     
+    /**
+     * {@inheritDoc}
+     */
     protected function updateState(Identifier $identifier, $state, $message = null)
     {
         // set object on the session
@@ -82,6 +91,9 @@ class Session extends Adapter {
         $_SESSION [$this->namespace] [$key] = $data;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function isPersisted(Identifier $identifier)
     {
         $key = $identifier->getId();
@@ -91,6 +103,9 @@ class Session extends Adapter {
         return true;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     public function getEntityIds($machine, $state = null)
     {
         $ids = array();

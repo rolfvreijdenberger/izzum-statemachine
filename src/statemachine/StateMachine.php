@@ -907,7 +907,7 @@ class StateMachine {
      * @param int $code
      *            if the exception is not of type Exception, wrap it and use
      *            this code.
-     * @param Transtion $transition
+     * @param Transition $transition
      *            optional. if set, we handle it as a transition exception too
      *            so it can be logged or handled
      * @throws Exception an izzum exception

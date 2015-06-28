@@ -426,7 +426,7 @@ class State {
 
     /**
      * calls a $callable if it exists, with the arguments $context->getEntity()
-     * @param $callable $callable
+     * @param callable $callable
      * @param Context $context
      */
     protected function callCallable($callable, Context $context)

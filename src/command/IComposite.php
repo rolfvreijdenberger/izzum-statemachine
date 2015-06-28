@@ -25,7 +25,7 @@ interface IComposite extends ICommand {
      * 
      * @param
      *            command the ICommand to remove
-     * @return Boolean, whether or not the removal was succesful
+     * @return bool whether or not the removal was succesful
      */
     public function remove(ICommand $command);
 

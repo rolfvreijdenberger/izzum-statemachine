@@ -17,7 +17,7 @@ class Composite extends Command implements IComposite {
     /**
      * an array of commands
      * 
-     * @var \izzum\ICommand[]
+     * @var ICommand[]
      */
     private $commands;
 

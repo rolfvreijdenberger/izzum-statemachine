@@ -94,6 +94,11 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
         $ids = $adapter->getEntityIds('non-used-machine');
         $this->assertEquals(1, count($ids));
         
+        $this->assertNotNull($adapter->toString());
+        $this->assertNotNull($adapter . '');
+        $this->assertRegexp('|mongodb://localhost:27017|', $adapter->toString());
+        $this->assertRegexp('|mongodb://localhost:27017|', $adapter . '');
+        
     }
     
     /**

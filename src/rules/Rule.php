@@ -221,7 +221,7 @@ abstract class Rule implements IRule {
      * 
      * @param string $result            
      */
-    protected final function addResult($result)
+    final protected function addResult($result)
     {
         $this->result [] = new RuleResult($this, $result);
     }
@@ -281,7 +281,7 @@ abstract class Rule implements IRule {
     /**
      * should we cache the result if the rule is applied more than once?
      * 
-     * @param boolean $cache            
+     * @param boolean $cached            
      */
     final public function setCacheEnabled($cached = true)
     {
@@ -295,7 +295,7 @@ abstract class Rule implements IRule {
      * 
      * @return boolean
      */
-    protected final function getCache()
+    final protected function getCache()
     {
         return $this->cache;
     }
