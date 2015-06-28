@@ -99,7 +99,6 @@ class Identifier {
      */
     public function getId($readable = false)
     {
-        $output;
         if ($readable) {
             $output = "machine: '" . $this->getMachine() . "', id: '" . $this->getEntityId() . "'";
         } else {
