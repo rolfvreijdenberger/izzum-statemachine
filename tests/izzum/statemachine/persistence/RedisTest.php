@@ -62,7 +62,8 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
         $redis->setDatabase(15);
         //clear the redis database for testing
         $redis->flushdb();
-        $machine = new StateMachine(new Context(new Identifier(1, 'test-machine'), null, $redis));
+        $identifier = new Identifier(1, 'test-machine');
+        $machine = new StateMachine(new Context($identifier, null, $redis));
         //create the loader
         //get the configuration from the json file
         $configuration = file_get_contents(__DIR__ .'/../loader/fixture-example.json');
@@ -70,12 +71,28 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
         $redis->set(sprintf(Redis::KEY_CONFIGURATION_SPECIFIC, $redis->getConfigurationKey(), 'test-machine'), $configuration);
         //load the machine
         $count = $redis->load($machine);
+        $this->assertEquals(0, count($ids));
         $this->assertEquals(4, $count, 'expect 4 transitions to be loaded');
         $this->assertCount(4, $machine->getTransitions(), 'there is a regex transition that adds 2 transitions (a-c and b-c)');
         $this->assertCount(4, $machine->getStates());
         $this->assertNotNull($redis->toString());
         $this->assertNotNull($redis . '');
+        $this->assertFalse($redis->isPersisted($identifier));
+        $this->assertTrue($machine->add('add to the backend'));
+        $this->assertFalse($machine->add('add to the backend'), 'already added');
+        $this->assertEquals('a', $machine->getCurrentState());
+        $this->assertTrue($redis->isPersisted($identifier));
+        $this->assertTrue($machine->run('run from a to b'));
+        $this->assertEquals('b', $machine->getCurrentState());
+        $this->assertTrue($redis->isPersisted($identifier));
+        $this->assertTrue($machine->run('some message here to store'));
+        $this->assertEquals('done', $machine->getCurrentState());
+        $ids = $redis->getEntityIds('test-machine');
+        $this->assertEquals(1, count($ids));
     
+        //destroy
+        $redis = null;
+        
     }
     
     /**

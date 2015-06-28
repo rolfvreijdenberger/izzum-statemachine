@@ -126,6 +126,23 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
+    public function shouldWrapException()
+    {
+        $e = new \Exception('test', 0);
+        try {
+            Utils::wrapToStateMachineException($e, 1, true);
+            $this->fail('should not come here');
+        } catch (\Exception $e) {
+            $this->assertEquals(1, $e->getCode());
+            $this->assertEquals('test', $e->getMessage());
+            $this->assertTrue(is_a($e, '\izzum\statemachine\Exception'));
+        }
+        
+    }
+    
+    /**
+     * @test
+     */
     public function shouldReturnCorrectTransitionName(){
         $from = 'state-from';
         $to = 'state-to';

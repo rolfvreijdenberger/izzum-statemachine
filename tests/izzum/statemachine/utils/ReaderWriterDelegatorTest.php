@@ -59,6 +59,7 @@ class ReaderWriterDelegatorTest extends \PHPUnit_Framework_TestCase {
     {
         $loader = XML::createFromFile(__DIR__ . '/../../../../assets/xml/example.xml');
         $writer = new Memory();
+        Memory::clear();
         $delegator = new ReaderWriterDelegator($loader, $writer);
         
         $this->assertSame($loader, $delegator->getReader());
@@ -67,6 +68,9 @@ class ReaderWriterDelegatorTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('XML', $delegator->toString());
         $this->assertContains('Memory', $delegator . '');
         $this->assertContains('XML', $delegator . '');
+        $this->assertCount(0, $delegator->getEntityIds('test'));
+        $this->assertFalse($delegator->isPersisted(new Identifier('123', 'bogus')));
+        $delegator->setFailedTransition(new Identifier('foo', 'bar'), new Transition(new State('foo'), new State('bar')), new \Exception('bogus'));
        
     }
 }
