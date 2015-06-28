@@ -26,7 +26,7 @@ abstract class Command implements ICommand {
      * @see \izzum\command\ICommand::execute()
      * @throws Exception https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    public final function execute()
+    final public function execute()
     {
         try {
             $this->_execute();

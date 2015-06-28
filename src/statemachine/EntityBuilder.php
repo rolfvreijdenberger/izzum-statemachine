@@ -97,7 +97,7 @@ class EntityBuilder {
      * @see Context::getEntity()
      * @throws Exception
      */
-    public final function getEntity(Identifier $identifier, $create_fresh_entity = false)
+    final public function getEntity(Identifier $identifier, $create_fresh_entity = false)
     {
         try {
             // lazy loading with caching.

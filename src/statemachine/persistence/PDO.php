@@ -163,7 +163,7 @@ class PDO extends Adapter implements Loader {
      * 
      * @param string $prefix            
      */
-    public final function setPrefix($prefix)
+    final public function setPrefix($prefix)
     {
         $this->prefix = $prefix;
     }
@@ -173,7 +173,7 @@ class PDO extends Adapter implements Loader {
      * 
      * @return string
      */
-    public final function getPrefix()
+    final public function getPrefix()
     {
         return $this->prefix;
     }

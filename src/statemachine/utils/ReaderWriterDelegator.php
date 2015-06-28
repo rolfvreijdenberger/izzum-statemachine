@@ -79,7 +79,7 @@ class ReaderWriterDelegator extends Adapter implements Loader {
     }
     public function isPersisted(Identifier $identifier)
     {
-        return $this->writer->isPersisted();
+        return $this->writer->isPersisted($identifier);
     }
 
     public function processSetState(Identifier $identifier, $state, $message = null)
