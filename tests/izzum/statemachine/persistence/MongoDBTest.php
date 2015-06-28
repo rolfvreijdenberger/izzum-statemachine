@@ -53,12 +53,17 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(array(), $adapter->getEntityIds('test-machine', 'b'));
         $this->assertEquals(array(), $adapter->getEntityIds('test-machine', 'c'));
         
-        
-        $machine = new StateMachine(new Context(new Identifier('another-mongo', 'test-machine'), null, $adapter));
+        //another
+        $identifier = new Identifier('another-mongo', 'test-machine');
+        $machine = new StateMachine(new Context($identifier, null, $adapter));
         $adapter->load($machine);
-        $machine->add("adding for " . __FUNCTION__);
+        $this->assertFalse($adapter->isPersisted($identifier));
+        $this->assertTrue($machine->add("adding for " . __FUNCTION__));
+        $this->assertFalse($machine->add("adding for " . __FUNCTION__), 'already added');
+        $this->assertTrue($adapter->isPersisted($identifier));
         $machine->runToCompletion("testing 213");
         
+        //some other stuff
         $machine = new StateMachine(new Context(new Identifier('foobar', 'non-used-machine'), null, $adapter));
         $adapter->load($machine);
         $machine->add("adding for " . __FUNCTION__);
@@ -75,13 +80,27 @@ class MongoDBTest extends \PHPUnit_Framework_TestCase {
         
         
         //recreate the existing statemachine
-        $machine = new StateMachine(new Context(new Identifier('another-mongo', 'test-machine'), null, $adapter));
+        $identifier = new Identifier('another-mongo', 'test-machine');
+        $machine = new StateMachine(new Context($identifier, null, $adapter));
         $adapter->load($machine);
+        $this->assertTrue($adapter->isPersisted($identifier));
         $this->assertFalse($machine->add(), 'already added');
         $this->assertEquals('done', $machine->getCurrentState()->getName(), 'state persisted');
         $this->assertEquals(0, $machine->runToCompletion(), 'alread in a final state, no transitions');
         
+        $ids = $adapter->getEntityIds('test-machine');
+        $this->assertEquals(2, count($ids));
         
-        $this->markTestIncomplete("needs more tests to check the database and some scenarios");
+        $ids = $adapter->getEntityIds('non-used-machine');
+        $this->assertEquals(1, count($ids));
+        
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldDoMoreTests()
+    {
+        $this->markTestIncomplete('need more tests for actual database contents');
     }
 }

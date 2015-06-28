@@ -166,8 +166,13 @@ class RedisTest extends \PHPUnit_Framework_TestCase {
         
         //$redis->hmset("key" , array("name1" => "value1", "name2" => "value2"));
         
-        $this->markTestIncomplete('should check the actual redis database for contents. instead, I did this manually. see the png file in assets/redis');
-        
-        
+    }
+    
+    /**
+     * @test
+     */
+    public function shouldDoMoreTests()
+    {
+        $this->markTestIncomplete('need more tests for actual database contents');
     }
 }
