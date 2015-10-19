@@ -349,7 +349,7 @@ class PDO extends Adapter implements Loader {
             return time(); // "CURRENT_TIMESTAMP";//"DateTime('now')";
         }
         // might have to be overriden for certain drivers.
-        return 'now'; // now, CURRENT_TIMESTAMP
+        return date("Y-m-d H:i:s", time()); // since prepared statements do not support now as binding parameter we need the time from php
     }
 
     /**
