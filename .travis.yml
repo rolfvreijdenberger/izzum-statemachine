@@ -2,10 +2,32 @@ language: php
 php:
   - 5.5
   - 5.4
+  - 5.3
   - 5.6
 install:
-  - composer install
-script: phpunit --configuration tests/phpunit.xml --exclude-group not-on-production --coverage-clover=coverage.clover
+  - composer --no-interaction install
+
+# http://docs.travis-ci.com/user/languages/php/
+# http://docs.travis-ci.com/user/database-setup/
+# https://stackoverflow.com/questions/15995009/problems-with-php-yaml-within-travis-ci
+before_script:
+  - composer selfupdate
+  - composer update --prefer-source --no-interaction 
+  - sudo apt-get update -qq
+  - printf "\n" | pecl install yaml 1.2.0 
+  - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+  - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
+#  - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini # yaml is loaded by pecl install
+  - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.json
+  - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.xml
+  - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.yaml
+  
+services:
+  - mongodb
+  - redis-server
+  
+script: phpunit --configuration tests/phpunit-travis.xml --coverage-clover=coverage.clover
+
 after_script:
   - wget https://scrutinizer-ci.com/ocular.phar
   - php ocular.phar code-coverage:upload --format=php-clover coverage.clover

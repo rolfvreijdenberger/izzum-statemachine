@@ -1,0 +1,18 @@
+- schema.json contains a valid json schema definition which the izzum\statemachine\loader\JSON needs to build the correct transitions.
+- it can be used to load json from a file and to load a json string from a redis server (see JSON and Redis classes)
+- use http://jsonschemalint.com/draft4/# to validate your json against this schema.
+- http://json-schema.org/ for the schema specification format
+- example.json contains a valid example which validates against the schema and is used in the unittests for the JSON loader and the Redis adapter.
+
+When using a json file to read configuration data from, you still would want
+to use a persistence adapter to store/write the state and transition history data.
+
+That can be achieved with one of adapters (like PDO, Session, Memory, Redis) in 
+combination with the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
+and an adapter (writer) to delegate to.
+Alternatively, you could subclass one of the persistence adapters and override the 'load' method to
+delegate the loading to the JSON loader (which the Redis adapter does by default)
+
+The redis adapter actually uses the same JSON schema (as specified here) to retrieve it's configuration data.
+
+see also tests/loader/JSONTest.php for examples of how to use it.

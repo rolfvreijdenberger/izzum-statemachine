@@ -1,7 +1,7 @@
 {
-    "name": "rolfvreijdenberger/izzum",
-    "description": "php library - statemachine, rules and commands",
-    "keywords":    ["statemachine", "rules", "command", "transition", "state"],
+    "name": "rolfvreijdenberger/izzum-statemachine",
+    "description": "A superior statemachine library php >= 5.3. Integrates with your domain models perfectly.",
+    "keywords":    ["statemachine", "state machine", "php", "rules", "command", "transition", "state", "event", "callback", "machine", "domain", "model", "finite", "izzum", "automaton", "pattern", "fsm", "regex", "graph", "xml" , "json", "sql"],
     "type":        "library",
     "license": "MIT",
     "authors": [
@@ -9,10 +9,6 @@
             "name": "Rolf Vreijdenberger",
             "email": "rolf@vreijdenberger.nl",
             "homepage": "http://www.vreijdenberger.nl"
-        },
-        {
-            "name": "Richard Ruiter",
-            "email": "richard.ruiter@gmail.com"
         }
         
     ],
@@ -21,7 +17,7 @@
     },
     "autoload": {
         "psr-4": {
-            "izzum\\": "izzum/"
+            "izzum\\": "src/"
         }
     }
 }

@@ -1,0 +1,203 @@
+@startuml
+
+package izzum.statemachine {
+    Class StateMachine {
+      + construct(Context)
+      + transition(transition, message)
+      + handle(event, message):boolean
+      + run(message):boolean
+      + runToCompletion(message):int
+      + canTransition(transition):boolean
+      + canHandle(event):boolean
+      + getTransitions():Transition[]
+      + getStates(): State[]
+      + getCurrentState():State
+      + getInitialState(): State
+      + addTransition(Transition)
+      + addState(State)
+      + setState(State, message)
+      + add(message):boolean #add to persistence layer
+      + changeContext(Context)
+      + getContext():Context
+      + __call(name, arguments)
+      # _checkCanTransition(Transition, event)
+      # _onExitState(Transition, event)
+      # _onTransition(Transition, event)
+      # _onEnterState(Transtion, event)
+      # handleTransitionException(Transition, Exception)   
+    }
+    
+    Class State {
+        + getName() : string
+        + getType():string
+        + getTransitions():Transition[] #outgoing transitions
+        + hasTransition(transitions):boolean
+        + exitAction(Context) #executes command and/or callable
+        + entryAction(Context) #executes command and/or callable
+        + isInitial():boolean
+        + isNormal():boolean
+        + isFinal():boolean
+        + isRegex():boolean #special state with regex name
+        + getTransitionTriggeredByEvent(event:string)
+    	+ construct(name,type,entry, exit)
+    }
+    Class Transition {
+    	+ getName() : string
+        + can(Context, event):boolean #checks guards (Rule and callable)
+        + process(Context, event) #executes command and callable
+        + getRule(Context, event:string):Rule
+        + getCommand(Context, event:string): Command
+        + isTriggeredBy(event)
+        + getStateFrom():State
+        + getStateTo():State
+    	+ construct(from, to, event, rule, command, guard, logic)
+    }
+    Class Context {
+        + construct(Identifier, EntityBuilder, Adapter)
+        + getEntity():*
+        + getEntityId():string
+        + getMachine():string
+        + getBuilder():EntityBuilder
+        + getPersistenceAdapter():Adapter
+        + getState():string
+        + setState(State, message)
+        + add(State, message)
+        + setStateMachine(StateMachine)
+        + getStateMachine():StateMachine
+        + setFailedTransition(Transition, Exception)
+        + getId():string
+    }
+    
+    Class Identifier {
+    	+ construct(entity_id, machine)
+    	+ getEntityId():string
+    	+ getMachine():string
+    	+ getId():string
+    }
+
+    Class EntityBuilder {
+        + getEntity(Identifier):*
+        # build():* # override to build a domain object for your application
+    }
+    package persistence {
+      abstract Class Adapter {
+        + {abstract} getEntityIds(machine:string, state:string):string[]
+        + {abstract} isPersisted(Identifier) : boolean
+        + setState(Identifier, State, message):boolean
+        + processSetState(Identifier):boolean
+        # insertState(Identifier, State, message):string
+        # updateState(Identifier, State, message):string
+        # addHistory(Identifier, State, message):boolean
+        + getState(Identifier):string
+        + {abstract} processGetState(Identifier)
+        + add(Identifier, State, message):boolean
+        + setFailedTransition(Identifier, Transition, Exception)
+      }
+
+      Class PDO {
+      }
+      Class Redis {
+      }
+      Class MongoDB {
+      }
+      Class Memory {
+      }
+      Class Session {
+      }
+
+    }
+
+        abstract Class AbstractFactory {
+            + getStateMachine(id):StateMachine # gets a complete statemachine ready to go
+            # {abstract} createLoader(): Loader
+            # {abstract} createAdapter(): Adapter
+            # {abstract} createBuilder(): EntityBuilder
+            # {abstract} getMachineName(): string
+            # createMachine(Context): StateMachine
+            # createContext(Identifier): Context
+            +add(Context)
+        }
+
+    package loader {
+        Interface Loader {
+          +load(StateMachine):int
+        }
+        Class LoaderArray {
+          + construct(Transitions[])
+        }
+        Class JSON {
+          + construct(json: string)
+          + {static} createFromFile(file:string): JSON
+        }
+        Class XML {
+          + construct(xml: string)
+          + {static} createFromFile(file:string): XML
+        }
+        Class YAML {
+          + construct(yaml: string)
+          + {static} createFromFile(file:string): YAML
+        }
+    }
+
+    Class Exception
+
+    package command {
+      Class Command {
+        + construct(DO)
+        +execute()
+        #{abstract}_execute()
+      }
+    }
+
+    package rules {
+      Class Rule {
+        + construct(DO)
+        +applies():boolean
+        #{abstract}_applies():boolean
+      }
+    }
+    
+    package utils {
+      Class ReaderWriterDelegator extends Adapter implements Loader {
+        + construct(Loader, Adapter)
+      }
+      Class Utils {
+      }
+      Class PlantUml {
+      }
+    }
+
+}
+    StateMachine "1" o-- "n" State : uses
+    StateMachine "1" o-- "n" Transition : does
+    StateMachine "1" o-- "1" Context : needs and uses
+    StateMachine "1" --> "n" Exception: throws
+    Context "n" o-- "1" EntityBuilder : gets domain object aka entity (alias: DO)
+    Context "n" o-- "1" Adapter : read/write state info
+    Context "1" o-- "1" Identifier : use to ID the DO/entity
+    State "n" -- "n" Transition : need each other
+    Adapter <|-- Memory : stores state in memory
+    Adapter <|-- PDO : stores state in relational db
+    Adapter <|-- Redis : stores state in nosql key/value store
+    Adapter <|-- MongoDB : stores state in nosql document store
+    Adapter <|-- Session : stores state in $_SESSION
+    Loader <|.. PDO : load from sql
+    Loader <|.. Redis : load from Redis
+    Loader <|.. MongoDB : load from Mongo
+    Loader <|.. LoaderArray 
+    Loader <|.. JSON 
+    Loader <|.. XML 
+    Loader <|.. YAML 
+    XML  -->  LoaderArray : delegates to
+    JSON  -->  LoaderArray : delegates to
+    YAML  -->  LoaderArray : delegates to
+    Transition *-- Command : process transitions, entry logic, exit logic
+    Transition *-- Rule : check if transition allowed
+    Transition "n" --> "1" Context : acts on
+    AbstractFactory "1" --> "n" StateMachine: creates SM, Adapter, Loader, Context, Identifier, EntityBuilder
+    Loader "1" --> "n" StateMachine : loads state and transition configuration from data source
+
+
+
+@enduml
+

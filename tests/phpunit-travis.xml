@@ -1,0 +1,20 @@
+<phpunit bootstrap="./bootstrap.php" colors="true" verbose="true" convertErrorsToExceptions="false">
+    <testsuite name="izzum testsuite - all tests for travis-ci.org">
+        <directory>./</directory>>
+    </testsuite>
+    <groups>
+        <exclude>
+           <!--
+            <group>redis</group>
+            <group>mongodb</group>
+            <group>yaml</group>
+            <group>filepermissions</group>
+            -->
+            <group>sqlite</group>
+            <group>uses-sessions</group>
+            <group>mysql</group>
+            <group>postgresql</group>
+        </exclude>
+    </groups>
+</phpunit>
+

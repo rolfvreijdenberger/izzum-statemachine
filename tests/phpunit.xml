@@ -1,6 +1,12 @@
-<phpunit bootstrap="./bootstrap.php" convertErrorsToExceptions="false">
+<phpunit bootstrap="./bootstrap.php" colors="true" verbose="true" convertErrorsToExceptions="false">
     <testsuite name="izzum testsuite">
         <directory>./</directory>>
     </testsuite>
+    <groups>
+        <exclude>
+        	<!-- the 'not-on-production' group (test annotation) needs databases or files with specific permissions -->
+            <group>not-on-production</group>
+        </exclude>
+    </groups>
 </phpunit>
 

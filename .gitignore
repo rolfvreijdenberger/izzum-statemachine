@@ -1,3 +1,7 @@
-index.php
-
+/index.php
+tests/report
+tests/sqlite.db
 /vendor/
+.buildpath
+.project
+.settings/
