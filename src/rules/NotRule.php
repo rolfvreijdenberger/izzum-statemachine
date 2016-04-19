@@ -13,13 +13,13 @@ class NotRule extends Rule {
     
     /**
      *
-     * @var Rule
+     * @var izzum\rules\Rule
      */
     private $original;
 
     /**
      *
-     * @param Rule $original            
+     * @param \izzum\rules\Rule $original            
      */
     public function __construct(Rule $original)
     {

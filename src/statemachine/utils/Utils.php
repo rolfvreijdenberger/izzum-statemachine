@@ -125,7 +125,7 @@ class Utils {
     public static function getAllRegexMatchingStates(State $regex, $targets)
     {
         $all = array();
-        if ($regex->isRegex()) {
+        if ($regex->isRegex($regex)) {
             // lookup all from states that conform to this rgex
             foreach ($targets as $target) {
                 if (!$target->isRegex() && self::matchesRegex($regex, $target)) {

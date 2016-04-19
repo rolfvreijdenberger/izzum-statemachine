@@ -188,6 +188,7 @@ class MongoDB extends Adapter implements Loader {
             //https://php.net/manual/en/mongocollection.insert.php
             $this->getClient()->izzum->states->insert($data);
         } catch (\Exception $e) {
+            $redis->discard();
             throw new Exception(sprintf('query for inserting state failed: [%s]',
                     $e->getMessage()),
                     Exception::PERSISTENCE_LAYER_EXCEPTION);
@@ -284,7 +285,7 @@ class MongoDB extends Adapter implements Loader {
         try {
             $client = $this->getClient();
             $query = array("machine" => $machine);
-            if($state !== null) {
+            if($state) {
                 $query["state"] = $state;
             }
             $projection = array("entity_id" => 1);

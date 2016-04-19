@@ -141,16 +141,16 @@ class State {
     protected $command_exit_name;
     
     /**
-     *  the entry callable method
-     * @var callable
+     *  the entry closure method
+     * @var \Closure
      */
-    protected $callable_entry;
+    protected $closure_entry;
     
     /**
-     *  the exit callable method
-     * @var callable
+     *  the exit closure method
+     * @var \Closure
      */
-    protected $callable_exit;
+    protected $closure_exit;
     
     /**
      * a description for the state
@@ -268,6 +268,8 @@ class State {
      *      "regex:<regular-expression-here>"
      *      "not-regex:<regular-expression-here>"
      *
+     *
+     * @param State $state
      * @return boolean
      * @link https://php.net/manual/en/function.preg-match.php
      * @link http://regexr.com/ for trying out regular expressions
@@ -275,13 +277,14 @@ class State {
     public function isRegex()
     {
         //check the type (and check the state name for regex matches)
-        return $this->type === self::TYPE_REGEX || $this->isNormalRegex() || $this->isNegatedRegex();
+        return $this->type === self::TYPE_REGEX || $this->isNormalRegex($this->getName()) || $this->isNegatedRegex($this->getName());
     }
 
     /**
      * is this state a normal regex type of state?
      * "regex:<regular-expression-here>"
      *
+     * @param State $state
      * @return boolean
      */
     public function isNormalRegex()
@@ -293,6 +296,7 @@ class State {
      * is this state a negated regex type of state?
      * "not-regex:<regular-expression-here>"
      *
+     * @param State $state
      * @return boolean
      */
     public function isNegatedRegex()
@@ -426,7 +430,7 @@ class State {
 
     /**
      * calls a $callable if it exists, with the arguments $context->getEntity()
-     * @param callable $callable
+     * @param $callable $callable
      * @param Context $context
      */
     protected function callCallable($callable, Context $context)

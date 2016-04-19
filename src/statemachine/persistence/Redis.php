@@ -206,7 +206,7 @@ class Redis extends Adapter implements Loader {
      * set the key prefix to be used for all redis keys
      * @param string $prefix
      */
-    final public function setPrefix($prefix) {
+    public final function setPrefix($prefix) {
         if($this->redis) {
             $this->redis->setOption(\Redis::OPT_PREFIX, $prefix);
         }
@@ -217,7 +217,7 @@ class Redis extends Adapter implements Loader {
      * set the configuration key to be used for storing a json string of machine configurations.
      * @param string $key
      */
-    final public function setConfigurationKey($key) {
+    public final function setConfigurationKey($key) {
         $this->configuration_key = $key;
     }
     
@@ -225,7 +225,7 @@ class Redis extends Adapter implements Loader {
      * get the configuration key used for storing a json string of machine configurations.
      * @return string $key
      */
-    final public function getConfigurationKey() {
+    public final function getConfigurationKey() {
         return $this->configuration_key;
     }
 
@@ -233,7 +233,7 @@ class Redis extends Adapter implements Loader {
      * get the prefix for all keys used
      * @return string
      */
-    final public function getPrefix()
+    public final function getPrefix()
     {
         return $this->prefix;
     }
@@ -248,14 +248,14 @@ class Redis extends Adapter implements Loader {
         //lazy loaded connection
         try {
             if($this->redis === null) {
-                $this->redis = new \Redis();
+                $this->redis = new Redis();
                 if($this->socket) {
                     $connected = $this->redis->connect($this->socket);
                 } else { /* default connection with different parameters */
-                    if($this->retry !== null) {
+                    if($this->retry) {
                         $connected = $this->redis->connect($this->host, $this->port, $this->timeout, null, $this->retry);
                     } else {
-                        if($this->reserved !== null) {
+                        if($this->reserved) {
                             $connected = $this->redis->connect($this->host, $this->port, $this->timeout, $this->reserved);
                         } else {
                             $connected = $this->redis->connect($this->host, $this->port, $this->timeout);
@@ -494,7 +494,7 @@ class Redis extends Adapter implements Loader {
         $output = array();
         try {
             $redis = $this->getRedis();
-            if($state !== null) {
+            if($state) {
                 //get from set of entities per state
                 $key = sprintf(self::KEY_CURRENT_STATES, $machine, $state);
                 $output = $redis->smembers($key);
@@ -549,7 +549,7 @@ class Redis extends Adapter implements Loader {
                 $this->redis = null;
             }
         } catch (\Exception $e) {
-           //nothing we can do about it...
+
         }
     }
 

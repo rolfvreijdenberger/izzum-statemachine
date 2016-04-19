@@ -19,7 +19,7 @@ class ExceptionSupressor extends Rule {
     
     /**
      *
-     * @var Rule
+     * @var izzum\rules\Rule
      */
     private $decoree;
     
@@ -31,7 +31,7 @@ class ExceptionSupressor extends Rule {
 
     /**
      *
-     * @param Rule $decoree            
+     * @param \izzum\rules\Rule $decoree            
      * @param boolean $supressed_result
      *            what to return in case the decorated rule
      *            throws an error
