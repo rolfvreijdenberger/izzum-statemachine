@@ -107,7 +107,7 @@ abstract class Rule implements IRule {
      * @return boolean
      * @throws Exception https://en.wikipedia.org/wiki/Template_method_pattern
      */
-    final public function applies()
+    public final function applies()
     {
         try {
             if ($this->shouldReturnCache()) {
@@ -149,7 +149,7 @@ abstract class Rule implements IRule {
      * @param Rule $other            
      * @return Rule
      */
-    final public function orRule(Rule $other)
+    public final function orRule(Rule $other)
     {
         return new OrRule($this, $other);
     }
@@ -161,7 +161,7 @@ abstract class Rule implements IRule {
      * @param Rule $other            
      * @return Rule
      */
-    final public function xorRule(Rule $other)
+    public final function xorRule(Rule $other)
     {
         return new XorRule($this, $other);
     }
@@ -173,7 +173,7 @@ abstract class Rule implements IRule {
      * @param Rule $other            
      * @return Rule
      */
-    final public function andRule(Rule $other)
+    public final function andRule(Rule $other)
     {
         return new AndRule($this, $other);
     }
@@ -183,7 +183,7 @@ abstract class Rule implements IRule {
      *
      * @return Rule
      */
-    final public function not()
+    public final function not()
     {
         return new NotRule($this);
     }
@@ -221,7 +221,7 @@ abstract class Rule implements IRule {
      * 
      * @param string $result            
      */
-    final protected function addResult($result)
+    protected final function addResult($result)
     {
         $this->result [] = new RuleResult($this, $result);
     }
@@ -236,7 +236,7 @@ abstract class Rule implements IRule {
      * @see Rule::getResults()
      * @param string $expected            
      */
-    final public function containsResult($expected)
+    public final function containsResult($expected)
     {
         $output = false;
         $results = $this->getResults();
@@ -273,7 +273,7 @@ abstract class Rule implements IRule {
      *
      * @return boolean
      */
-    final public function hasResult()
+    public final function hasResult()
     {
         return count($this->getResults()) !== 0;
     }
@@ -281,9 +281,9 @@ abstract class Rule implements IRule {
     /**
      * should we cache the result if the rule is applied more than once?
      * 
-     * @param boolean $cached            
+     * @param boolean $cache            
      */
-    final public function setCacheEnabled($cached = true)
+    public final function setCacheEnabled($cached = true)
     {
         $cached = (bool) $cached;
         $this->use_caching = $cached;
@@ -295,7 +295,7 @@ abstract class Rule implements IRule {
      * 
      * @return boolean
      */
-    final protected function getCache()
+    protected final function getCache()
     {
         return $this->cache;
     }
@@ -319,7 +319,7 @@ abstract class Rule implements IRule {
      *
      * @return boolean
      */
-    final public function getCacheEnabled()
+    public final function getCacheEnabled()
     {
         return $this->use_caching;
     }

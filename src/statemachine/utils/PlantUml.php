@@ -181,7 +181,7 @@ SKINS;
         
         // note for initial alias with explanation
         $uml .= "note right of $initial_alias $NEWLINE";
-        $uml .= "state diagram for machine '" . $machine->getContext()->getMachine() . "'$NEWLINE";
+        $uml .= "state diagram for machine '" . $machine->getMachine() . "'$NEWLINE";
         $uml .= "created by izzum plantuml generator $NEWLINE";
         $uml .= "@link http://plantuml.sourceforge.net/state.html\"" . $NEWLINE;
         $uml .= "end note" . $NEWLINE;

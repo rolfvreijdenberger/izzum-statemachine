@@ -48,7 +48,7 @@ class Identifier {
      * @param mixed $entity_id
      *            the id of the domain specific entity (it will internally be
      *            converted to a string)
-     * @param string $machine_name
+     * @param string $machine
      *            the name of the statemachine (eg: 'order')
      */
     public function __construct($entity_id, $machine_name)
@@ -99,10 +99,11 @@ class Identifier {
      */
     public function getId($readable = false)
     {
+        $output = '';
         if ($readable) {
             $output = "machine: '" . $this->getMachine() . "', id: '" . $this->getEntityId() . "'";
         } else {
-            $output = $this->getMachine() . "_" . $this->getEntityId();
+            $output = is_array($this->getMachine()) ? $this->getMachine()['machine'] : $this->getMachine() . "_" . $this->getEntityId();
         }
         return $output;
     }

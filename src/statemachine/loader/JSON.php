@@ -89,7 +89,6 @@ class JSON implements Loader {
         }
         $name = $stateMachine->getContext()->getMachine();
         $found = false;
-        $data = null;
         if(is_array(@$decoded->machines)) {
             foreach ($decoded->machines as $data) {
                 if ($data->name === $name) {

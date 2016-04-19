@@ -79,15 +79,15 @@ class Context {
      * @param EntityBuilder $entity_builder
      *            optional: A specific builder class to create a reference to
      *            the entity we wish to manipulate/have access to.
-     * @param Adapter $persistence_adapter
+     * @param Adapter $persistance_adapter
      *            optional: A specific reader/writer class can be used to
      *            generate different 'read/write' behaviour
      */
-    public function __construct(Identifier $identifier, $entity_builder = null, $persistence_adapter = null)
+    public function __construct(Identifier $identifier, $entity_builder = null, $persistance_adapter = null)
     {
         $this->identifier = $identifier;
         $this->entity_builder = $entity_builder;
-        $this->persistence_adapter = $persistence_adapter;
+        $this->persistance_adapter = $persistance_adapter;
     }
 
     /**
@@ -206,15 +206,15 @@ class Context {
     /**
      * gets the Context state reader/writer.
      *
-     * @return Adapter a concrete persistence adapter
+     * @return Adapter a concrete persistance adapter
      */
     public function getPersistenceAdapter()
     {
-        if ($this->persistence_adapter === null || !is_a($this->persistence_adapter, 'izzum\statemachine\persistence\Adapter')) {
+        if ($this->persistance_adapter === null || !is_a($this->persistance_adapter, 'izzum\statemachine\persistence\Adapter')) {
             // the default
-            $this->persistence_adapter = new Memory();
+            $this->persistance_adapter = new Memory();
         }
-        return $this->persistence_adapter;
+        return $this->persistance_adapter;
     }
 
     /**
