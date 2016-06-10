@@ -506,7 +506,7 @@ Create a file called composer.json with these lines:
 ```
 {
     "require": {
-        "rolfvreijdenberger/izzum-statemachine": "~3.2"
+        "rolfvreijdenberger/izzum-statemachine": "~4.0"
     }
 }
 ```
