@@ -58,14 +58,14 @@ class SimpleTestFactory extends AbstractFactory{
             $b = new State('b');
             $c = new State('c');
             $done = new State('done', \izzum\statemachine\State::TYPE_FINAL);
-            $transitions[] = new Transition($new, $a, null,'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($new, $a, null,'izzum\rules\TrueRule', 'izzum\command\NullCommand');
             //can never go, a false rule
-            $transitions[] = new Transition($a, $done, null, 'izzum\rules\False', 'izzum\command\Null');
-            $transitions[] = new Transition($a, $b, null, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($a, $done, null, 'izzum\rules\FalseRule', 'izzum\command\NullCommand');
+            $transitions[] = new Transition($a, $b, null, 'izzum\rules\TrueRule', 'izzum\command\NullCommand');
             //can never go, a false rule
-            $transitions[] = new Transition($b, $c, null, 'izzum\rules\False', 'izzum\command\Null');
-            $transitions[] = new Transition($c, $done, null, 'izzum\rules\True', 'izzum\command\Null');
-            $transitions[] = new Transition($b, $done, null, 'izzum\rules\True', 'izzum\command\Null');
+            $transitions[] = new Transition($b, $c, null, 'izzum\rules\FalseRule', 'izzum\command\NullCommand');
+            $transitions[] = new Transition($c, $done, null, 'izzum\rules\TrueRule', 'izzum\command\NullCommand');
+            $transitions[] = new Transition($b, $done, null, 'izzum\rules\TrueRule', 'izzum\command\NullCommand');
             return new loader\LoaderArray($transitions);
             
         

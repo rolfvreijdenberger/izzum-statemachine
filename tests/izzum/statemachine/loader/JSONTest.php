@@ -16,9 +16,9 @@ use izzum\statemachine\utils\Utils;
  * @group statemachine
  * @group loader
  * @group json
- * 
+ *
  * @author rolf
- *        
+ *
  */
 class JSONTest extends \PHPUnit_Framework_TestCase {
 
@@ -35,7 +35,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         $this->assertCount(4, $machine->getTransitions(),'there is a regex transition that adds 2 transitions (a-c and b-c)');
         $this->assertEquals(4, $count);
     }
-    
+
     /**
      * @test
      */
@@ -49,7 +49,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('JSON', $loader->toString());
         $this->assertContains('JSON', $loader . '' , '__toString()');
     }
-    
+
     /**
      * @test
      */
@@ -65,7 +65,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('does not exist', $e->getMessage());
         }
     }
-    
+
     /**
      * @test
      * @group not-on-production
@@ -84,7 +84,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('Failed to read', $e->getMessage());
         }
     }
-    
+
     /**
      * @test
      */
@@ -100,7 +100,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('decode', $e->getMessage());
         }
     }
-    
+
     /**
      * @test
      */
@@ -116,8 +116,8 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('no machine data', $e->getMessage());
         }
     }
-    
-    
+
+
     /**
      * @test
      */
@@ -142,7 +142,7 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($b->isNormal());
         $this->assertTrue($d->isFinal());
     }
-    
+
     protected function getJSON()
     {
         //heredoc syntax
@@ -165,8 +165,8 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         {
           "name": "b",
           "type": "normal",
-          "entry_command": "izzum\\\\command\\\\Null",
-          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_command": "izzum\\\\command\\\\NullCommand",
+          "exit_command": "izzum\\\\command\\\\NullCommand",
           "entry_callable": "Static::method",
           "exit_callable": "Static::method",
           "description": "state b description"
@@ -174,8 +174,8 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         {
           "name": "done",
           "type": "final",
-          "entry_command": "izzum\\\\command\\\\Null",
-          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_command": "izzum\\\\command\\\\NullCommand",
+          "exit_command": "izzum\\\\command\\\\NullCommand",
           "entry_callable": "Static::method",
           "exit_callable": null,
           "description": "state done description"
@@ -185,8 +185,8 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
         {
           "state_from": "a",
           "state_to": "b",
-          "rule": "izzum\\\\rules\\\\True",
-          "command": "izzum\\\\command\\\\Null",
+          "rule": "izzum\\\\rules\\\\TrueRule",
+          "command": "izzum\\\\command\\\\NullCommand",
           "guard_callable": "Static::guard",
           "transition_callable": "Static::method",
           "event": "ab",
@@ -208,5 +208,5 @@ class JSONTest extends \PHPUnit_Framework_TestCase {
 }';
         return $json;
     }
-    
+
 }

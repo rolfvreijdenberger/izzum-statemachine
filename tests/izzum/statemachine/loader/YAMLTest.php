@@ -17,15 +17,15 @@ use izzum\statemachine\utils\Utils;
  * @group loader
  * @group yaml
  * @group not-on-production
- * 
- * the YAML test used the yaml module for php. therefore it can only be run on 
+ *
+ * the YAML test used the yaml module for php. therefore it can only be run on
  * a system that has been setup properly with that module
- * 
+ *
  * @author rolf
- *        
+ *
  */
 class YAMLTest extends \PHPUnit_Framework_TestCase {
-    
+
 
     /**
      * @test
@@ -41,7 +41,7 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals(4, $count);
         //echo $machine->toString(true);
     }
-    
+
     /**
      * @test
      */
@@ -54,7 +54,7 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         $this->assertContains('YAML', $loader->toString());
         $this->assertContains('YAML', $loader . '' , '__toString()');
     }
-    
+
     /**
      * @test
      */
@@ -70,7 +70,7 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('does not exist', $e->getMessage());
         }
     }
-    
+
     /**
      * @test
      * @group not-on-production
@@ -89,7 +89,7 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('Failed to read', $e->getMessage());
         }
     }
-    
+
     /**
      * @test
      */
@@ -105,7 +105,7 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('no machine data', $e->getMessage());
         }
     }
-    
+
     /**
      * @test
      */
@@ -121,8 +121,8 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
             $this->assertContains('no machine data', $e->getMessage());
         }
     }
-    
-    
+
+
     /**
      * @test
      */
@@ -147,13 +147,13 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         $this->assertTrue($b->isNormal());
         $this->assertTrue($d->isFinal());
     }
-    
+
     protected function getYAML()
     {
         //the string below is a json string.
         //since yaml 1.2, json is a valid subset o yaml.
         //most yaml parsers should parse json just fine.
-        
+
         //heredoc syntax
         $yaml = '{
   "machines": [
@@ -174,8 +174,8 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         {
           "name": "b",
           "type": "normal",
-          "entry_command": "izzum\\\\command\\\\Null",
-          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_command": "izzum\\\\command\\\\NullCommand",
+          "exit_command": "izzum\\\\command\\\\NullCommand",
           "entry_callable": "Static::method",
           "exit_callable": "Static::method",
           "description": "state b description"
@@ -183,8 +183,8 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         {
           "name": "done",
           "type": "final",
-          "entry_command": "izzum\\\\command\\\\Null",
-          "exit_command": "izzum\\\\command\\\\Null",
+          "entry_command": "izzum\\\\command\\\\NullCommand",
+          "exit_command": "izzum\\\\command\\\\NullCommand",
           "entry_callable": "Static::method",
           "exit_callable": null,
           "description": "state done description"
@@ -194,8 +194,8 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
         {
           "state_from": "a",
           "state_to": "b",
-          "rule": "izzum\\\\rules\\\\True",
-          "command": "izzum\\\\command\\\\Null",
+          "rule": "izzum\\\\rules\\\\TrueRule",
+          "command": "izzum\\\\command\\\\NullCommand",
           "guard_callable": "Static::guard",
           "transition_callable": "Static::method",
           "event": "ab",
@@ -217,5 +217,5 @@ class YAMLTest extends \PHPUnit_Framework_TestCase {
 }';
         return $yaml;
     }
-    
+
 }

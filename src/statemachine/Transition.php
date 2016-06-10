@@ -1,7 +1,7 @@
 <?php
 namespace izzum\statemachine;
-use izzum\command\Null;
-use izzum\rules\True;
+use izzum\command\NullCommand;
+use izzum\rules\TrueRule;
 use izzum\statemachine\Exception;
 use izzum\statemachine\utils\Utils;
 use izzum\statemachine\Context;
@@ -16,8 +16,8 @@ use izzum\rules\IRule;
  * transition between states.
  *
  * It has functionality to accept a Rule (guard logic) and a Command (transition
- * logic) as well as callables for the guard logic and transition logic . 
- * callables are: closures, anonymous functions, user defined functions, 
+ * logic) as well as callables for the guard logic and transition logic .
+ * callables are: closures, anonymous functions, user defined functions,
  * instance methods, static methods etc. see the php manual.
  *
  * The guards are used to check whether a transition can take place (Rule and callable)
@@ -32,37 +32,37 @@ use izzum\rules\IRule;
  * @link https://php.net/manual/en/language.types.callable.php
  * @link https://en.wikipedia.org/wiki/Command_pattern
  * @author Rolf Vreijdenberger
- *        
+ *
  */
 class Transition {
-    const RULE_TRUE = '\izzum\rules\True';
-    const RULE_FALSE = '\izzum\rules\False';
+    const RULE_TRUE = '\izzum\rules\TrueRule';
+    const RULE_FALSE = '\izzum\rules\FalseRule';
     const RULE_EMPTY = '';
-    const COMMAND_NULL = '\izzum\command\Null';
+    const COMMAND_NULL = '\izzum\command\NullCommand';
     const COMMAND_EMPTY = '';
     const CALLABLE_NULL = null;
-    
+
     /**
      * the state this transition starts from
      *
      * @var State
      */
     protected $state_from;
-    
+
     /**
      * the state this transition points to
      *
      * @var State
      */
     protected $state_to;
-    
+
     /**
      * an event code that can trigger this transitions
      *
      * @var string
      */
     protected $event;
-    
+
     /**
      * The fully qualified Rule class name of the
      * Rule to be applied to check if we can transition.
@@ -71,7 +71,7 @@ class Transition {
      * @var string
      */
     protected $rule;
-    
+
     /**
      * the fully qualified Command class name of the Command to be
      * executed as part of the transition logic.
@@ -80,19 +80,19 @@ class Transition {
      * @var string
      */
     protected $command;
-    
+
     /**
      * the callable to call as part of the transition logic
      * @var callable
      */
     protected $callable_transition;
-    
+
     /**
      * the callable to call as part of the transition guard (should return a boolean)
      * @var callable
      */
     protected $callable_guard;
-    
+
     /**
      * a description for the state
      *
@@ -102,8 +102,8 @@ class Transition {
 
     /**
      *
-     * @param State $state_from            
-     * @param State $state_to            
+     * @param State $state_from
+     * @param State $state_to
      * @param string $event
      *            optional: an event name by which this transition can be
      *            triggered
@@ -138,7 +138,7 @@ class Transition {
         // set and sanitize event name
         $this->setEvent($event);
     }
-    
+
     /**
      * the callable to call as part of the transition logic
      * @param callable $callable
@@ -147,7 +147,7 @@ class Transition {
         $this->callable_transition = $callable;
         return $this;
     }
-    
+
     /**
      * returns the callable for the transition logic.
      * @return callable or null
@@ -156,7 +156,7 @@ class Transition {
     {
         return $this->callable_transition;
     }
-    
+
     /**
      * the callable to call as part of the transition guard
      * @param callable $callable
@@ -165,7 +165,7 @@ class Transition {
         $this->callable_guard = $callable;
         return $this;
     }
-    
+
     /**
      * returns the callable for the guard logic.
      * @return callable or null
@@ -179,7 +179,7 @@ class Transition {
      * Can this transition be triggered by a certain event?
      * This also matches on the transition name.
      *
-     * @param string $event            
+     * @param string $event
      * @return boolean
      */
     public function isTriggeredBy($event)
@@ -191,7 +191,7 @@ class Transition {
      * is a transition possible? Check the guard Rule with the domain object
      * injected.
      *
-     * @param Context $context            
+     * @param Context $context
      * @return boolean
      */
     public function can(Context $context)
@@ -211,7 +211,7 @@ class Transition {
      * Process the transition for the statemachine and execute the associated
      * Command with the domain object injected.
      *
-     * @param Context $context            
+     * @param Context $context
      * @return void
      */
     public function process(Context $context)
@@ -227,7 +227,7 @@ class Transition {
             throw $e;
         }
     }
-    
+
     /**
      * calls the $callable as part of the transition
      * @param callable $callable
@@ -255,22 +255,22 @@ class Transition {
     {
         // if no rule is defined, just allow the transition by default
         if ($this->rule === '' || $this->rule === null) {
-            return new True();
+            return new TrueRule();
         }
-        
+
         $entity = $context->getEntity();
-        
+
         // a rule string can be made up of multiple rules seperated by a comma
         $all_rules = explode(',', $this->rule);
-        $rule = new True();
+        $rule = new TrueRule();
         foreach ($all_rules as $single_rule) {
-            
+
             // guard clause to check if rule exists
             if (!class_exists($single_rule)) {
                 $e = new Exception(sprintf("failed rule creation, class does not exist: (%s) for Context (%s).", $this->rule, $context->toString()), Exception::RULE_CREATION_FAILURE);
                 throw $e;
             }
-            
+
             try {
                 $and_rule = new $single_rule($entity);
                 // create a chain of rules that need to be true
@@ -291,7 +291,7 @@ class Transition {
      * In case there have been multiple commands as input (',' seperated), this
      * method will return a Composite command.
      *
-     * @param Context $context            
+     * @param Context $context
      * @return izzum\command\ICommand
      * @throws Exception
      */
@@ -376,7 +376,7 @@ class Transition {
     /**
      * set the description of the transition (for uml generation for example)
      *
-     * @param string $description            
+     * @param string $description
      */
     public function setDescription($description)
     {
@@ -399,7 +399,7 @@ class Transition {
      * In case the event name is null or an empty string, it defaults to the
      * transition name.
      *
-     * @param string $event            
+     * @param string $event
      */
     public function setEvent($event)
     {
@@ -431,8 +431,8 @@ class Transition {
      * static' we are already instantiating a possible subclass.
      *
      *
-     * @param State $from            
-     * @param State $to            
+     * @param State $from
+     * @param State $to
      * @return Transition
      */
     public function getCopy(State $from, State $to)

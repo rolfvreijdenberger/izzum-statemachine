@@ -84,7 +84,7 @@ class JSON implements Loader {
         $decoded = json_decode($this->getJSON(), false);
         if (!$decoded) {
             //could not decode (make sure that fully qualified names are escaped with 
-            //2 backslashes: \\izzum\\commands\\Null and that only double quotes are used.
+            //2 backslashes: \\izzum\\commands\\NullCommand and that only double quotes are used.
             throw new Exception(sprintf('could not decode json data. did you only use double quotes? check the json format against %s', 'http://jsonlint.com/'), Exception::BAD_LOADERDATA);
         }
         $name = $stateMachine->getContext()->getMachine();

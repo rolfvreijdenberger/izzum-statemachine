@@ -6,10 +6,10 @@ namespace izzum\rules;
  * the
  * constructor needs to apply.
  *
- * $rule = new True();
- * $chained = $rule->orRule(new False());
+ * $rule = new TrueRule();
+ * $chained = $rule->orRule(new FalseRule());
  * $chained->applies();//true, since true or false is true.
- * 
+ *
  * @author Rolf Vreijdenberger
  * @author Richard Ruiter
  */
@@ -27,8 +27,8 @@ class OrRule extends Rule {
 
     /**
      *
-     * @param Rule $original            
-     * @param Rule $other            
+     * @param Rule $original
+     * @param Rule $other
      */
     public function __construct(Rule $original, Rule $other)
     {

@@ -6,8 +6,10 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master)
 [![License](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/license.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine)
 
-###A superior, extensible and flexible statemachine library
+###A superior, extensible and flexible statemachine library for php version >= 5.3 including php 7
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") is a model for the behaviour of a system that consists of a finite number of states, transitions between those states and guard~ and transition logic for those states and transitions. 
+
+see the [change log here](https://github.com/rolfvreijdenberger/izzum-statemachine/blob/master/CHANGELOG.md).
 
 
 ###about
@@ -16,6 +18,10 @@ A proven enterprise grade, fully unittested and high quality statemachine. It ha
 It will work seamlessly with existing domain models (like 'Order', 'Customer' etc) by operating on those models instead of having to create new domain models with statemachine logic in them (which is also possible). The examples, extensive (inline) documentation and unittests will make it easy to setup and get going. 
 
 Bitcoin donations are more than welcome on *[1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM](https://blockchain.info/address/1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM)*.
+
+###upgrade path to 4.y.z release for php 7 from 3.y.z
+- upgrade definitions in database/yml/xml/json configuration that use False Rule, True Rule or Null Command: use 'FalseRule', 'TrueRule', 'NullCommand'
+- upgrade references in code that use False Rule, True Rule or Null Command: use 'FalseRule', 'TrueRule', 'NullCommand'
  
 ### Example walkthrough
 The following code examples will guide you through using the statemachine and will familiarize you with the different ways to interact with the statemachine. 
@@ -206,7 +212,7 @@ echo $machine->getCurrentState();//still in the same state
 ### guard conditions 2. using business rules
 [A business rule](https://en.wikipedia.org/wiki/Business_rule) is used by creating a Rule class (a subclass of `\izzum\rules\Rule`) and by setting the fully qualified class name as a string on the Transition. The Rule class is dynamically instantiated only when necessary for checking the transition and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Rule should have a `Rule::applies()` method that will return a boolean value that will be calculated by querying the domain model or any other data source (eg: services, apis, database etc).
 
-The `False` rule is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using rules and a domain object with an EntityBuilder.
+The `FalseRule` rule is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using rules and a domain object with an EntityBuilder.
 
 A rule should never have side effects and should only return a boolean. 
 
@@ -215,7 +221,7 @@ Multiple rules can be chained together (using [logical conjunction](https://en.w
 Testing is facilitated because you can inject [test doubles](https://en.wikipedia.org/wiki/Test_double) (mocks/stubs) in your Rule.
 ```php
 $forbidden = new State('forbidden');
-$rule = '\izzum\rules\False';
+$rule = '\izzum\rules\FalseRule';
 $transition = new Transition($new, $forbidden, 'thoushaltnotpass', $rule);
 // or: $transition->setRuleName($rule);
 $machine->addTransition($transition);
@@ -322,7 +328,7 @@ The general transition logic sequence is as follows
 A [command](https://en.wikipedia.org/wiki/Command_pattern) is used by creating a seperate Command class (a subclass of `\izzum\command\Command`) and by setting it's fully qualified class name as a string on the transition or states. 
 
 The Command class is dynamically instantiated only when necessary for performing the logic and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Command should have a `Command::execute()` method that will perform the logic by *potentially operating on the domain model* or any other data source (eg: services, apis, database etc).
-The `Null` command is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using commands and a domain object with an EntityBuilder.
+The `NullCommand` command is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using commands and a domain object with an EntityBuilder.
 
 Multiple commands can be chained together as a [Composite](https://en.wikipedia.org/?title=Composite_pattern) by specifying multiple fully qualified command class names seperated by a `,` comma. Keep in mind that if you have 3 commands in a transition of which the last one throws an exception you might need to perform the transition again, thereby performing the first 2 again.
 

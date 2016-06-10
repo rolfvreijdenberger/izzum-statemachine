@@ -2,17 +2,17 @@
 namespace izzum\rules;
 
 /**
- * A Rule that always returns false
+ * A Rule that always returns true
  *
  * useful for testing or to be used in a statemachine guard clause that should
- * always fail.
+ * always pass.
  *
  * @author Rolf Vreijdenberger
  */
-class False extends Rule {
+class TrueRule extends Rule {
 
     protected function _applies()
     {
-        return false;
+        return true;
     }
 }

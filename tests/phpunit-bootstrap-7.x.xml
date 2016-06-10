@@ -4,16 +4,12 @@
     </testsuite>
     <groups>
         <exclude>
-           <!--
-            <group>redis</group>
-            <group>mongodb</group>
-            <group>yaml</group>
-            <group>filepermissions</group>
-            -->
             <group>sqlite</group>
             <group>uses-sessions</group>
             <group>mysql</group>
             <group>postgresql</group>
+            <group>yaml</group>
+            <group>mongodb_less_than_php7</group>
         </exclude>
     </groups>
 </phpunit>

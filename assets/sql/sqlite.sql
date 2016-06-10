@@ -40,8 +40,8 @@ CREATE TABLE statemachine_transitions (
 	state_from VARCHAR  NOT NULL,
 	state_to VARCHAR  NOT NULL, 
 	event VARCHAR NULL,
-	rule VARCHAR  DEFAULT '\izzum\rules\True' NOT NULL,
-	command VARCHAR  DEFAULT '\izzum\command\Null' NOT NULL,
+	rule VARCHAR  DEFAULT '\izzum\rules\TrueRule' NOT NULL,
+	command VARCHAR  DEFAULT '\izzum\command\NullCommand' NOT NULL,
 	priority int4 DEFAULT 1 NOT NULL, 
 	description text,
         PRIMARY KEY (machine, state_from, state_to),
@@ -101,7 +101,7 @@ VALUES
 
 UPDATE statemachine_states
 SET 
-entry_command = 'izzum\command\Null', exit_command = 'izzum\command\Null'
+entry_command = 'izzum\command\NullCommand', exit_command = 'izzum\command\NullCommand'
 WHERE machine = 'izzum'
 AND (state = 'bad' OR state = 'ok');
 
@@ -111,15 +111,15 @@ AND (state = 'bad' OR state = 'ok');
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
-('izzum', 'new', 'ok','\izzum\rules\True', 'izzum\command\Null', 1, 'new_to_ok transition'),
-('izzum', 'ok', 'fine','\izzum\rules\True', 'izzum\command\Null', 2, 'ok_to_fine transition'),
-('izzum', 'fine', 'excellent','\izzum\rules\True', 'izzum\command\Null', 2, 'fine_to_excellent transition'),
-('izzum', 'excellent', 'done','\izzum\rules\True', 'izzum\command\Null', 2, 'excellent_to_done transition'),
-('izzum', 'new', 'bad','\izzum\rules\True', 'izzum\command\Null', 2, 'new_to_bad transition'),
-('izzum', 'ok', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'ok_to_bad transition'),
-('izzum', 'fine', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'fine_to_bad transition'),
-('izzum', 'excellent', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'excellent_to_bad transition'),
-('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\Null', 1, 'bad_to_done transition');
+('izzum', 'new', 'ok','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 1, 'new_to_ok transition'),
+('izzum', 'ok', 'fine','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'ok_to_fine transition'),
+('izzum', 'fine', 'excellent','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'fine_to_excellent transition'),
+('izzum', 'excellent', 'done','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'excellent_to_done transition'),
+('izzum', 'new', 'bad','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'new_to_bad transition'),
+('izzum', 'ok', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'ok_to_bad transition'),
+('izzum', 'fine', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'fine_to_bad transition'),
+('izzum', 'excellent', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'excellent_to_bad transition'),
+('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\NullCommand', 1, 'bad_to_done transition');
 
 UPDATE statemachine_transitions
 SET

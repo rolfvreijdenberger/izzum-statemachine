@@ -7,9 +7,9 @@ use izzum\command\Command;
  * This command provides null behaviour and has no side effects.
  *
  * @author Rolf Vreijdenberger
- *        
+ *
  */
-class Null extends Command {
+class NullCommand extends Command {
 
     protected function _execute()
     {}

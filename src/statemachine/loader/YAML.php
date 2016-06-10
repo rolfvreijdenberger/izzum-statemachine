@@ -8,14 +8,14 @@ use izzum\statemachine\Exception;
 
 /**
  * YAML loader. accepts a yaml string and loads a machine from it.
- * The yaml string can contain one or more machine definitions. 
+ * The yaml string can contain one or more machine definitions.
  * The correct machine will be found from the yaml structure.
- * 
+ *
  * This class provides a way to load yaml from a file on your file system (fast access).
- * 
+ *
  * This class needs the php yaml module to operate, which can be found via php.net
- * 
- * 
+ *
+ *
  * @link https://en.wikipedia.org/wiki/YAML
  * @link https://php.net/manual/en/intro.yaml.php
  * @link http://pecl.php.net/package/yaml the needed yaml library
@@ -30,7 +30,7 @@ class YAML implements Loader {
     private $yaml;
 
     /**
-     * 
+     *
      * @param string $yaml optional a valid yaml string as specified in assets/yaml/example.yaml
      */
     public function __construct($yaml)
@@ -68,8 +68,8 @@ class YAML implements Loader {
     public function load(StateMachine $stateMachine)
     {
         //decode the json in a php object structure
-        $decoded = yaml_parse($this->getYaml(), false);
-        
+        $decoded = \yaml_parse($this->getYaml(), false);
+
         //yaml decoding returns a php array.
         $name = $stateMachine->getContext()->getMachine();
         $found = false;
@@ -95,14 +95,14 @@ class YAML implements Loader {
             $tmp->setDescription(@$state['description']);
             $states [$tmp->getName()] = $tmp;
         }
-        
+
         $transitions = array();
         foreach ($data['transitions'] as $transition) {
             $tmp = new Transition($states [$transition['state_from']], $states [$transition['state_to']], @$transition['event'], @$transition['rule'], @$transition['command'], @$transition['guard_callable'], @$transition['transition_callable']);
             $tmp->setDescription(@$transition['description']);
             $transitions [] = $tmp;
         }
-        
+
         //delegate to loader
         $loader = new LoaderArray($transitions);
         return $loader->load($stateMachine);
@@ -112,7 +112,7 @@ class YAML implements Loader {
     {
         return get_class($this);
     }
-    
+
     public function __toString()
     {
         return $this->toString();

@@ -1,15 +1,27 @@
 language: php
-php:
-  - 5.5
-  - 5.4
-  - 5.3
-  - 5.6
+  
+matrix:
+  fast_finish: true
+  include:
+    - php: 5.3
+      env: PHPUNIT_BOOTSTRAP="tests/phpunit-bootstrap-5.x.xml"
+    - php: 5.4
+      env: PHPUNIT_BOOTSTRAP="tests/phpunit-bootstrap-5.x.xml" YAML_EXTENSION=true
+    - php: 5.5
+      env: PHPUNIT_BOOTSTRAP="tests/phpunit-bootstrap-5.x.xml"
+    - php: 5.6
+      env: PHPUNIT_BOOTSTRAP="tests/phpunit-bootstrap-5.x.xml"
+    - php: 7.0
+      env: PHPUNIT_BOOTSTRAP="tests/phpunit-bootstrap-7.x.xml"
+  allow_failures:
+    - php: hhvm
+    - php: 7.0  
+
+script: phpunit --configuration $PHPUNIT_BOOTSTRAP --coverage-clover=coverage.clover
+  
 install:
   - composer --no-interaction install
 
-# http://docs.travis-ci.com/user/languages/php/
-# http://docs.travis-ci.com/user/database-setup/
-# https://stackoverflow.com/questions/15995009/problems-with-php-yaml-within-travis-ci
 before_script:
   - composer selfupdate
   - composer update --prefer-source --no-interaction 
@@ -17,7 +29,7 @@ before_script:
   - printf "\n" | pecl install yaml 1.2.0 
   - echo "extension = redis.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
   - echo "extension = mongo.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini
-#  - echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini # yaml is loaded by pecl install
+  - if [ $YAML_EXTENSION == true ]; then echo "extension = yaml.so" >> ~/.phpenv/versions/$(phpenv version-name)/etc/php.ini; fi; # yaml is loaded by pecl install
   - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.json
   - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.xml
   - chmod 200 tests/izzum/statemachine/loader/fixture-no-permission.yaml
@@ -25,9 +37,13 @@ before_script:
 services:
   - mongodb
   - redis-server
-  
-script: phpunit --configuration tests/phpunit-travis.xml --coverage-clover=coverage.clover
 
 after_script:
   - wget https://scrutinizer-ci.com/ocular.phar
   - php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+
+
+
+# http://docs.travis-ci.com/user/languages/php/
+# http://docs.travis-ci.com/user/database-setup/
+# https://stackoverflow.com/questions/15995009/problems-with-php-yaml-within-travis-ci

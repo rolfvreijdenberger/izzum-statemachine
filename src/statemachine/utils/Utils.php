@@ -1,6 +1,6 @@
 <?php
 namespace izzum\statemachine\utils;
-use izzum\command\Null;
+use izzum\command\NullCommand;
 use izzum\command\Composite;
 use izzum\statemachine\Exception;
 use izzum\statemachine\Context;
@@ -12,7 +12,7 @@ use izzum\statemachine\StateMachine;
  * utils class that has some helper methods for diverse purposes
  *
  * @author Rolf Vreijdenberger
- *        
+ *
  */
 class Utils {
     const STATE_CONCATENATOR = '_to_';
@@ -57,24 +57,24 @@ class Utils {
         // a 'shortcut' state for special cases.
         if ($command_name === '' || $command_name === null) {
             // return a command without side effects
-            return new Null();
+            return new NullCommand();
         }
-        
+
         $output = new Composite();
-        
+
         // a command string can be made up of multiple commands seperated by a
         // comma
         $all_commands = explode(',', $command_name);
-        
+
         // get the correct object to inject in the command(s)
         $entity = $context->getEntity();
-        
+
         foreach ($all_commands as $single_command) {
             if (!class_exists($single_command)) {
                 $e = new Exception(sprintf("failed command creation, class does not exist: (%s) for Context (%s)", $single_command, $context->toString()), Exception::COMMAND_CREATION_FAILURE);
                 throw $e;
             }
-            
+
             try {
                 $command = new $single_command($entity);
                 $output->add($command);
@@ -91,8 +91,8 @@ class Utils {
      * izzum exception).
      * optionally throws it.
      *
-     * @param \Exception $e            
-     * @param int $code            
+     * @param \Exception $e
+     * @param int $code
      * @return Exception
      * @throws Exception
      */

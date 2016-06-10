@@ -77,13 +77,13 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     	$context = new Context(new Identifier('1','test'));
     	 
     	$command = Utils::getCommand($command_name, $context);
-    	$this->assertTrue(is_a($command, 'izzum\command\Null'));
+    	$this->assertTrue(is_a($command, 'izzum\command\NullCommand'));
     	
     	$command_name = null;
     	$context = new Context(new Identifier('1','test'));
     	
     	$command = Utils::getCommand($command_name, $context);
-    	$this->assertTrue(is_a($command, 'izzum\command\Null'));
+    	$this->assertTrue(is_a($command, 'izzum\command\NullCommand'));
     	 
     }
     

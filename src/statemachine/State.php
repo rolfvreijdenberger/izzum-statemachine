@@ -1,7 +1,7 @@
 <?php
 namespace izzum\statemachine;
 use izzum\command\ICommand;
-use izzum\command\Null;
+use izzum\command\NullCommand;
 use izzum\statemachine\Exception;
 use izzum\command\Composite;
 use izzum\statemachine\utils\Utils;
@@ -65,7 +65,7 @@ class State {
      * default exit/entry command
      * @var string
      */
-    const COMMAND_NULL = '\izzum\command\Null';
+    const COMMAND_NULL = '\izzum\command\NullCommand';
     
     /**
      * default exit/entry command for constructor

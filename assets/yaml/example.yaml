@@ -14,14 +14,14 @@
           description: description for state a
         - name: b
           type: normal
-          entry_command: \izzum\command\Null
-          exit_command: \izzum\command\Null
+          entry_command: \izzum\command\NullCommand
+          exit_command: \izzum\command\NullCommand
           entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
           exit_callable: \izzum\statemachine\loader\MyStatic::exitMethod
           description: description for state b
         - name: done
           type: final
-          entry_command: \izzum\command\Null
+          entry_command: \izzum\command\NullCommand
           exit_command: 
           entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
           exit_callable: null
@@ -30,8 +30,8 @@
         - state_from: a
           state_to: b
           event: ab
-          rule: \izzum\rules\True
-          command: \izzum\command\Null
+          rule: \izzum\rules\TrueRule
+          command: \izzum\command\NullCommand
           guard_callable: \izzum\statemachine\loader\MyStatic::guardMethod
           transition_callable: \izzum\statemachine\loader\MyStatic::transitionMethod
           description: my description for a_to_b
@@ -56,8 +56,8 @@
           description: description for state a
         - name: b
           type: normal
-          entry_command: \izzum\command\Null
-          exit_command: \izzum\command\Null
+          entry_command: \izzum\command\NullCommand
+          exit_command: \izzum\command\NullCommand
           entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
           exit_callable: \izzum\statemachine\loader\MyStatic::exitMethod
           description: description for state b
@@ -69,7 +69,7 @@
           description: used for the transitions of a and b to c. (done is a final state and will not be used by the regex)
         - name: done
           type: final
-          entry_command: \izzum\command\Null
+          entry_command: \izzum\command\NullCommand
           exit_command: 
           entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
           exit_callable: null
@@ -78,8 +78,8 @@
         - state_from: a
           state_to: b
           event: ab
-          rule: \izzum\rules\True
-          command: \izzum\command\Null
+          rule: \izzum\rules\TrueRule
+          command: \izzum\command\NullCommand
           guard_callable: izzum\statemachine\loader\MyStatic::guardMethod
           transition_callable: izzum\statemachine\loader\MyStatic::transitionMethod
           description: my description for a_to_b

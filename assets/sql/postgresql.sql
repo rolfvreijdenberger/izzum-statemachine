@@ -89,21 +89,21 @@ CREATE TABLE statemachine_transitions (
 	state_from varchar  NOT NULL, -- the state this transition is from
 	state_to varchar  NOT NULL, -- the state this transition is to
 	event varchar NULL, --optional: can be used for giving 'event' input to the statemachine.
-	rule varchar  DEFAULT '\izzum\rules\True'::character varying NOT NULL, -- the fully qualified name of a Rule class to instantiate
-	command varchar  DEFAULT '\izzum\command\Null'::character varying NOT NULL, -- the fully qualified name of a Command class to instantiate
+	rule varchar  DEFAULT '\izzum\rules\TrueRule'::character varying NOT NULL, -- the fully qualified name of a Rule class to instantiate
+	command varchar  DEFAULT '\izzum\command\NullCommand'::character varying NOT NULL, -- the fully qualified name of a Command class to instantiate
 	priority int4 DEFAULT 1 NOT NULL, -- optional: can be used if you want your rules to be tried in a certain order. make sure to ORDER in your retrieval query.
 	description text -- optional: a descriptive text
 );
 COMMENT ON TABLE statemachine_transitions IS '
 Define the transitions to be used per statemachine.
 A rule is used to check a transition possibility (use a fully qualified classname). 
-The default True rule always allows a transition. 
+The default TrueRule rule always allows a transition. 
 A command is used to execute the transition logic (use a fully qualified classname).
-The default Null command does nothing.
+The default NullCommand command does nothing.
 Priority is only relevant for the unique combination of {machine, state_from} and 
 has context in the preferred order of checking rules for the transition from a state,
 since this allows you to check a higher priority rule first, followed by transition with a 
-True rule if the first rule does not apply. 
+TrueRule rule if the first rule does not apply. 
 Priority can be used to order the transitions for the statemachine.
 Event can be used to trigger the statemachine with an event name. event names do not have to be unique for 
 transitions in a statemachine (see the difference in mealy vs moore statemachines).
@@ -261,15 +261,15 @@ VALUES
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
-('izzum', 'new', 'ok','\izzum\rules\True', 'izzum\command\Null', 1, 'new_to_ok transition'),
-('izzum', 'ok', 'fine','\izzum\rules\True', 'izzum\command\Null', 2, 'ok_to_fine transition'),
-('izzum', 'fine', 'excellent','\izzum\rules\True', 'izzum\command\Null', 2, 'fine_to_excellent transition'),
-('izzum', 'excellent', 'done','\izzum\rules\True', 'izzum\command\Null', 2, 'excellent_to_done transition'),
-('izzum', 'new', 'bad','\izzum\rules\True', 'izzum\command\Null', 2, 'new_to_bad transition'),
-('izzum', 'ok', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'ok_to_bad transition'),
-('izzum', 'fine', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'fine_to_bad transition'),
-('izzum', 'excellent', 'bad','\izzum\rules\False', 'izzum\command\Null', 1, 'excellent_to_bad transition'),
-('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\Null', 1, 'bad_to_done transition');
+('izzum', 'new', 'ok','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 1, 'new_to_ok transition'),
+('izzum', 'ok', 'fine','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'ok_to_fine transition'),
+('izzum', 'fine', 'excellent','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'fine_to_excellent transition'),
+('izzum', 'excellent', 'done','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'excellent_to_done transition'),
+('izzum', 'new', 'bad','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'new_to_bad transition'),
+('izzum', 'ok', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'ok_to_bad transition'),
+('izzum', 'fine', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'fine_to_bad transition'),
+('izzum', 'excellent', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'excellent_to_bad transition'),
+('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\NullCommand', 1, 'bad_to_done transition');
 
 INSERT INTO statemachine_entities
 (machine, entity_id, state)
