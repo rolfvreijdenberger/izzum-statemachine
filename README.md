@@ -11,6 +11,8 @@ A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "fini
 
 see the [change log here](https://github.com/rolfvreijdenberger/izzum-statemachine/blob/master/CHANGELOG.md).
 
+see the [presentation for an Amsterdam phpmeetup here](https://github.com/rolfvreijdenberger/izzum-statemachine/files/341665/2015_09_17_amsterdamphpmeetup.pdf).
+
 
 ###about
 A proven enterprise grade, fully unittested and high quality statemachine. It has the ability to be used with different backends (postgres, redis, sqlite, mongodb, mysql, session or memory) for storing state data and transition history, and for configuring the statemachine with states, transitions and the logic for those transitions (in yaml, json, xml, sql, redis or mongodb).
