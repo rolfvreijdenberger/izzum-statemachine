@@ -41,6 +41,8 @@ class Transition {
     const COMMAND_NULL = '\izzum\command\NullCommand';
     const COMMAND_EMPTY = '';
     const CALLABLE_NULL = null;
+    const CALLABLE_GUARD = 'transition guard';
+    const CALLABLE_TRANSITION = 'transition logic';
 
     /**
      * the state this transition starts from
@@ -200,8 +202,9 @@ class Transition {
             if(!$this->getRule($context)->applies()) {
                 return false;
             }
-            return $this->callCallable($this->getGuardCallable(), $context);
+            return $this->callCallable($this->getGuardCallable(), $context, self::CALLABLE_GUARD);
         } catch(\Exception $e) {
+            //rule or callable failure
             $e = new Exception($this->toString() . ' '. $e->getMessage(), Exception::RULE_APPLY_FAILURE, $e);
             throw $e;
         }
@@ -220,9 +223,9 @@ class Transition {
         // by the statemachine itself
         try {
             $this->getCommand($context)->execute();
-            $this->callCallable($this->getTransitionCallable(), $context);
+            $this->callCallable($this->getTransitionCallable(), $context, self::CALLABLE_TRANSITION);
         } catch(\Exception $e) {
-            // command failure
+            // command or callable failure
             $e = new Exception($e->getMessage(), Exception::COMMAND_EXECUTION_FAILURE, $e);
             throw $e;
         }
@@ -232,10 +235,12 @@ class Transition {
      * calls the $callable as part of the transition
      * @param callable $callable
      * @param Context $context
+     * @throws Exception in case of an invalid callable
      */
-    protected function callCallable($callable, Context $context) {
+    protected function callCallable($callable, Context $context, $type = 'n/a') {
         //in case it is a guard callable we need to return true/false
-        if($callable != self::CALLABLE_NULL && is_callable($callable)){
+        if($callable != self::CALLABLE_NULL){
+            Utils::checkCallable($callable, $type, "transition: " . $this, $context);
             return (boolean) call_user_func($callable, $context->getEntity());
         }
         return true;

@@ -124,7 +124,7 @@ class StateTest extends \PHPUnit_Framework_TestCase {
     /**
      * @test
      */
-    public function shoulExecuteEntryAndExitAction()
+    public function shouldExecuteEntryAndExitAction()
     {
         // scenario 1
         $context = new Context(new Identifier('1', 'test'));
@@ -262,6 +262,33 @@ class StateTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals('123', $context->getEntityId());
         $state->entryAction($context);
         $this->assertEquals('234', $context->getEntityId());
+    }
+
+    /**
+     * @test
+     */
+    public function shouldFailEntryAndExitWithNonCallable()
+    {
+        $state = new State('a');
+        $context = new Context(new Identifier('123','foo-machine'));
+        $event = 'foo';
+        $callable = "Foo::BarEntry";
+        $state->setEntryCallable($callable);
+        $callable = "Foo::BarExit";
+        $state->setExitCallable($callable);
+        try {
+            $state->entryAction($context);
+            $this->fail('should not come here');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::CALLABLE_FAILURE, $e->getCode());
+        }
+
+        try {
+            $state->exitAction($context);
+            $this->fail('should not come here');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::CALLABLE_FAILURE, $e->getCode());
+        }
     }
     
     /**

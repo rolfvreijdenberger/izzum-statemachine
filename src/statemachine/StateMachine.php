@@ -292,6 +292,8 @@ class StateMachine {
      * The first possible transition is based on the configuration of
      * the guard logic and the current state of the statemachine.
      *
+     * This method is the main way to have the statemachine do useful work.
+     * 
      * TRICKY: Be careful when using this function, since all guard logic must
      * be mutually exclusive! If not, you might end up performing the state
      * transition with priority n when you really want to perform transition

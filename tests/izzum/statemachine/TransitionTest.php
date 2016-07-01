@@ -458,6 +458,53 @@ class TransitionTest extends \PHPUnit_Framework_TestCase {
     }
 
     /**
+     * https://github.com/rolfvreijdenberger/izzum-statemachine/issues/7
+     * @test
+     */
+    public function shouldFailWithBadCallableDefinitions()
+    {
+
+        $context = new Context(new Identifier('123','foo-machine'));
+        $event = 'foo';
+        $a = new State('a');
+        $b = new State('b');
+
+
+        //scenario 5: static method invocation in array (use fully qualified name)
+        $transition_callable = array('Foo', 'Bar');
+        $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
+        try {
+            $t->process($context);
+            $this->fail('should not come here');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
+        }
+
+        //scenario 6: static method invocation in string (use fully qualified name)
+        //THIS IS THE WAY TO be able to specify a callable in a configuration file.
+        $transition_callable = 'Foo::Bar';
+        $t = new Transition($a, $b, $event, null, null, null, $transition_callable);
+        try {
+            $t->process($context);
+            $this->fail('should not come here');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::COMMAND_EXECUTION_FAILURE, $e->getCode());
+        }
+
+        //guard should fail
+        $guard_callable = 'Foo::Bar';
+        $t = new Transition($a, $b, $event, null, null, $guard_callable, $transition_callable);
+        try {
+            $t->can($context);
+            $this->fail('should not come here');
+        }catch (Exception $e) {
+            $this->assertEquals(Exception::RULE_APPLY_FAILURE, $e->getCode());
+        }
+
+
+    }
+
+    /**
      * @test
      */
     public function shouldThrowExceptionFromAppliedRule()
