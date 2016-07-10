@@ -7,6 +7,7 @@ use izzum\statemachine\Context;
 use izzum\command\ICommand;
 use izzum\statemachine\State;
 use izzum\statemachine\StateMachine;
+use izzum\statemachine\Transition;
 
 /**
  * utils class that has some helper methods for diverse purposes
@@ -17,6 +18,87 @@ use izzum\statemachine\StateMachine;
 class Utils {
     const STATE_CONCATENATOR = '_to_';
 
+
+    /**
+     * Checks a fully loaded statemachine for a valid configuration.
+     *
+     * This is useful in a debug situation so you can check for the validity of
+     * rules, commands and callables in guard logic, transition logic and state entry/exit logic
+     * before they hit a
+     *
+     * This does not instantiate any objects. It just checks if callables can be found
+     * and if classes for rules and commands can be found
+     *
+     * @param StateMachine $machine
+     * @return Exception[] an array of exceptions if anything is wrong with the configuration
+     */
+    public static function checkConfiguration(StateMachine $machine)
+    {
+
+        //TODO: also check the rules and commands
+
+        $exceptions = array();
+        $output = array();
+        //check state callables
+        foreach($machine->getStates() as $state)
+        {
+            $exceptions[] = self::getExceptionForCheckingCallable($state->getExitCallable(), State::CALLABLE_ENTRY, $state);
+            $exceptions[] = self::getExceptionForCheckingCallable($state->getEntryCallable(), State::CALLABLE_ENTRY, $state);
+        }
+
+        //check transition callables
+        foreach($machine->getTransitions() as $transition)
+        {
+            $exceptions[] = self::getExceptionForCheckingCallable($transition->getGuardCallable(), Transition::CALLABLE_GUARD, $transition);
+            $exceptions[] = self::getExceptionForCheckingCallable($transition->getTransitionCallable(), Transition::CALLABLE_TRANSITION, $transition);
+        }
+        //get the exceptions
+        foreach($exceptions as $e)
+        {
+            if(is_a($e, '\Exception')){
+                $output[] = $e;
+            }
+        }
+        return $output;
+    }
+
+    /**
+     * @param callable $callable
+     * @param string $type a type description of the callable eg: State::CALLABLE_ENTRY
+     * @param string $info extra info for exception message purposes
+     * @param Context $context optional: the context the callable is called in
+     * @return Exception if the callable does not pass the check
+     */
+    private static function getExceptionForCheckingCallable($callable, $type, $info, $context = null)
+    {
+        try {
+            self::checkCallable($callable, $type, $info, $context);
+        } catch(\Exception $e) {
+            return $e;
+        }
+        return null;
+    }
+
+
+    /**
+     * @param callable $callable
+     * @param string $type a type description of the callable eg: State::CALLABLE_ENTRY
+     * @param string $info extra info for exception message purposes
+     * @param Context $context optional: the context the callable is called in
+     * @return bool
+     * @throws Exception if the callable does not pass the check
+     */
+    public static function checkCallable($callable, $type, $info, $context = null)
+    {
+        if($callable !== null && !is_callable($callable)) {
+            throw new Exception(sprintf("not a valid '%s' callable for '%s'. %s",
+                $type, $info, $context ),
+                Exception::CALLABLE_FAILURE);
+        }
+        return true;
+    }
+    
+    
     /**
      * gets the transition name by two state names, using the default convention
      * for a transition name (which is concatenating state-from to state-to with

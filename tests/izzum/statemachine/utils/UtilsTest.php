@@ -42,6 +42,91 @@ class UtilsTest extends \PHPUnit_Framework_TestCase {
     	$command->execute();
     	$this->assertEquals(1, $entity->id);
     }
+
+    /**
+     * https://github.com/rolfvreijdenberger/izzum-statemachine/issues/7
+     * @test
+     */
+    public function shouldPassConfigurationCheckForBasicMachine()
+    {
+        $transitions = array();
+        $s1 = new State("1");
+        $s2 = new State("2");
+        $s3 = new State("3");
+        $transitions[] = new Transition($s1, $s2);
+        $transitions[] = new Transition($s2, $s3);
+        $loader = new LoaderArray($transitions);
+        $context = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($context);
+        $loader->load($machine);
+        Utils::checkConfiguration($machine);
+        $this->assertTrue(true, 'basic machine will be configured correctly');
+
+    }
+
+    /**
+     * https://github.com/rolfvreijdenberger/izzum-statemachine/issues/7
+     * @test
+     */
+    public function shouldPassConfigurationCheckForMachineWithGoodCallables()
+    {
+        $transitions = array();
+        $s1 = new State("1");
+        $s1->setEntryCallable('phpinfo');
+        $s2 = new State("2");
+        $s2->setEntryCallable('phpinfo');
+        $s3 = new State("3");
+        $s3->setEntryCallable('phpinfo');
+        $transitions[] = new Transition($s1, $s2);
+        $transitions[] = new Transition($s2, $s3);
+        foreach($transitions as $transition)
+        {
+            $transition->setGuardCallable('phpinfo');
+            $transition->setTransitionCallable('phpinfo');
+        }
+        $loader = new LoaderArray($transitions);
+        $context = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($context);
+        $loader->load($machine);
+        Utils::checkConfiguration($machine);
+        $this->assertTrue(true, 'basic machine with good callables will be configured correctly');
+
+    }
+
+
+    /**
+     * https://github.com/rolfvreijdenberger/izzum-statemachine/issues/7
+     * @test
+     */
+    public function shouldFailConfigurationCheckForMachineWithBadCallables()
+    {
+        $transitions = array();
+        $s1 = new State("1");
+        $s1->setEntryCallable('foobar');
+        $s2 = new State("2");
+        $s2->setEntryCallable('foobar');
+        $s3 = new State("3");
+        $s3->setEntryCallable('foobar');
+        $transitions[] = new Transition($s1, $s2);
+        $transitions[] = new Transition($s2, $s3);
+        //3 states, 3 bad callables
+        //2 transitions, 4 bad callables
+        //total of 7
+        foreach($transitions as $transition)
+        {
+            $transition->setGuardCallable('foobar');
+            $transition->setTransitionCallable('foobar');
+        }
+        $loader = new LoaderArray($transitions);
+        $context = new Context(new Identifier(Identifier::NULL_ENTITY_ID, Identifier::NULL_STATEMACHINE));
+        $machine = new StateMachine($context);
+        $loader->load($machine);
+        $exceptions = Utils::checkConfiguration($machine);
+        $this->assertEquals(7, count($exceptions));
+
+        $this->assertTrue(true, 'basic machine with bad callables will be configured incorrectly');
+
+    }
     
     
     /**

@@ -75,6 +75,9 @@ class State {
     const CALLABLE_NULL = null;
     const REGEX_PREFIX = 'regex:';
     const REGEX_PREFIX_NEGATED = 'not-regex:';
+
+    const CALLABLE_ENTRY = 'state entry';
+    const CALLABLE_EXIT = 'state exit';
     
     /**
      * the state types:
@@ -421,17 +424,19 @@ class State {
     {
         $command = $this->getCommand($this->getEntryCommandName(), $context);
         $this->execute($command);
-        $this->callCallable($this->getEntryCallable(), $context);
+        $this->callCallable($this->getEntryCallable(), $context, self::CALLABLE_ENTRY);
     }
 
     /**
      * calls a $callable if it exists, with the arguments $context->getEntity()
      * @param callable $callable
      * @param Context $context
+     * @param string $type the type of callable (self::CALLABLE_ENTRY | self::CALLABLE_EXIT)
      */
-    protected function callCallable($callable, Context $context)
+    protected function callCallable($callable, Context $context, $type = 'n/a')
     {
-        if ($callable != self::CALLABLE_NULL && is_callable($callable)) {
+        if ($callable != self::CALLABLE_NULL){
+            Utils::checkCallable($callable, $type, $this, $context);
             call_user_func($callable, $context->getEntity());
         }
     }
@@ -448,7 +453,7 @@ class State {
     {
         $command = $this->getCommand($this->getExitCommandName(), $context);
         $this->execute($command);
-        $this->callCallable($this->getExitCallable(), $context);
+        $this->callCallable($this->getExitCallable(), $context, self::CALLABLE_EXIT);
     }
 
     /**
