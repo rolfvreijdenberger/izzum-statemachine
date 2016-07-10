@@ -4,10 +4,10 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 ### Added
-- nothing
+- Utils::checkConfiguration($machine) as per request [#7](https://github.com/rolfvreijdenberger/izzum-statemachine/issues/7)
 
 ### Changed
-- nothing
+- optimized some code by moving it to utils class
 
 ### Fixed
 - nothing
