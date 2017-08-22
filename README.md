@@ -6,7 +6,7 @@
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master)
 [![License](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/license.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine)
 
-###A superior, extensible and flexible statemachine library for php version >= 5.3 including php 7
+### A superior, extensible and flexible statemachine library for php version >= 5.3 including php 7
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") is a model for the behaviour of a system that consists of a finite number of states, transitions between those states and guard~ and transition logic for those states and transitions. 
 
 see the [change log here](https://github.com/rolfvreijdenberger/izzum-statemachine/blob/master/CHANGELOG.md).
@@ -14,21 +14,21 @@ see the [change log here](https://github.com/rolfvreijdenberger/izzum-statemachi
 see the [presentation for an Amsterdam phpmeetup here](https://github.com/rolfvreijdenberger/izzum-statemachine/files/341665/2015_09_17_amsterdamphpmeetup.pdf).
 
 
-###about
+### about
 A proven enterprise grade, fully unittested and high quality statemachine. It has the ability to be used with different backends (postgres, redis, sqlite, mongodb, mysql, session or memory) for storing state data and transition history, and for configuring the statemachine with states, transitions and the logic for those transitions (in yaml, json, xml, sql, redis or mongodb).
 
 It will work seamlessly with existing domain models (like 'Order', 'Customer' etc) by operating on those models instead of having to create new domain models with statemachine logic in them (which is also possible). The examples, extensive (inline) documentation and unittests will make it easy to setup and get going. 
 
 Bitcoin donations are more than welcome on *[1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM](https://blockchain.info/address/1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM)*.
 
-###upgrade path to 4.y.z release for php 7 from 3.y.z
+### upgrade path to 4.y.z release for php 7 from 3.y.z
 - upgrade definitions in database/yml/xml/json configuration that use False Rule, True Rule or Null Command: use 'FalseRule', 'TrueRule', 'NullCommand'
 - upgrade references in code that use False Rule, True Rule or Null Command: use 'FalseRule', 'TrueRule', 'NullCommand'
  
 ### Example walkthrough
 The following code examples will guide you through using the statemachine and will familiarize you with the different ways to interact with the statemachine. 
 
-###creating a statemachine
+### creating a statemachine
 An entity id and a machine name provide a unique definition for your statemachine. Together they constitute the simplest way to identify a statemachine in your application. An entity id will most probably be the unique id or primary key of a domain model in your application. The machine name is a name used to distinguish one machine type from another (eg 'order-machine', 'customer-machine'). Together they are stored in the Identifier object.
 
 A Context provides the operational context in which your statemachine operates. Context uses the identifier to uniquely identify a statemachine. A context also provides ways to store your state in a backend of choice and provides ways to operate on your domain specific models via optional constructor arguments (explained later).
