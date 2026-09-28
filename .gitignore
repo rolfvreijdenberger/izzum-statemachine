@@ -5,3 +5,4 @@ tests/sqlite.db
 .buildpath
 .project
 .settings/
+.idea

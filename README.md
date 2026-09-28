@@ -1,12 +1,9 @@
 
-[![Build Status](https://travis-ci.org/rolfvreijdenberger/izzum-statemachine.svg?branch=master)](https://travis-ci.org/rolfvreijdenberger/izzum-statemachine/) 
 [![Total Downloads](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/downloads.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine) 
 [![Latest Stable Version](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/v/stable.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine) 
-[![Code Coverage](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/rolfvreijdenberger/izzum-statemachine/?branch=master)
 [![License](https://poser.pugx.org/rolfvreijdenberger/izzum-statemachine/license.svg)](https://packagist.org/packages/rolfvreijdenberger/izzum-statemachine)
 
-### A superior, extensible and flexible statemachine library for php version >= 5.3 including php 7
+### A superior, extensible and flexible statemachine library for php 8.4 and up
 A [finite statemachine](https://en.wikipedia.org/wiki/Finite-state_machine "finite statemachine on wikipedia") is a model for the behaviour of a system that consists of a finite number of states, transitions between those states and guard~ and transition logic for those states and transitions. 
 
 see the [change log here](https://github.com/rolfvreijdenberger/izzum-statemachine/blob/master/CHANGELOG.md).
@@ -15,11 +12,31 @@ see the [presentation for an Amsterdam phpmeetup here](https://github.com/rolfvr
 
 
 ### about
-A proven enterprise grade, fully unittested and high quality statemachine. It has the ability to be used with different backends (postgres, redis, sqlite, mongodb, mysql, session or memory) for storing state data and transition history, and for configuring the statemachine with states, transitions and the logic for those transitions (in yaml, json, xml, sql, redis or mongodb).
+A proven enterprise grade, fully unittested and high quality statemachine. It has the ability to be used with different backends (postgres, redis, sqlite, mysql, session or memory) for storing state data and transition history, and for configuring the statemachine with states, transitions and the logic for those transitions (in yaml, json, xml, sql or redis).
 
 It will work seamlessly with existing domain models (like 'Order', 'Customer' etc) by operating on those models instead of having to create new domain models with statemachine logic in them (which is also possible). The examples, extensive (inline) documentation and unittests will make it easy to setup and get going. 
 
 Bitcoin donations are more than welcome on *[1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM](https://blockchain.info/address/1zzumvx7zVHv3AdWXQ1XUuNKyQonx7uHM)*.
+
+### upgrade path to 5.y.z release for php 8.4 from 4.y.z
+5.0.0 requires php 8.4 and renames every namespace to PascalCase. This affects both your php code and any statemachine configuration that stores fully qualified class names as strings.
+
+Rename these prefixes everywhere:
+
+| 4.y.z | 5.y.z |
+| --- | --- |
+| `izzum\command\` | `Izzum\Command\` |
+| `izzum\rules\` | `Izzum\Rules\` |
+| `izzum\statemachine\` | `Izzum\StateMachine\` |
+| `izzum\statemachine\builder\` | `Izzum\StateMachine\Builder\` |
+| `izzum\statemachine\loader\` | `Izzum\StateMachine\Loader\` |
+| `izzum\statemachine\persistence\` | `Izzum\StateMachine\Persistence\` |
+| `izzum\statemachine\utils\` | `Izzum\StateMachine\Utils\` |
+
+- update `use` statements and inline class references in your php code.
+- update the fully qualified rule/command/callable/factory names stored as strings in your database, yaml, xml and json configuration. These are resolved by autoloading at runtime, so a stale name fails only when that transition is actually used.
+- **match the casing exactly.** A partially corrected name such as `Izzum\rules\TrueRule` may appear to work on a case-insensitive filesystem (macOS by default) because composer maps the part after the `Izzum\` prefix straight onto a file path. The same name fails on a case-sensitive filesystem, which is what most linux production hosts use.
+- the MongoDB persistence adapter has been removed. It targeted the long deprecated ext-mongo driver, which has no build for any supported php version. Use the Redis or PDO adapter instead.
 
 ### upgrade path to 4.y.z release for php 7 from 3.y.z
 - upgrade definitions in database/yml/xml/json configuration that use False Rule, True Rule or Null Command: use 'FalseRule', 'TrueRule', 'NullCommand'
@@ -64,7 +81,7 @@ The context provides contextual information about the machine and as such holds 
 ```php
 $context = $machine->getContext();
 echo $context->getPersistenceAdapter();//echo works because of Memory::__toString()
-# Memory
+# Izzum\StateMachine\Persistence\Memory
 echo $context->getEntityId();//get the id for your domain model (entity)
 # 198442
 echo $context->getMachine();//get the name of the statemachine
@@ -98,7 +115,7 @@ Regular expression states take a [regular expression](https://en.wikipedia.org/w
 //action, or any state ending with 'ew'
 $regex = new State('regex:/action|.*ew$/', State::TYPE_REGEX);
 $pause = new State('pause');
-$machine->addTransition(new Transition($regex, $pause), 'pause');
+$machine->addTransition(new Transition($regex, $pause, 'pause'));
 //new->pause, action->pause
 ```
 
@@ -181,23 +198,23 @@ If a guard is not specified on a transition then the transition will be allowed 
 
 There are multiple ways to set guard conditions on transitions:
 * **callables**: closures/anonymous methods, instance methods and static methods that return a boolean. This is easy to use and possibly decoupled from domain models. The drawback is that all code should always be defined and in memory.
-* **rules**: [business rules](https://en.wikipedia.org/wiki/Business_rule) that are fully qualified classnames of instances of izzum/rules/Rule that shall accept a domain model (via the EntityBuilder) in their constructor and shall have an implemented `Rule::applies()` method that returns a boolean *after potentially interacting with the domain model injected in the rule*. This is the most formal and most powerful guard to use because it operates on domain models in a noninvasive, loosely coupled way. Furthermore, the code (possibly expensive to run, eg: when accessing databases or network services) is only instantiated and used when needed, in contrast to all other methods for which the code should  should always be fully available in memory.
+* **rules**: [business rules](https://en.wikipedia.org/wiki/Business_rule) that are fully qualified classnames of instances of `Izzum\Rules\Rule` that shall accept a domain model (via the EntityBuilder) in their constructor and shall have an implemented `Rule::applies()` method that returns a boolean *after potentially interacting with the domain model injected in the rule*. This is the most formal and most powerful guard to use because it operates on domain models in a noninvasive, loosely coupled way. Furthermore, the code (possibly expensive to run, eg: when accessing databases or network services) is only instantiated and used when needed, in contrast to all other methods for which the code should  should always be fully available in memory.
 * **event handlers**: called on a specified domain object (via the EntityBuilder) in the Context. This is flexible and convenient since you define the event handlers on your domain model that is accessible by the statemachine.
 * **hooks**: used by overriding a specific method `StateMachine::_onCheckCanTransition()` when subclassing the statemachine itself. This is then tailored to your application domain and offers less flexibility than the other methods since you will need to 'switch' on the transition to take a specific action.
 * **hooks as event dispatchers**: by subclassing the statemachine you can implement your own event handling/dispatching library of choice.
 
 ### guard conditions 1. using callables: closures, static methods, instance methods
-A [callable comes in multiple forms in php](https://php.net/manual/en/language.types.callable.php). In the next example, a [closure, or anonymous function](https://php.net/manual/en/functions.anonymous.php), is used to evaluate the boolean expression by operating on any context variables it has in it's scope and by using the automatically provided arguments of $entity and $event. $entity is the domain model returned by the Context of the statemachine (via the EntityBuilder). The event is only set when the transition was initiated by an event. The guard can operate on the $entity (which defaults to the Identifier if no Builder is used) to calculate the boolean result.
+A [callable comes in multiple forms in php](https://php.net/manual/en/language.types.callable.php). In the next example, a [closure, or anonymous function](https://php.net/manual/en/functions.anonymous.php), is used to evaluate the boolean expression by operating on any context variables it has in it's scope and by using the automatically provided $entity argument. $entity is the domain model returned by the Context of the statemachine (via the EntityBuilder). The guard can operate on the $entity (which defaults to the Identifier if no Builder is used) to calculate the boolean result.
 
-In general, all callables will be passed the 2 arguments $entity and $event and should have a method signature of `[static] public function <name>($entity, $event = null): boolean`. 
+In general, all callables will be passed the single argument $entity and should have a method signature of `[static] public function <name>($entity): bool`. 
 
 If you define your transitions in a php script you have more options than when defining your transitions via configuration that you load via a file or a persistance backend.
 When loading the transition configurations you can only use the form `\fully\qualified\Class::staticMethod` for callables since you cannot define closures as a string in your configuration.
 
-Check the example in `examples/inheritance` for using instance methods as callables. see `tests/izzum/statemachine/TransitionTest::shouldAcceptMultipleCallableTypes` for all possible implementations of callables in the izzum statemachine.
+Check the example in `examples/inheritance` for using instance methods as callables. see `tests/Izzum/StateMachine/TransitionTest::shouldAcceptMultipleCallableTypes` for all possible implementations of callables in the izzum statemachine.
 ```php
 $forbidden = new State('forbidden');
-$closure = function($entity, $event){return false;};
+$closure = function($entity){return false;};
 $transition = new Transition($new, $forbidden, 'thoushaltnotpass', null, null, $closure);
 // or: $transition->setGuardCallable($closure);
 $machine->addTransition($transition);
@@ -212,7 +229,7 @@ echo $machine->getCurrentState();//still in the same state
 ```
 
 ### guard conditions 2. using business rules
-[A business rule](https://en.wikipedia.org/wiki/Business_rule) is used by creating a Rule class (a subclass of `\izzum\rules\Rule`) and by setting the fully qualified class name as a string on the Transition. The Rule class is dynamically instantiated only when necessary for checking the transition and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Rule should have a `Rule::applies()` method that will return a boolean value that will be calculated by querying the domain model or any other data source (eg: services, apis, database etc).
+[A business rule](https://en.wikipedia.org/wiki/Business_rule) is used by creating a Rule class (a subclass of `\Izzum\Rules\Rule`) and by setting the fully qualified class name as a string on the Transition. The Rule class is dynamically instantiated only when necessary for checking the transition and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Rule should have a `Rule::applies()` method that will return a boolean value that will be calculated by querying the domain model or any other data source (eg: services, apis, database etc).
 
 The `FalseRule` rule is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using rules and a domain object with an EntityBuilder.
 
@@ -223,7 +240,7 @@ Multiple rules can be chained together (using [logical conjunction](https://en.w
 Testing is facilitated because you can inject [test doubles](https://en.wikipedia.org/wiki/Test_double) (mocks/stubs) in your Rule.
 ```php
 $forbidden = new State('forbidden');
-$rule = '\izzum\rules\FalseRule';
+$rule = '\Izzum\Rules\FalseRule';
 $transition = new Transition($new, $forbidden, 'thoushaltnotpass', $rule);
 // or: $transition->setRuleName($rule);
 $machine->addTransition($transition);
@@ -232,7 +249,7 @@ echo $machine->hasEvent('thoushaltnotpass');
 echo $machine->handle('thoushaltnotpass');//transition will not be made
 # false
 echo $machine->transition('new_to_forbidden');
-#> false
+# false
 echo $machine->getCurrentState();//still in the same state
 # new
 ```
@@ -246,7 +263,7 @@ class IsAllowedToShip extends Rule {
 The configuration of a Transition with a rule should be done by providing a fully qualified classname.
 The php application must be able to find the class via autoloading (which is a wrapper around including files)
 ```php
-$rule = '\izzum\rules\IsAllowedToShip';
+$rule = '\Izzum\Rules\IsAllowedToShip';
 $transition = new Transition($action, new State('shipping'), 'ship', $rule);
 ```
 The advantage of using Rules as guards is that there is no coupling between your domain model and the statemachine, making your application code much cleaner and more testable.
@@ -299,7 +316,7 @@ Comparable to the logic of using guards, the exit~ transition~ and exit logic ca
 
 There are multiple ways to set logic handlers on transitions:
 * **callables**: closures/anonymous methods, instance methods and static methods. This is easy to use and possibly decoupled from domain models. The drawback is that all code should always be defined and in memory when the transitions are defined.
-* **commands**: [Commands (the design pattern)](https://en.wikipedia.org/wiki/Command_pattern) are encapsulated reusable logic and are specified as fully qualified classnames of clases of `izzum/command/Command` that shall accept a domain model (via the EntityBuilder) in their constructor and shall have an implemented `Command::execute()` method that can *potentially interact with the domain model injected in the command*. This is the most formal and most powerful way to use handling logic because it operates on domain models in a noninvasive, loosely coupled way. Furthermore, the code (possibly expensive to run, eg: when accessing databases or network services) is only instantiated and used when needed, in contrast to all other methods for which the code  should always be fully in memory.
+* **commands**: [Commands (the design pattern)](https://en.wikipedia.org/wiki/Command_pattern) are encapsulated reusable logic and are specified as fully qualified classnames of classes of `Izzum\Command\Command` that shall accept a domain model (via the EntityBuilder) in their constructor and shall have an implemented `Command::execute()` method that can *potentially interact with the domain model injected in the command*. This is the most formal and most powerful way to use handling logic because it operates on domain models in a noninvasive, loosely coupled way. Furthermore, the code (possibly expensive to run, eg: when accessing databases or network services) is only instantiated and used when needed, in contrast to all other methods for which the code  should always be fully in memory.
 * **event handlers**: called on a specified domain object (via the EntityBuilder) in the Context. This is flexible and convenient since you define the event handlers on your domain model that is accessible by the statemachine.
 * **hooks**: used by overriding a specific methods: `StateMachine::_onExitState()`, `StateMachine::_onTransition()` and `StateMachine::_onEnterState()` when subclassing the statemachine itself. This is then tailored to your application domain and offers less flexibility than the other methods since you will need to 'switch' on the transition to take a specific action.
 * **hooks as event dispatchers**: by subclassing the statemachine you can implement your own event handling/dispatching library of choice in the hooks provided.
@@ -327,7 +344,7 @@ The general transition logic sequence is as follows
 
 
 ### logic actions 2. commands
-A [command](https://en.wikipedia.org/wiki/Command_pattern) is used by creating a seperate Command class (a subclass of `\izzum\command\Command`) and by setting it's fully qualified class name as a string on the transition or states. 
+A [command](https://en.wikipedia.org/wiki/Command_pattern) is used by creating a seperate Command class (a subclass of `\Izzum\Command\Command`) and by setting it's fully qualified class name as a string on the transition or states. 
 
 The Command class is dynamically instantiated only when necessary for performing the logic and wil have the domain model (provided by the Context via the EntityBuilder) injected in it's constructor. The Command should have a `Command::execute()` method that will perform the logic by *potentially operating on the domain model* or any other data source (eg: services, apis, database etc).
 The `NullCommand` command is provided as an example. you should write your own specifcally for your problem domain. See `examples/trafficlight` for an implementation using commands and a domain object with an EntityBuilder.
@@ -352,7 +369,7 @@ Class OrderDelivery extends Command {
 public function __construct(Order $order) { $this->order = $order;}
   protected function _execute() { $this->order->deliver(); }
 }
-$command = '\izzum\command\OrderDelivery';
+$command = '\Izzum\Command\OrderDelivery';
 //assume we are using the rule from the example
 $transition = new Transition($action, new State('shipping'), 'ship', $rule, $command);
 
@@ -360,8 +377,8 @@ $transition = new Transition($action, new State('shipping'), 'ship', $rule, $com
 ### using a persistance adapter to store state
 Persistence adapters provide an abstraction to write state data and transition history to a persistence backend of choice, so your statemachine can be used in multiple consecutive php processes because it remembers in which state it is. 
 
-Out of the box izzum provides persistance adapters for sql based backends for [postgresql](http://www.postgresql.org), [mysql](http://www.mysql.com), [sqlite](http://www.sqlite.org) (they all function via the [php PDO library](http://www.php.net/PDO)), the [redis key/value database(nosql)](http://www.redis.io), and the [document based mongoDB (nosql)](http://www.mongodb.org). 
-These Adapters all support the full range of abilities that their php drivers support. They are implemented using known stable php modules (PDO, redis, mongo) and more information can be found in the phpdocs in the classes and on [php.net](http://php.net).
+Out of the box izzum provides persistance adapters for sql based backends for [postgresql](http://www.postgresql.org), [mysql](http://www.mysql.com), [sqlite](http://www.sqlite.org) (they all function via the [php PDO library](http://www.php.net/PDO)), and the [redis key/value database(nosql)](http://www.redis.io). 
+These Adapters all support the full range of abilities that their php drivers support. They are implemented using known stable php modules (PDO, redis) and more information can be found in the phpdocs in the classes and on [php.net](http://php.net).
 
 A semi persistant adapter is the php session adapter and a non-persistent adapter is the memory adapter (the default). 
 
@@ -393,27 +410,25 @@ $machine->run();
 SQL based backends are abundantly available in most applications. the PDO adapter provides access to all backends made available via the PDO driver. There are full sql schemas in `assets/sql` for postgresql, mysql and sqlite available with full documentation about the design in `assets/sql/postgresql.sql`. Once you create those tables you and provide the right credentials to the PDO adapter you are ready to start storing your state in your database and you can also fully define your machines including states and transitions with their associated actions in the tables.
 The data is permanently stored, providing you with the history of all your machines and a way to keep track of all states without storing state in the tables for your domain objects.
 ```php
-$identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
+$identifier = new Identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
 $adapter = new PDO('pgsql:host=localhost;port=5432;dbname=izzum');
 //or for mysql
 $adapter = new PDO('mysql:host=localhost;dbname=izzum');
 //or for sqlite
-$adapter = new PDO('"sqlite:izzum.db"');
+$adapter = new PDO('sqlite:izzum.db');
 $context = new Context($identifier, $builder, $adapter);
 $statemachine = new StateMachine($context);
 $adapter->load($statemachine);//the adapter can also act as a loader
 $statemachine->add('creation of machine...');
 ```
 
-### persistance 4. storing transition history and state data in redis or mongodb
-Redis is a nosql key/value database and MongoDB is a nosql document based database.
-Both are schemaless and as such need no configuration to start storing state and transition history.
-Both the redis and the mongodb provide the possibility to store full statemachine configurations in JSON format (see the Loader examples for more info).
+### persistance 4. storing transition history and state data in redis
+Redis is a nosql key/value database.
+It is schemaless and as such needs no configuration to start storing state and transition history.
+Redis provides the possibility to store full statemachine configurations in JSON format (see the Loader examples for more info).
 ```php
-$identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
+$identifier = new Identifier('UUID-1234-ACD3-2156', 'data-migration-machine');
 $adapter = new Redis('127.0.0.1', 6379);
-//or use mongodb
-$adapter = new MongoDB('mongodb://localhost:27017');
 $context = new Context($identifier, $builder, $adapter);
 $statemachine = new StateMachine($context);
 $adapter->load($statemachine);//the adapter can also act as a loader
@@ -421,7 +436,7 @@ $statemachine->add('creation of machine...');
 ```
 
 ### loading statemachine configurations
-By using one of the provided Loader classes you are able to load (multiple) statemachine definitions from [JSON](https://en.wikipedia.org/wiki/JSON), [XML](https://en.wikipedia.org/wiki/XML) or [YAML](https://en.wikipedia.org/wiki/YAML). They all can load data from a file and from a string). Loading data can also be done by using one of the provided persistence adapters (redis and mongodb use the JSON format but can be subclassed to load any other format).
+By using one of the provided Loader classes you are able to load (multiple) statemachine definitions from [JSON](https://en.wikipedia.org/wiki/JSON), [XML](https://en.wikipedia.org/wiki/XML) or [YAML](https://en.wikipedia.org/wiki/YAML). They all can load data from a file and from a string). Loading data can also be done by using one of the provided persistence adapters (redis uses the JSON format but can be subclassed to load any other format).
 
 By using a Loader class you do not have to configure your statemachine in a php script and make maintaining and defining statemachines easier and reusable.
 
@@ -429,7 +444,7 @@ Loader itself is an interface with one simple method: `Loader::load($statemachin
 
 ### loading statemachine configurations: examples for XML, JSON, YAML
 XML example:
-see `assets/xml` for an example xml file definition and the xml schema to use with the loader. The loader is `izzum\loader\XML`.
+see `assets/xml` for an example xml file definition and the xml schema to use with the loader. The loader is `Izzum\StateMachine\Loader\XML`.
 ```php
 $statemachine = new StateMachine(new Context(new Identifier('198442' , 't-shirt-production-facility-machine')));
 $file = __DIR__ . '/machines.xml';
@@ -438,7 +453,7 @@ $loader->load($statemachine);
 $statemachine->runToCompletion();
 ```
 JSON example
-see `assets/json` for an example json file definition and the json schema to use with the loader. The loader is `izzum\loader\JSON`.
+see `assets/json` for an example json file definition and the json schema to use with the loader. The loader is `Izzum\StateMachine\Loader\JSON`.
 ```php
 $statemachine = new StateMachine(new Context(new Identifier('btc-data-generator' , 'blockchain-parsing-machine')));
 $file = __DIR__ . '/machines.json';
@@ -448,7 +463,7 @@ $statemachine->runToCompletion();
 ```
 
 YAML example
-see `assets/json` for an example yaml file definition. The loader is `izzum\loader\YAML`.
+see `assets/yaml` for an example yaml file definition. The loader is `Izzum\StateMachine\Loader\YAML`.
 ```php
 $statemachine = new StateMachine(new Context(new Identifier('wolverine' , 'mutant-machine')));
 $file = __DIR__ . '/machines.yaml';
@@ -466,14 +481,13 @@ $adapter->load($statemachine);
 $statemachine->run();
 ```
 
-### loading statemachine configurations: examples for mongodb and redis
-MongoDb and Redis persistence adapters can also be used as a Loader. The implementation uses JSON as specified in `assets/json`.
+### loading statemachine configurations: examples for redis
+The Redis persistence adapter can also be used as a Loader. The implementation uses JSON as specified in `assets/json`.
 You should load the JSON data in the backend in a specific location.
-For MongoDB you would store the JSON data (which will internally be converted to a document) in the <database>.configuration collection. You can store multiple configurations in the collection and the adapter will automatically find the one matching the machine name in the collection.
 For Redis you would store the JSON string in the `<configurable-prefix>:configuration:<machine-name>` key if you want to use multiple configurations in different keys. Alternatively, you can store the JSON string in the `<configurable-prefix>:configuration` key if you want to store multiple configurations in one key. The adapter will automatically find the configuration by matching the machine name in the specific key and will fallback to the default key.
 
-For both Adapters it will be easier to maintain multiple machines if you put 1 machine definition in one JSON string.
-see the `tests\izzum\statemachine\persistence\RedisTest` and `tests\izzum\statemachine\persistence\MongoDBTest` for some more details.
+It will be easier to maintain multiple machines if you put 1 machine definition in one JSON string.
+see `tests/Izzum/StateMachine/Persistence/RedisTest.php` for some more details.
 ```php
 $redis = new Redis('127.0.0.1', 6379);
 $machine = new StateMachine(new Context(new Identifier(1988442, 'crazy-machine'), null, $redis));
@@ -499,16 +513,30 @@ $delegator->load($machine);//loads from xml file
 $machine->run();//stores data in postgres
 ```
 
-###generating uml diagrams from a statemachine
-TO DESCRIBE
+### generating uml diagrams from a statemachine
+`Izzum\StateMachine\Utils\PlantUml` turns a fully loaded statemachine into [plantuml](http://www.plantuml.com/plantuml/) source for a state diagram. It reads the states and transitions already on the machine, so load your machine first (via a Loader, a persistence adapter or by adding transitions in php) and then generate.
 
-###installation
+`PlantUml::createStateDiagram($machine)` returns the diagram as a string; it does not render an image itself. Write it to a file and render it with plantuml, or paste it into the [online plantuml server](http://www.plantuml.com/plantuml/).
+
+The generated diagram includes the state names, their descriptions, entry and exit commands, the transition names and events, the guard rules and transition commands, and the order in which transitions are tried per state. Setting descriptions on your states and transitions via `State::setDescription()` and `Transition::setDescription()` makes the output considerably more readable.
+```php
+$machine = new StateMachine(new Context(new Identifier('198442', 'order')));
+$loader = XML::createFromFile(__DIR__ . '/machines.xml');
+$loader->load($machine);
+
+$plantuml = new PlantUml();
+$output = $plantuml->createStateDiagram($machine);
+file_put_contents('order-machine.plantuml', $output);
+```
+See `examples/trafficlight` for a runnable example that prints a diagram for the traffic light machine.
+
+### installation
 use [composer](https://getcomposer.org/) to install the project.
 Create a file called composer.json with these lines: 
 ```
 {
     "require": {
-        "rolfvreijdenberger/izzum-statemachine": "~4.0"
+        "rolfvreijdenberger/izzum-statemachine": "~5.0"
     }
 }
 ```
@@ -519,15 +547,14 @@ composer install
 You will find the izzum package in ./vendor/rolfvreijdenberger/izzum-statemachine.
 You can also download it directly from github. The package should be included via an autoloader (provided by composer by default)
 
-###running unittests
-you can run the testsuite with phpunit (installable via composer) in the tests directory from the command line.
+### running unittests
+you can run the testsuite with Codeception (installable via composer) from the project root.
 ```
-cd ./vendor/rolfvreijdenberger/izzum-statemachine/tests
-phpunit -c phpunit.xml
+composer test
 ```
-Not all tests are run by default, since the persistence layer tests depend on the different backends being available (postgres, mysql, sqlite, mongodb, redis) and/or php modules (yaml, redis, mongodb). These can be run by adjusting the phpunit-xall.xml file, installing the correct php modules and having the correct backends in place.
+Not all tests are run by default, since the persistence layer tests depend on the different backends being available (postgres, mysql, sqlite, redis) and/or php modules (yaml, redis). Tests requiring those are tagged with the `not-on-production` group and skipped by default. To run the full suite, including those, install the correct php modules, have the correct backends in place, and run:
 ```
-phpunit -c phpunit-all.xml
+vendor/bin/codecept run unit
 ```
 
 

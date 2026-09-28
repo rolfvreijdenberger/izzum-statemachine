@@ -16,7 +16,7 @@ When using a yaml file to read configuration data from, you still would want
 to use a persistence adapter to store/write the state and transition history data.
 
 That can be achieved with one of adapters (like PDO, Session, Memory, Redis, MongDB) in 
-combination with the izzum\statemachine\utils\ReaderWriterDelegator class which accepts both a loader (reader) 
+combination with the Izzum\StateMachine\Utils\ReaderWriterDelegator class which accepts both a loader (reader) 
 and an adapter (writer) to delegate to.
 Alternatively, you could subclass one of the persistence adapters and override the 'load' method to
 delegate the loading to the YAML loader.

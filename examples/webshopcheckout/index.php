@@ -1,10 +1,12 @@
 <?php
+
 namespace izzum\examples\webshopcheckout;
-use izzum\statemachine\Context;
-use izzum\statemachine\Identifier;
-use izzum\statemachine\State;
-use izzum\statemachine\Transition;
-use izzum\statemachine\StateMachine;
+
+use Izzum\StateMachine\Context;
+use Izzum\StateMachine\Identifier;
+use Izzum\StateMachine\State;
+use Izzum\StateMachine\Transition;
+use Izzum\StateMachine\StateMachine;
 
 require_once('../autoload.php');
 /**
@@ -42,13 +44,13 @@ $machine->addTransition(new Transition($payment, $complete, 'ready'));
 
 //start the interactive demo
 //with some coloring that works in the bash shell
-echo PHP_EOL ."\033[01;32mIzzum statemachine webshopcheckout demo. press ctrl+c to stop it.\033[0m" . PHP_EOL . PHP_EOL;
+echo PHP_EOL . "\033[01;32mIzzum statemachine webshopcheckout demo. press ctrl+c to stop it.\033[0m" . PHP_EOL . PHP_EOL;
 //loop the machine
-while(true) {
+while (true) {
     $state = $machine->getCurrentState();
     echo "current state: $state" . PHP_EOL;
     echo "possible transitions from $state: " . PHP_EOL;
-    if($state->isFinal()) {
+    if ($state->isFinal()) {
         //Sold! Thanks and hope to see you again soon.
         echo "\033[01;35mSold! Thanks and hope to see you again soon. ;)\033[0m" . PHP_EOL . PHP_EOL;
         exit;
@@ -69,16 +71,20 @@ while(true) {
         $status = 0;
         $transitioned = false;
         //we allow transitions by name or by event
-        if(strstr($event, '_to_')) {
+        if (strstr($event, '_to_')) {
             $transitioned = $machine->transition($event);
-            if($transitioned) $status = 1;
+            if ($transitioned) {
+                $status = 1;
+            }
         } else {
             $transitioned = $machine->handle($event);
-            if($transitioned) $status = 2;
+            if ($transitioned) {
+                $status = 2;
+            }
         }
     } catch (\Exception $e) {
         //for instance, when providing a bad transition name.
-        echo "\033[31mAn exception occured: " . $e->getMessage(). PHP_EOL;
+        echo "\033[31mAn exception occured: " . $e->getMessage() . PHP_EOL;
     }
 
     //check what happened

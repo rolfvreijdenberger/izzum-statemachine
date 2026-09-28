@@ -2,7 +2,7 @@
 -- This file contains a fully normalized, indexed and functioning backend implementation 
 -- for the izzum statemachine for a postgresql database
 
--- this database can be used with the izzum\statemachine\persistence\PDO adapter with
+-- this database can be used with the Izzum\StateMachine\Persistence\PDO adapter with
 -- a correct dsn to connect to postgres.
 -- http://php.net/manual/en/ref.pdo-pgsql.php
 
@@ -89,8 +89,8 @@ CREATE TABLE statemachine_transitions (
 	state_from varchar  NOT NULL, -- the state this transition is from
 	state_to varchar  NOT NULL, -- the state this transition is to
 	event varchar NULL, --optional: can be used for giving 'event' input to the statemachine.
-	rule varchar  DEFAULT '\izzum\rules\TrueRule'::character varying NOT NULL, -- the fully qualified name of a Rule class to instantiate
-	command varchar  DEFAULT '\izzum\command\NullCommand'::character varying NOT NULL, -- the fully qualified name of a Command class to instantiate
+	rule varchar  DEFAULT '\Izzum\Rules\TrueRule'::character varying NOT NULL, -- the fully qualified name of a Rule class to instantiate
+	command varchar  DEFAULT '\Izzum\Command\NullCommand'::character varying NOT NULL, -- the fully qualified name of a Command class to instantiate
 	priority int4 DEFAULT 1 NOT NULL, -- optional: can be used if you want your rules to be tried in a certain order. make sure to ORDER in your retrieval query.
 	description text -- optional: a descriptive text
 );
@@ -110,7 +110,7 @@ transitions in a statemachine (see the difference in mealy vs moore statemachine
 
 All data for a statemachine can be retrieved via a join on this 
 table and the statemachine_state table.
-This should be done by an implementation of izzum\statemachine\loader\Loader.';
+This should be done by an implementation of Izzum\StateMachine\Loader\Loader.';
 CREATE UNIQUE INDEX u_statemachine_transitions_m_sf_st ON statemachine_transitions (machine, state_from, state_to);
 ALTER TABLE statemachine_transitions ADD PRIMARY KEY (machine, state_from, state_to);
 ALTER TABLE statemachine_transitions ADD FOREIGN KEY (machine, state_from) REFERENCES statemachine_states (machine, state) ON DELETE NO ACTION ON UPDATE CASCADE;
@@ -140,7 +140,7 @@ only state of the machine with type "initial" (for theoretical purposes)
 
 
 The data that will be written to this table by a subclass 
-of izzum\statemachine\persistence\Adapter specifically written for postgres. 
+of Izzum\StateMachine\Persistence\Adapter specifically written for postgres. 
 Entities should be explicitely added to the statemachine by application logic. 
 This will be done in the method "$context->add($state)" which should write 
 the first entry for this entity: it should be the only 'initial' state, the "new" state.
@@ -217,7 +217,7 @@ The message column could store json so we can use the exception code
 and message in this field.
 
 Entities should be explicitely added to the statemachine by application logic. 
-This will be done in a subclass of izzum\statemachine\persistence\Adapter. 
+This will be done in a subclass of Izzum\StateMachine\Persistence\Adapter. 
 The logic will be implemented in the method "$context->add($state)" for the first entry,
 and in the method "processetState($identifier, $state)" for all subsequent entries.';
 CREATE INDEX i_statemachine_history_entity_id ON statemachine_history (entity_id);
@@ -237,7 +237,7 @@ ALTER TABLE statemachine_history ADD PRIMARY KEY (id);
 INSERT INTO statemachine_machines
 (machine, factory, description)
 VALUES 
-('izzum', '\izzum\statemachine\factory\PostgresExampleFactory', 'this izzum: an example statemachine');
+('izzum', '\Izzum\StateMachine\factory\PostgresExampleFactory', 'this izzum: an example statemachine');
 
 -- insert states into the izzum machine
 INSERT INTO statemachine_states
@@ -261,15 +261,15 @@ VALUES
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
-('izzum', 'new', 'ok','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 1, 'new_to_ok transition'),
-('izzum', 'ok', 'fine','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'ok_to_fine transition'),
-('izzum', 'fine', 'excellent','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'fine_to_excellent transition'),
-('izzum', 'excellent', 'done','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'excellent_to_done transition'),
-('izzum', 'new', 'bad','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'new_to_bad transition'),
-('izzum', 'ok', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'ok_to_bad transition'),
-('izzum', 'fine', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'fine_to_bad transition'),
-('izzum', 'excellent', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'excellent_to_bad transition'),
-('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\NullCommand', 1, 'bad_to_done transition');
+('izzum', 'new', 'ok','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 1, 'new_to_ok transition'),
+('izzum', 'ok', 'fine','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'ok_to_fine transition'),
+('izzum', 'fine', 'excellent','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'fine_to_excellent transition'),
+('izzum', 'excellent', 'done','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'excellent_to_done transition'),
+('izzum', 'new', 'bad','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'new_to_bad transition'),
+('izzum', 'ok', 'bad','\Izzum\Rules\FalseRule', 'Izzum\Command\NullCommand', 1, 'ok_to_bad transition'),
+('izzum', 'fine', 'bad','\Izzum\Rules\FalseRule', 'Izzum\Command\NullCommand', 1, 'fine_to_bad transition'),
+('izzum', 'excellent', 'bad','\Izzum\Rules\FalseRule', 'Izzum\Command\NullCommand', 1, 'excellent_to_bad transition'),
+('izzum', 'bad', 'done','\Izzum\Rules\ExceptionRule', 'Izzum\Command\NullCommand', 1, 'bad_to_done transition');
 
 INSERT INTO statemachine_entities
 (machine, entity_id, state)

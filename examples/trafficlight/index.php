@@ -1,8 +1,10 @@
 <?php
-namespace izzum\examples\trafficlight;
-use izzum\statemachine\utils\PlantUml;
 
-require_once ('../autoload.php');
+namespace izzum\examples\trafficlight;
+
+use Izzum\StateMachine\Utils\PlantUml;
+
+require_once('../autoload.php');
 /**
  * Example script that uses the 'delegation mode' as one of the four usage models for the statemachine.
  * The other three usage models being inheritance, composition and standalone.
@@ -30,7 +32,7 @@ echo $output;
 echo PHP_EOL . PHP_EOL . PHP_EOL;
 
 //loop the machine
-while ( true ) {
+while (true) {
     $machine->run();
     sleep(1);
 }

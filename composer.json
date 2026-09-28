@@ -13,11 +13,19 @@
         
     ],
     "require": {
-        "php": ">=5.3.3"
+        "php": "^8.4"
     },
     "autoload": {
         "psr-4": {
-            "izzum\\": "src/"
+            "Izzum\\": "src/"
         }
+    },
+    "require-dev": {
+        "rector/rector": "^2.6",
+        "codeception/codeception": "^5.3",
+        "friendsofphp/php-cs-fixer": "^3.95"
+    },
+    "scripts": {
+        "test": "codecept run unit --skip-group not-on-production"
     }
 }

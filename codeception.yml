@@ -1,0 +1,9 @@
+namespace: ''
+paths:
+    tests: tests
+    output: tests/_output
+    data: tests/_data
+    support: tests/_support
+    envs: tests/_envs
+bootstrap: bootstrap.php
+actor_suffix: Tester

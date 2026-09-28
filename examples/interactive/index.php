@@ -1,26 +1,29 @@
 <?php
+
 namespace izzum\examples\interactive;
-use izzum\statemachine\Context;
-use izzum\statemachine\Identifier;
-use izzum\statemachine\State;
-use izzum\statemachine\Transition;
-use izzum\statemachine\StateMachine;
+
+use Izzum\StateMachine\Context;
+use Izzum\StateMachine\Identifier;
+use Izzum\StateMachine\State;
+use Izzum\StateMachine\Transition;
+use Izzum\StateMachine\StateMachine;
+
 require_once('../autoload.php');
 /**
  * Example script that uses the 'standalone mode' as one of the four usage models for the statemachine.
  * The other three usage models being inheritance, composition and delegation.
- * 
+ *
  * This script allows you to interact with the statemachine from the command line
  * and does not use anything fancy for guard or transition logic.
  * To see an example of guard and transition logic for the standalone mode you
  * can see 'examples/standalone'
- * 
- * 
+ *
+ *
  * run this script from the (bash) command line:
  * php -f index.php
  * and stop it with ctrl+c
  */
- 
+
 
 //create machine. context defaults to in-memory state handling
 $context = new Context(new Identifier("interactive-example", "interactive-machine"));
@@ -61,52 +64,56 @@ $machine->addTransition(new Transition($high, $sleep, 'pzzah'));
 
 //start the interactive demo
 //with some coloring that works in the bash shell
-echo PHP_EOL ."\033[01;32mIzzum statemachine interactive demo. press ctrl+c to stop it.\033[0m" . PHP_EOL . PHP_EOL;
+echo PHP_EOL . "\033[01;32mIzzum statemachine interactive demo. press ctrl+c to stop it.\033[0m" . PHP_EOL . PHP_EOL;
 //loop the machine
-while(true) {
-	$state = $machine->getCurrentState();
-	echo "current state: $state" . PHP_EOL;
-	echo "possible transitions from $state: " . PHP_EOL;
-	if($state->isFinal()) {
-		//too much good times
-		echo "\033[01;35mAhw man...! Try not to drink/smoke as much next time, it's bad for you ;)\033[0m" . PHP_EOL . PHP_EOL;
-		exit;
-	}
-	foreach ($state->getTransitions() as $transition) {
-		echo "'" . $transition->getName() . "' aka event '" . $transition->getEvent() . "'" . PHP_EOL;
-	}
-	echo PHP_EOL;
-    //get input from the user
-	$event = readline("\033[01;32mEnter an \033[01;36mevent \033[01;32mor \033[01;34mtransition \033[01;32mname: \033[0m");
-    
-    try {
-    	$status = 0;
-    	$transitioned = false;
-    	//we allow transitions by name or by event
-    	if(strstr($event, '_to_')) {
-    		$transitioned = $machine->transition($event);
-    		if($transitioned) $status = 1;
-    	} else {
-    		$transitioned = $machine->handle($event); 
-    		if($transitioned) $status = 2;
-    	}
-    } catch (\Exception $e) {
-    	//for instance, when providing a bad transition name.
-    	echo "\033[31mAn exception occured: " . $e->getMessage(). PHP_EOL;
+while (true) {
+    $state = $machine->getCurrentState();
+    echo "current state: $state" . PHP_EOL;
+    echo "possible transitions from $state: " . PHP_EOL;
+    if ($state->isFinal()) {
+        //too much good times
+        echo "\033[01;35mAhw man...! Try not to drink/smoke as much next time, it's bad for you ;)\033[0m" . PHP_EOL . PHP_EOL;
+        exit;
     }
-    
+    foreach ($state->getTransitions() as $transition) {
+        echo "'" . $transition->getName() . "' aka event '" . $transition->getEvent() . "'" . PHP_EOL;
+    }
+    echo PHP_EOL;
+    //get input from the user
+    $event = readline("\033[01;32mEnter an \033[01;36mevent \033[01;32mor \033[01;34mtransition \033[01;32mname: \033[0m");
+
+    try {
+        $status = 0;
+        $transitioned = false;
+        //we allow transitions by name or by event
+        if (strstr($event, '_to_')) {
+            $transitioned = $machine->transition($event);
+            if ($transitioned) {
+                $status = 1;
+            }
+        } else {
+            $transitioned = $machine->handle($event);
+            if ($transitioned) {
+                $status = 2;
+            }
+        }
+    } catch (\Exception $e) {
+        //for instance, when providing a bad transition name.
+        echo "\033[31mAn exception occured: " . $e->getMessage() . PHP_EOL;
+    }
+
     //check what happened
     switch ($status) {
-    	case 1:
-    		echo "\033[01;34m--- transition by transition name '$event' succesful";
-    		break;
-    	case 2:
-    		echo "\033[01;36m--- transition by event name '$event' succesful";
-    		break;
-    	default:
-	    	echo "\033[01;31m--- transition for '$event' not succesful";
-	    	break;
+        case 1:
+            echo "\033[01;34m--- transition by transition name '$event' succesful";
+            break;
+        case 2:
+            echo "\033[01;36m--- transition by event name '$event' succesful";
+            break;
+        default:
+            echo "\033[01;31m--- transition for '$event' not succesful";
+            break;
     }
     echo "\033[0m" . PHP_EOL . PHP_EOL;
-    		
+
 }

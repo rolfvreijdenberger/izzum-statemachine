@@ -3,7 +3,7 @@
 
 -- for full explanation and comments, see the postgresql.sql file
 
--- this database can be used with the izzum\statemachine\persistence\PDO adapter with
+-- this database can be used with the Izzum\StateMachine\Persistence\PDO adapter with
 -- a correct dsn to connect to sqlite ("sqlite:path/to/sqlite.db")
 -- http://php.net/manual/en/ref.pdo-sqlite.php
 
@@ -40,8 +40,8 @@ CREATE TABLE statemachine_transitions (
 	state_from VARCHAR  NOT NULL,
 	state_to VARCHAR  NOT NULL, 
 	event VARCHAR NULL,
-	rule VARCHAR  DEFAULT '\izzum\rules\TrueRule' NOT NULL,
-	command VARCHAR  DEFAULT '\izzum\command\NullCommand' NOT NULL,
+	rule VARCHAR  DEFAULT '\Izzum\Rules\TrueRule' NOT NULL,
+	command VARCHAR  DEFAULT '\Izzum\Command\NullCommand' NOT NULL,
 	priority int4 DEFAULT 1 NOT NULL, 
 	description text,
         PRIMARY KEY (machine, state_from, state_to),
@@ -86,7 +86,7 @@ CREATE INDEX i_statemachine_history_entity_id ON statemachine_history (entity_id
 INSERT INTO statemachine_machines
 (machine, factory, description)
 VALUES 
-('izzum', '\izzum\statemachine\factory\SqliteExampleFactory', 'this izzum: an example statemachine');
+('izzum', '\Izzum\StateMachine\factory\SqliteExampleFactory', 'this izzum: an example statemachine');
 
 -- insert states into the izzum machine
 INSERT INTO statemachine_states
@@ -101,7 +101,7 @@ VALUES
 
 UPDATE statemachine_states
 SET 
-entry_command = 'izzum\command\NullCommand', exit_command = 'izzum\command\NullCommand'
+entry_command = 'Izzum\Command\NullCommand', exit_command = 'Izzum\Command\NullCommand'
 WHERE machine = 'izzum'
 AND (state = 'bad' OR state = 'ok');
 
@@ -111,15 +111,15 @@ AND (state = 'bad' OR state = 'ok');
 INSERT INTO statemachine_transitions
 (machine, state_from, state_to, rule, command, priority, description)
 VALUES
-('izzum', 'new', 'ok','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 1, 'new_to_ok transition'),
-('izzum', 'ok', 'fine','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'ok_to_fine transition'),
-('izzum', 'fine', 'excellent','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'fine_to_excellent transition'),
-('izzum', 'excellent', 'done','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'excellent_to_done transition'),
-('izzum', 'new', 'bad','\izzum\rules\TrueRule', 'izzum\command\NullCommand', 2, 'new_to_bad transition'),
-('izzum', 'ok', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'ok_to_bad transition'),
-('izzum', 'fine', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'fine_to_bad transition'),
-('izzum', 'excellent', 'bad','\izzum\rules\FalseRule', 'izzum\command\NullCommand', 1, 'excellent_to_bad transition'),
-('izzum', 'bad', 'done','\izzum\rules\ExceptionRule', 'izzum\command\NullCommand', 1, 'bad_to_done transition');
+('izzum', 'new', 'ok','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 1, 'new_to_ok transition'),
+('izzum', 'ok', 'fine','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'ok_to_fine transition'),
+('izzum', 'fine', 'excellent','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'fine_to_excellent transition'),
+('izzum', 'excellent', 'done','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'excellent_to_done transition'),
+('izzum', 'new', 'bad','\Izzum\Rules\TrueRule', 'Izzum\Command\NullCommand', 2, 'new_to_bad transition'),
+('izzum', 'ok', 'bad','\Izzum\Rules\FalseRule', 'Izzum\Command\NullCommand', 1, 'ok_to_bad transition'),
+('izzum', 'fine', 'bad','\Izzum\Rules\FalseRule', 'Izzum\Command\NullCommand', 1, 'fine_to_bad transition'),
+('izzum', 'excellent', 'bad','\Izzum\Rules\FalseRule', 'Izzum\Command\NullCommand', 1, 'excellent_to_bad transition'),
+('izzum', 'bad', 'done','\Izzum\Rules\ExceptionRule', 'Izzum\Command\NullCommand', 1, 'bad_to_done transition');
 
 UPDATE statemachine_transitions
 SET

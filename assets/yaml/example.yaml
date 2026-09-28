@@ -14,26 +14,26 @@
           description: description for state a
         - name: b
           type: normal
-          entry_command: \izzum\command\NullCommand
-          exit_command: \izzum\command\NullCommand
-          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
-          exit_callable: \izzum\statemachine\loader\MyStatic::exitMethod
+          entry_command: \Izzum\Command\NullCommand
+          exit_command: \Izzum\Command\NullCommand
+          entry_callable: \Izzum\StateMachine\Loader\MyStatic::entryMethod
+          exit_callable: \Izzum\StateMachine\Loader\MyStatic::exitMethod
           description: description for state b
         - name: done
           type: final
-          entry_command: \izzum\command\NullCommand
+          entry_command: \Izzum\Command\NullCommand
           exit_command: 
-          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
+          entry_callable: \Izzum\StateMachine\Loader\MyStatic::entryMethod
           exit_callable: null
           description: description for state done
       transitions: 
         - state_from: a
           state_to: b
           event: ab
-          rule: \izzum\rules\TrueRule
-          command: \izzum\command\NullCommand
-          guard_callable: \izzum\statemachine\loader\MyStatic::guardMethod
-          transition_callable: \izzum\statemachine\loader\MyStatic::transitionMethod
+          rule: \Izzum\Rules\TrueRule
+          command: \Izzum\Command\NullCommand
+          guard_callable: \Izzum\StateMachine\Loader\MyStatic::guardMethod
+          transition_callable: \Izzum\StateMachine\Loader\MyStatic::transitionMethod
           description: my description for a_to_b
         - state_from: b
           state_to: done
@@ -56,10 +56,10 @@
           description: description for state a
         - name: b
           type: normal
-          entry_command: \izzum\command\NullCommand
-          exit_command: \izzum\command\NullCommand
-          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
-          exit_callable: \izzum\statemachine\loader\MyStatic::exitMethod
+          entry_command: \Izzum\Command\NullCommand
+          exit_command: \Izzum\Command\NullCommand
+          entry_callable: \Izzum\StateMachine\Loader\MyStatic::entryMethod
+          exit_callable: \Izzum\StateMachine\Loader\MyStatic::exitMethod
           description: description for state b
         - name: c
           type: normal
@@ -69,19 +69,19 @@
           description: used for the transitions of a and b to c. (done is a final state and will not be used by the regex)
         - name: done
           type: final
-          entry_command: \izzum\command\NullCommand
+          entry_command: \Izzum\Command\NullCommand
           exit_command: 
-          entry_callable: \izzum\statemachine\loader\MyStatic::entryMethod
+          entry_callable: \Izzum\StateMachine\Loader\MyStatic::entryMethod
           exit_callable: null
           description: description for state done
       transitions: 
         - state_from: a
           state_to: b
           event: ab
-          rule: \izzum\rules\TrueRule
-          command: \izzum\command\NullCommand
-          guard_callable: izzum\statemachine\loader\MyStatic::guardMethod
-          transition_callable: izzum\statemachine\loader\MyStatic::transitionMethod
+          rule: \Izzum\Rules\TrueRule
+          command: \Izzum\Command\NullCommand
+          guard_callable: Izzum\StateMachine\Loader\MyStatic::guardMethod
+          transition_callable: Izzum\StateMachine\Loader\MyStatic::transitionMethod
           description: my description for a_to_b
         - state_from: b
           state_to: done
@@ -94,5 +94,5 @@
         - state_from: "regex:/.*/"
           state_to: c
           event: goToC
-          rule: \izzum\rules\ExceptionRule
+          rule: \Izzum\Rules\ExceptionRule
           description: transitions from a and b to c will throw an exception. used in the unittests. (done is a final state and will not be used by the regex)
